@@ -1,0 +1,41 @@
+// Copyright 2024 Unomed AG
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import * as React from 'react';
+
+import { StyleSheet, View, Text } from 'react-native';
+import { multiply } from 'react-native-matrix-sdk';
+
+const result = multiply(3, 7);
+
+export default function App() {
+  return (
+    <View style={styles.container}>
+      <Text>Result: {result}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  box: {
+    width: 60,
+    height: 60,
+    marginVertical: 20,
+  },
+});
