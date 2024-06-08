@@ -2,6 +2,8 @@
 
 Matrix client SDK for React Native
 
+[![CI](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ci.yml)
+
 
 ## Installation
 
