@@ -1,5 +1,4 @@
 # OSX
-#
 .DS_Store
 
 # XDE
@@ -10,7 +9,6 @@
 jsconfig.json
 
 # Xcode
-#
 build/
 *.pbxuser
 !default.pbxuser
@@ -31,7 +29,6 @@ project.xcworkspace
 .xcode.env.local
 
 # Android/IJ
-#
 .classpath
 .cxx
 .gradle
@@ -42,8 +39,8 @@ local.properties
 android.iml
 
 # Cocoapods
-#
 example/ios/Pods
+ios/MatrixRustSDK
 
 # Ruby
 example/vendor/
