@@ -24,7 +24,7 @@ Pod::Spec.new do |s|
   matrix_sdk_ffi_src_url = "https://github.com/matrix-org/matrix-rust-components-swift/archive/refs/tags/v#{matrix_sdk_ffi_version}.zip"
 
   s.prepare_command = <<-CMD
-    mkdir ios/MatrixRustSDK
+    mkdir -p ios/MatrixRustSDK
     cd ios/MatrixRustSDK
 
     # Fetch MatrixSDKFFI.xcframework & sources
