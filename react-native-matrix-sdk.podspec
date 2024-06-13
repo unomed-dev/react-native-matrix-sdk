@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
-  matrix_sdk_ffi_version = "1.1.67"
+  matrix_sdk_ffi_version = "1.1.68"
   matrix_sdk_ffi_xcf_zip = "MatrixSDKFFI-#{matrix_sdk_ffi_version}.xcframework.zip"
   matrix_sdk_ffi_xcf_url = "https://github.com/matrix-org/matrix-rust-components-swift/releases/download/v#{matrix_sdk_ffi_version}/MatrixSDKFFI.xcframework.zip"
   matrix_sdk_ffi_src_dir = "matrix-rust-components-swift-#{matrix_sdk_ffi_version}"
@@ -41,27 +41,6 @@ Pod::Spec.new do |s|
 
     # Unzip the xcframework
     unzip "#{matrix_sdk_ffi_xcf_zip}"
-
-    # TODO: The steps below shouldn't be necessary anymore once https://github.com/matrix-org/matrix-rust-sdk/issues/3528
-    # is resolved and consumed in https://github.com/matrix-org/matrix-rust-components-swift
-
-    # Cocoapods needs all library files to have the same name ... because Cocoapods
-    mv MatrixSDKFFI.xcframework/ios-arm64_x86_64-simulator/libmatrix_sdk_ffi_iossimulator.a \
-      MatrixSDKFFI.xcframework/ios-arm64_x86_64-simulator/libmatrix_sdk_ffi.a
-    mv MatrixSDKFFI.xcframework/macos-arm64_x86_64/libmatrix_sdk_ffi_macos.a \
-      MatrixSDKFFI.xcframework/macos-arm64_x86_64/libmatrix_sdk_ffi.a
-
-    # The PList in the xcframework contains metadata, so we need to reassemble a new xcframework
-    xcodebuild -create-xcframework \
-      -library MatrixSDKFFI.xcframework/ios-arm64/libmatrix_sdk_ffi.a \
-      -headers MatrixSDKFFI.xcframework/ios-arm64/Headers \
-      -library MatrixSDKFFI.xcframework/ios-arm64_x86_64-simulator/libmatrix_sdk_ffi.a \
-      -headers MatrixSDKFFI.xcframework/ios-arm64_x86_64-simulator/Headers \
-      -library MatrixSDKFFI.xcframework/macos-arm64_x86_64/libmatrix_sdk_ffi.a \
-      -headers MatrixSDKFFI.xcframework/macos-arm64_x86_64/Headers \
-      -output MatrixSDKFFI-reassemble.xcframework
-    rm -r MatrixSDKFFI.xcframework
-    mv MatrixSDKFFI-reassemble.xcframework MatrixSDKFFI.xcframework
   CMD
 
   s.vendored_frameworks = "ios/MatrixRustSDK/MatrixSDKFFI.xcframework"
