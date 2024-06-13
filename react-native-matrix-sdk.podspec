@@ -35,11 +35,13 @@ Pod::Spec.new do |s|
     fi
 
     # Unzip the sources
+    rm -f *.swift
     unzip "#{matrix_sdk_ffi_src_zip}"
     mv "#{matrix_sdk_ffi_src_dir}"/Sources/MatrixRustSDK/* .
     rm -r "#{matrix_sdk_ffi_src_dir}"
 
     # Unzip the xcframework
+    rm -rf *.xcframework
     unzip "#{matrix_sdk_ffi_xcf_zip}"
   CMD
 
