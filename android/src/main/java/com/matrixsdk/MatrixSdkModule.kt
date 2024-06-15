@@ -16,6 +16,9 @@ package com.matrixsdk
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.annotations.ReactModule
+import org.matrix.rustcomponents.sdk.AuthenticationService
+
+private val authenticationService_store = ThreadSafeStore<AuthenticationService>()
 
 @ReactModule(name = MatrixSdkModule.NAME)
 class MatrixSdkModule(reactContext: ReactApplicationContext) :
@@ -25,13 +28,15 @@ class MatrixSdkModule(reactContext: ReactApplicationContext) :
     return NAME
   }
 
-  // Example method
-  // See https://reactnative.dev/docs/native-modules-android
-  override fun multiply(a: Double, b: Double): Double {
-    return a * b
-  }
-
   companion object {
     const val NAME = "MatrixSdk"
+  }
+
+  override fun authenticationService_init(basePath: String, passphrase: String?, userAgent: String?): String {
+    return authenticationService_store.add(AuthenticationService(basePath, passphrase, userAgent, emptyList(), null, null, null, null, null))
+  }
+
+  override fun authenticationService_destroy(id: String) {
+    authenticationService_store.remove(id)
   }
 }

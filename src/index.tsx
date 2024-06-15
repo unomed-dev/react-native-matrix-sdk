@@ -12,8 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const MatrixSdk = require('./NativeMatrixSdk').default;
+import MatrixSdk from './NativeMatrixSdk';
 
-export function multiply(a: number, b: number): number {
-  return MatrixSdk.multiply(a, b);
+export class AuthenticationService {
+  private id: string;
+
+  constructor(
+    basePath: string,
+    passphrase: string | null,
+    userAgent: string | null
+  ) {
+    this.id = MatrixSdk.authenticationService_init(
+      basePath,
+      passphrase,
+      userAgent
+    );
+  }
+
+  destroy() {
+    MatrixSdk.authenticationService_destroy(this.id);
+  }
 }

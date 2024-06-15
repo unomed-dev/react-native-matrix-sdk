@@ -19,15 +19,21 @@ RCT_EXPORT_MODULE()
 
 // Don't compile this code when we build for the old architecture.
 #ifdef RCT_NEW_ARCH_ENABLED
- - (NSNumber *)multiply:(double)a b:(double)b {
-     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
- }
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params
 {
     return std::make_shared<facebook::react::NativeMatrixSdkSpecJSI>(params);
 }
+
+- (NSString *)authenticationService_init:(NSString *)basePath passphrase:(NSString * _Nullable)passphrase userAgent:(NSString * _Nullable)userAgent {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)authenticationService_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
 #endif
 
 @end

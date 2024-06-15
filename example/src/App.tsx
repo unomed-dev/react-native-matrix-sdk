@@ -15,14 +15,14 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-matrix-sdk';
+import { AuthenticationService } from 'react-native-matrix-sdk';
 
-const result = multiply(3, 7);
+const authService = new AuthenticationService('', null, null);
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <Text>AuthenticationService: {`${authService}`}</Text>
     </View>
   );
 }

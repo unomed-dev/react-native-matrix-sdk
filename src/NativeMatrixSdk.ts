@@ -16,7 +16,12 @@ import type { TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
 
 export interface Spec extends TurboModule {
-  multiply(a: number, b: number): number;
+  authenticationService_init(
+    basePath: string,
+    passphrase: string | null,
+    userAgent: string | null
+  ): string;
+  authenticationService_destroy(id: string): void;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('MatrixSdk');
