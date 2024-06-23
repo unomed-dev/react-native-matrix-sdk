@@ -84,6 +84,22 @@ yarn test
 ```
 
 
+### Local matrix-rust-sdk
+
+By default the project is set up to consume the FFI bindings of [matrix-rust-sdk] via public
+releases of [matrix-rust-components-kotlin] and [matrix-rust-components-swift]. To build the
+bindings from a local checkout, follow the steps below.
+
+For iOS, run `pod install` in `example/ios` and afterwards execute
+
+```sh
+ios/build-local-sdk.sh PATH_TO_RUST_SDK_CHECKOUT
+```
+
+The script will build the bindings for the simulator on Apple Silicon Macs. If you need to
+build for a different architecture, change the `--target` argument inside the script.
+
+
 ### Commit message convention
 
 We follow the [conventional commits specification] for our commit messages:
@@ -151,6 +167,9 @@ When you're sending a pull request:
 [ESLint]: https://eslint.org/
 [example app]: /example/
 [Jest]: https://jestjs.io/
+[matrix-rust-components-kotlin]: https://github.com/matrix-org/matrix-rust-components-kotlin
+[matrix-rust-components-swift]: https://github.com/matrix-org/matrix-rust-components-swift
+[matrix-rust-sdk]: https://github.com/matrix-org/matrix-rust-sdk
 [`npm`]: https://github.com/npm/cli
 [Prettier]: https://prettier.io/
 [release-it]: https://github.com/release-it/release-it

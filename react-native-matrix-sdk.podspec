@@ -16,33 +16,41 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
-  matrix_sdk_ffi_version = "1.1.68"
-  matrix_sdk_ffi_xcf_zip = "MatrixSDKFFI-#{matrix_sdk_ffi_version}.xcframework.zip"
-  matrix_sdk_ffi_xcf_url = "https://github.com/matrix-org/matrix-rust-components-swift/releases/download/v#{matrix_sdk_ffi_version}/MatrixSDKFFI.xcframework.zip"
-  matrix_sdk_ffi_src_dir = "matrix-rust-components-swift-#{matrix_sdk_ffi_version}"
-  matrix_sdk_ffi_src_zip = "matrix-rust-components-swift-#{matrix_sdk_ffi_version}.zip"
-  matrix_sdk_ffi_src_url = "https://github.com/matrix-org/matrix-rust-components-swift/archive/refs/tags/v#{matrix_sdk_ffi_version}.zip"
+  # This appears to be required if we ever need to import react_native_matrix_sdk-Swift.h
+  # s.header_dir = 'react_native_matrix_sdk'
+
+  # For testing & production
+  ffi = ->(version) { return {
+    :xcf_zip => "MatrixSDKFFI-#{version}.xcframework.zip",
+    :xcf_url => "https://github.com/matrix-org/matrix-rust-components-swift/releases/download/v#{version}/MatrixSDKFFI.xcframework.zip",
+    :src_dir => "matrix-rust-components-swift-#{version}",
+    :src_zip => "matrix-rust-components-swift-#{version}.zip",
+    :src_url => "https://github.com/matrix-org/matrix-rust-components-swift/archive/refs/tags/v#{version}.zip"
+  } }.call("1.1.68")
 
   s.prepare_command = <<-CMD
-    mkdir -p ios/MatrixRustSDK
-    cd ios/MatrixRustSDK
+    # Prepare target folder
+    target=$(pwd)/ios/MatrixRustSDK
+    mkdir -p "${target}"
+
+    cd "${target}"
 
     # Fetch MatrixSDKFFI.xcframework & sources
-    if [[ ! -e "#{matrix_sdk_ffi_xcf_zip}" ]]; then
+    if [[ ! -e "#{ffi[:xcf_zip]}" ]]; then
       rm -rf *
-      curl -L -o "#{matrix_sdk_ffi_xcf_zip}" "#{matrix_sdk_ffi_xcf_url}"
-      curl -L -o "#{matrix_sdk_ffi_src_zip}" "#{matrix_sdk_ffi_src_url}"
+      curl -L -o "#{ffi[:xcf_zip]}" "#{ffi[:xcf_url]}"
+      curl -L -o "#{ffi[:src_zip]}" "#{ffi[:src_url]}"
     fi
 
     # Unzip the sources
     rm -f *.swift
-    unzip "#{matrix_sdk_ffi_src_zip}"
-    mv "#{matrix_sdk_ffi_src_dir}"/Sources/MatrixRustSDK/* .
-    rm -r "#{matrix_sdk_ffi_src_dir}"
+    unzip "#{ffi[:src_zip]}"
+    mv "#{ffi[:src_dir]}"/Sources/MatrixRustSDK/* .
+    rm -r "#{ffi[:src_dir]}"
 
     # Unzip the xcframework
     rm -rf *.xcframework
-    unzip "#{matrix_sdk_ffi_xcf_zip}"
+    unzip "#{ffi[:xcf_zip]}"
   CMD
 
   s.vendored_frameworks = "ios/MatrixRustSDK/MatrixSDKFFI.xcframework"
