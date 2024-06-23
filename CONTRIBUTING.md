@@ -90,11 +90,14 @@ By default the project is set up to consume the FFI bindings of [matrix-rust-sdk
 releases of [matrix-rust-components-kotlin] and [matrix-rust-components-swift]. To build the
 bindings from a local checkout, follow the steps below.
 
-For iOS, run `pod install` in `example/ios` and afterwards execute
+For iOS, run
 
 ```sh
 ios/build-local-sdk.sh PATH_TO_RUST_SDK_CHECKOUT
 ```
+
+Afterwards, comment out `prepare_command` in `react-native-matrix-sdk.podspec` and run
+`pod install` in `example/ios`.
 
 The script will build the bindings for the simulator on Apple Silicon Macs. If you need to
 build for a different architecture, change the `--target` argument inside the script.
