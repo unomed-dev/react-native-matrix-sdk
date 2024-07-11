@@ -14,15 +14,106 @@
 
 import * as React from 'react';
 
-import { StyleSheet, View, Text } from 'react-native';
-import { AuthenticationService } from 'react-native-matrix-sdk';
-
-const authService = new AuthenticationService('', null, null);
+import {
+  StyleSheet,
+  View,
+  Button,
+  ActivityIndicator,
+  Text,
+} from 'react-native';
+import {
+  Client,
+  ClientBuilder,
+  createRandomSessionDirectory,
+  type Session,
+} from 'react-native-matrix-sdk';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 export default function App() {
+  let [isLoading, setIsLoading] = React.useState(false);
+  let [client, setClient] = React.useState<Client | null>(null);
+  let [session, setSession] = React.useState<Session | null>(null);
+
+  const buildClient = React.useCallback(async () => {
+    const builder = new ClientBuilder()
+      .homeserverUrl('https://...')
+      .sessionPath(createRandomSessionDirectory());
+
+    try {
+      return await builder.build();
+    } finally {
+      builder.destroy();
+    }
+  }, []);
+
+  const logInWithSso = React.useCallback(async () => {
+    setIsLoading(true);
+
+    const theClient = await buildClient();
+    setClient(theClient);
+
+    const ssoHandler = await theClient.startSsoLogin(
+      'unomed.example://Main',
+      undefined
+    );
+
+    try {
+      const response = await InAppBrowser.openAuth(
+        ssoHandler.url(),
+        'unomed.example://Main',
+        {
+          ephemeralWebSession: false,
+          showTitle: false,
+          enableUrlBarHiding: true,
+          enableDefaultShare: false,
+        }
+      );
+
+      if (response.type !== 'success') {
+        throw 'SSO login failed';
+      }
+
+      await ssoHandler.finish(response.url);
+      setSession(theClient.session());
+    } catch (e) {
+      theClient.destroy();
+      console.error(e);
+    } finally {
+      ssoHandler.destroy();
+      setIsLoading(false);
+    }
+  }, [buildClient]);
+
+  const logOut = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await client?.logout();
+      client?.destroy();
+      setClient(null);
+      setSession(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [client]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text>AuthenticationService: {`${authService}`}</Text>
+      {!session && <Button title="Log in with SSO" onPress={logInWithSso} />}
+      {session && (
+        <View style={styles.box}>
+          <Text style={styles.label}>Access token</Text>
+          <Text>{session.accessToken}</Text>
+          <Button title="Log out" onPress={logOut} />
+        </View>
+      )}
     </View>
   );
 }
@@ -34,8 +125,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
+    padding: 16,
+  },
+  label: {
+    fontWeight: 'bold',
   },
 });
