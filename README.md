@@ -10,14 +10,37 @@ This SDK wraps the FFI bindings of [matrix-rust-sdk] for use in React Native via
 
 ## Installation
 
+Since this is a fairly young project we're not making releases yet. To use the module,
+clone the repository into a sibling folder of your app and then install it with e.g.
+
 ```sh
-npm install react-native-matrix-sdk
+npm add ../react-native-matrix-sdk
+```
+
+Additionally you need to change `metro.config.js` to find and watch the module's source
+code.
+
+```js
+const config = {
+  resolver: {
+    extraNodeModules: {
+      'react-native-matrix-sdk': path.resolve(__dirname, '../react-native-matrix-sdk'),
+    }, ...
+  },
+  watchFolders: [
+    path.resolve(__dirname, '../react-native-matrix-sdk'), ...
+  ]
+};
 ```
 
 
 ## Usage
 
-🚧 WIP 🚧
+See [src/index.tsx] for the module's full API. You may also find a usage example
+in [example/src/App.tsx].
+
+Objects that have a `destroy` method live on the native side and need to be explicitly
+deallocated by calling `obj.destroy()` to prevent memory leaks.
 
 
 ## Contributing
