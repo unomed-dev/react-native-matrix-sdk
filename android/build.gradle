@@ -112,7 +112,14 @@ dependencies {
   implementation "com.facebook.react:react-native:+"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
-  implementation "org.matrix.rustcomponents:sdk-android:0.2.24"
+  // Use locally built FFI bindings if available and fall back to pre-built remote bindings otherwise
+  if (file("libs").listFiles().findAll { it.name.endsWith('.aar') }.size() > 0) {
+    implementation fileTree(dir: "libs", include: ["*.aar"])
+    implementation "net.java.dev.jna:jna:5.14.0@aar"
+    artifacts.add("default", file("matrix-rust-sdk.aar"))
+  } else {
+    implementation "org.matrix.rustcomponents:sdk-android:0.2.24"
+  }
 }
 
 if (isNewArchitectureEnabled()) {

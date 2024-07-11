@@ -37,6 +37,9 @@ project.xcworkspace
 .settings
 local.properties
 android.iml
+*.aar
+android/src/main/java/org
+android/src/main/java/uniffi
 
 # Cocoapods
 example/ios/Pods
