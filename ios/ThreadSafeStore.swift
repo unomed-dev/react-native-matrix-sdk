@@ -18,7 +18,7 @@ class ThreadSafeStore<T> {
     private var store = [String: T]()
 
     /// Reads a value from the store
-    func get(key: String) -> T? {
+    func get(_ key: String) -> T? {
         return queue.sync { store[key] }
     }
 

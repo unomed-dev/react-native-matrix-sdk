@@ -26,11 +26,87 @@ RCT_EXPORT_MODULE()
     return std::make_shared<facebook::react::NativeMatrixSdkSpecJSI>(params);
 }
 
-- (NSString *)authenticationService_init:(NSString *)basePath passphrase:(NSString * _Nullable)passphrase userAgent:(NSString * _Nullable)userAgent {
+// MARK: - Client
+
+- (void)client_destroy:(NSString *)id {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
-- (void)authenticationService_destroy:(NSString *)id {
+- (void)client_displayName:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)client_logout:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)client_restoreSession:(NSString *)id session:(NSDictionary *)session resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSDictionary *)client_session:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)client_startSsoLogin:(NSString *)id redirectUrl:(NSString *)redirectUrl idpId:(NSString * _Nullable)idpId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)client_userId:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+// MARK: - ClientBuilder
+
+- (NSString *)clientBuilder_init {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)clientBuilder_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)clientBuilder_build:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)clientBuilder_homeserverUrl:(NSString *)id url:(NSString *)url {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)clientBuilder_passphrase:(NSString *)id passphrase:(NSString * _Nullable)passphrase {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)clientBuilder_sessionPath:(NSString *)id path:(NSString *)path {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)clientBuilder_username:(NSString *)id username:(NSString *)username {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+// MARK: - SsoHandler
+
+- (void)ssoHandler_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)ssoHandler_finish:(NSString *)id callbackUrl:(NSString *)callbackUrl resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)ssoHandler_url:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+// MARK: - Misc
+
+- (NSString *)createRandomSessionDirectory { 
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)sessionBaseDirectory { 
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 

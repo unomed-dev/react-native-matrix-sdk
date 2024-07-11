@@ -16,12 +16,43 @@ import type { TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
 
 export interface Spec extends TurboModule {
-  authenticationService_init(
-    basePath: string,
-    passphrase: string | null,
-    userAgent: string | null
-  ): string;
-  authenticationService_destroy(id: string): void;
+  // Client
+
+  client_destroy(id: string): void;
+
+  client_displayName(id: string): Promise<string>;
+  client_logout(id: string): Promise<string>;
+  client_restoreSession(id: string, session: Object): Promise<void>;
+  client_session(id: string): Object;
+  client_startSsoLogin(
+    id: string,
+    redirectUrl: string,
+    idpId: string | undefined
+  ): Promise<string>;
+  client_userId(id: string): string;
+
+  // ClientBuilder
+
+  clientBuilder_init(): string;
+  clientBuilder_destroy(id: string): void;
+
+  clientBuilder_build(id: string): Promise<string>;
+  clientBuilder_homeserverUrl(id: string, url: string): string;
+  clientBuilder_passphrase(id: string, passphrase: string | null): string;
+  clientBuilder_sessionPath(id: string, path: string): string;
+  clientBuilder_username(id: string, username: string): string;
+
+  // SsoHandler
+
+  ssoHandler_destroy(id: string): void;
+
+  ssoHandler_finish(id: string, callbackUrl: string): Promise<void>;
+  ssoHandler_url(id: string): string;
+
+  // Misc
+
+  createRandomSessionDirectory(): string;
+  sessionBaseDirectory(): string;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('MatrixSdk');

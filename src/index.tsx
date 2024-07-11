@@ -14,22 +14,131 @@
 
 import MatrixSdk from './NativeMatrixSdk';
 
-export class AuthenticationService {
+// Client
+
+export class Client {
   private id: string;
 
-  constructor(
-    basePath: string,
-    passphrase: string | null,
-    userAgent: string | null
-  ) {
-    this.id = MatrixSdk.authenticationService_init(
-      basePath,
-      passphrase,
-      userAgent
-    );
+  constructor(id: string) {
+    this.id = id;
   }
 
   destroy() {
-    MatrixSdk.authenticationService_destroy(this.id);
+    MatrixSdk.client_destroy(this.id);
   }
+
+  displayName(): Promise<string> {
+    return MatrixSdk.client_displayName(this.id);
+  }
+
+  logout(): Promise<string> {
+    return MatrixSdk.client_logout(this.id);
+  }
+
+  restoreSession(session: Session): Promise<void> {
+    return MatrixSdk.client_restoreSession(this.id, session);
+  }
+
+  session(): Session {
+    return MatrixSdk.client_session(this.id) as Session;
+  }
+
+  async startSsoLogin(
+    redirectUrl: string,
+    idpId: string | undefined
+  ): Promise<SsoHandler> {
+    return new SsoHandler(
+      await MatrixSdk.client_startSsoLogin(this.id, redirectUrl, idpId)
+    );
+  }
+
+  userId(): string {
+    return MatrixSdk.client_userId(this.id);
+  }
+}
+
+// ClientBuilder
+
+export class ClientBuilder {
+  private id: string;
+
+  constructor(id?: string) {
+    this.id = id ?? MatrixSdk.clientBuilder_init();
+  }
+
+  destroy() {
+    MatrixSdk.clientBuilder_destroy(this.id);
+  }
+
+  async build(): Promise<Client> {
+    return new Client(await MatrixSdk.clientBuilder_build(this.id));
+  }
+
+  homeserverUrl(url: string): ClientBuilder {
+    return new ClientBuilder(
+      MatrixSdk.clientBuilder_homeserverUrl(this.id, url)
+    );
+  }
+
+  passphrase(passphrase: string | null): ClientBuilder {
+    return new ClientBuilder(
+      MatrixSdk.clientBuilder_passphrase(this.id, passphrase)
+    );
+  }
+
+  sessionPath(path: string): ClientBuilder {
+    return new ClientBuilder(
+      MatrixSdk.clientBuilder_sessionPath(this.id, path)
+    );
+  }
+
+  username(username: string): ClientBuilder {
+    return new ClientBuilder(
+      MatrixSdk.clientBuilder_username(this.id, username)
+    );
+  }
+}
+
+// Session
+
+export type Session = {
+  accessToken: string;
+  refreshToken: string | null;
+  userId: string;
+  deviceId: string;
+  homeserverUrl: string;
+  oidcData: string | null;
+  slidingSyncProxy: string | null;
+};
+
+// SsoHandler
+
+export class SsoHandler {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  destroy() {
+    MatrixSdk.ssoHandler_destroy(this.id);
+  }
+
+  finish(callbackUrl: string): Promise<void> {
+    return MatrixSdk.ssoHandler_finish(this.id, callbackUrl);
+  }
+
+  url(): string {
+    return MatrixSdk.ssoHandler_url(this.id);
+  }
+}
+
+// Misc
+
+export function createRandomSessionDirectory(): string {
+  return MatrixSdk.createRandomSessionDirectory();
+}
+
+export function sessionBaseDirectory(): string {
+  return MatrixSdk.sessionBaseDirectory();
 }
