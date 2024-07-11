@@ -19,7 +19,6 @@ Pod::Spec.new do |s|
   # This appears to be required if we ever need to import react_native_matrix_sdk-Swift.h
   # s.header_dir = 'react_native_matrix_sdk'
 
-  # For testing & production
   ffi = ->(version) { return {
     :xcf_zip => "MatrixSDKFFI-#{version}.xcframework.zip",
     :xcf_url => "https://github.com/matrix-org/matrix-rust-components-swift/releases/download/v#{version}/MatrixSDKFFI.xcframework.zip",
@@ -28,6 +27,7 @@ Pod::Spec.new do |s|
     :src_url => "https://github.com/matrix-org/matrix-rust-components-swift/archive/refs/tags/v#{version}.zip"
   } }.call("1.1.68")
 
+  # Comment out when using locally built FFI bindings
   s.prepare_command = <<-CMD
     # Prepare target folder
     target=$(pwd)/ios/MatrixRustSDK
