@@ -90,6 +90,15 @@ By default the project is set up to consume the FFI bindings of [matrix-rust-sdk
 releases of [matrix-rust-components-kotlin] and [matrix-rust-components-swift]. To build the
 bindings from a local checkout, follow the steps below.
 
+For Android, run
+
+```sh
+android/build-local-sdk.sh PATH_TO_MATRIX_RUST_COMPONENTS_KOTLIN_CHECKOUT PATH_TO_RUST_SDK_CHECKOUT"
+```
+
+To revert back to using the prebuilt remote bindings, delete the `.aar` file under `android/libs`
+and the Kotlin files in `android/src/main/java/org` and `android/src/main/java/uniffi`.
+
 For iOS, run
 
 ```sh
