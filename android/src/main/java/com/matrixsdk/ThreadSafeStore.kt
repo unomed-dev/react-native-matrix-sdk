@@ -15,9 +15,9 @@ class ThreadSafeStore<T> {
   }
 
   /// Adds a new value to the store and returns its key
-  fun add(value: T): String {
+  fun add(value: T, key: String? = null): String {
     return lock.write {
-      val key = generateKey()
+      val key = key ?: generateKey()
       store[key] = value
       key
     }

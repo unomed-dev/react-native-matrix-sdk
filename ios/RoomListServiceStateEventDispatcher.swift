@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <React/RCTEventEmitter.h>
+private let kState = "state"
 
-#ifdef RCT_NEW_ARCH_ENABLED
-#import "RNMatrixSdkSpec.h"
+/// Dispatches events for RoomListService state updates
+final class RoomListServiceStateEventDispatcher: RoomListServiceStateListener {
+    private let eventName: String
+    private let eventEmitter: RCTEventEmitter
 
-@interface MatrixSdk : RCTEventEmitter <NativeMatrixSdkSpec>
-#else
-#import <React/RCTBridgeModule.h>
+    init(eventName: String, eventEmitter: RCTEventEmitter) {
+        self.eventName = eventName
+        self.eventEmitter = eventEmitter
+    }
 
-@interface MatrixSdk : RCTEventEmitter <RCTBridgeModule>
-#endif
-
-@end
+    func onUpdate(state: RoomListServiceState) {
+        eventEmitter.sendEvent(withName: eventName, body: [kState: roomListServiceStateToString(state)])
+    }
+}

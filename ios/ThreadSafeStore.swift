@@ -23,9 +23,9 @@ class ThreadSafeStore<T> {
     }
 
     /// Adds a new value to the store and returns its key
-    func add(_ value: T) -> String {
+    func add(_ value: T, key: String? = nil) -> String {
         return queue.sync(flags: .barrier) {
-            let key = generateKey()
+            let key = key ?? generateKey()
             store[key] = value
             return key
         }

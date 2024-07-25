@@ -14,21 +14,20 @@
 
 import Foundation
 
-// MARK: - Keys
+// MARK: - Events
 
-private let kSession_accessToken = "accessToken"
-private let kSession_refreshToken = "refreshToken"
-private let kSession_userId = "userId"
-private let kSession_deviceId = "deviceId"
-private let kSession_homeserverUrl = "homeserverUrl"
-private let kSession_oidcData = "oidcData"
-private let kSession_slidingSyncProxy = "slidingSyncProxy"
+private let kEvent_RoomListService_stateUpdated = "RoomListService_stateUpdated"
 
 // MARK: - Stores
 
 private let client_store = ThreadSafeStore<Client>()
 private let clientBuilder_store = ThreadSafeStore<ClientBuilder>()
+private let roomListService_store = ThreadSafeStore<RoomListService>()
+private let roomListServiceStateEventDispatcher_store = ThreadSafeStore<RoomListServiceStateEventDispatcher>()
 private let ssoHandler_store = ThreadSafeStore<SsoHandler>()
+private let syncServiceBuilder_store = ThreadSafeStore<SyncServiceBuilder>()
+private let syncService_store = ThreadSafeStore<SyncService>()
+private let taskHandle_store = ThreadSafeStore<TaskHandle>()
 
 extension MatrixSdk {
 
@@ -92,6 +91,11 @@ extension MatrixSdk {
             }
         }
     }
+
+    @objc(client_syncService:)
+    func client_syncService(id: String) -> String {
+        return syncServiceBuilder_store.add(client_store.get(id)!.syncService())
+    }
     
     @objc(client_userId:)
     func client_userId(id: String) -> String {
@@ -136,45 +140,46 @@ extension MatrixSdk {
         clientBuilder_store.add(clientBuilder_store.remove(id)!.sessionPath(path: path))
     }
 
+    @objc(clientBuilder_slidingSyncProxy:slidingSyncProxy:)
+    func clientBuilder_slidingSyncProxy(id: String, slidingSyncProxy: String?) -> String {
+        clientBuilder_store.add(clientBuilder_store.remove(id)!.slidingSyncProxy(slidingSyncProxy: slidingSyncProxy))
+    }
 
     @objc(clientBuilder_username:username:)
     func clientBuilder_username(id: String, username: String) -> String {
         clientBuilder_store.add(clientBuilder_store.remove(id)!.username(username: username))
     }
-    
-    // MARK: - Session
-    
-    private func sessionFromDictionary(_ dictionary: [AnyHashable: Any]) -> Session? {
-        guard
-            let accessToken = dictionary[kSession_accessToken] as? String,
-            let userId = dictionary[kSession_userId] as? String,
-            let deviceId = dictionary[kSession_deviceId] as? String,
-            let homeserverUrl = dictionary[kSession_homeserverUrl] as? String
-        else {
-            return nil
-        }
-        return Session(
-            accessToken: accessToken,
-            refreshToken: dictionary[kSession_refreshToken] as? String,
-            userId: userId,
-            deviceId: deviceId,
-            homeserverUrl: homeserverUrl,
-            oidcData: dictionary[kSession_oidcData] as? String,
-            slidingSyncProxy: dictionary[kSession_slidingSyncProxy] as? String)
+
+    // MARK: - RoomListService
+
+    @objc(roomListService_destroy:)
+    func roomListService_destroy(id: String) {
+        _ = roomListService_store.remove(id)
     }
-    
-    private func sessionToDictionary(_ session: Session) -> [AnyHashable: Any] {
-        return [
-            kSession_accessToken: session.accessToken,
-            kSession_refreshToken: session.refreshToken as Any,
-            kSession_userId: session.userId,
-            kSession_deviceId: session.deviceId,
-            kSession_homeserverUrl: session.homeserverUrl,
-            kSession_oidcData: session.oidcData as Any,
-            kSession_slidingSyncProxy: session.slidingSyncProxy as Any
-        ] as [AnyHashable: Any]
+
+    @objc(roomListService_state:dispatcherId:)
+    func roomListService_state(id: String, dispatcherId: String) {
+        let dispatcher = roomListServiceStateEventDispatcher_store.get(dispatcherId)!
+        _ = taskHandle_store.add(roomListService_store.get(id)!.state(listener: dispatcher), key: dispatcherId)
     }
-    
+
+    // MARK: - RoomListServiceStateEventDispatcher
+
+    @objc(roomListServiceStateEventDispatcher_init)
+    func roomListServiceStateEventDispatcher_init() -> String {
+        return roomListServiceStateEventDispatcher_store.add(
+            RoomListServiceStateEventDispatcher(
+                eventName: kEvent_RoomListService_stateUpdated,
+                eventEmitter: self))
+    }
+
+    @objc(roomListServiceStateEventDispatcher_destroy:)
+    func roomListServiceStateEventDispatcher_destroy(id: String) {
+        taskHandle_store.get(id)?.cancel()
+        _ = taskHandle_store.remove(id)
+        _ = roomListServiceStateEventDispatcher_store.remove(id)
+    }
+
     // MARK: - SsoHandler
 
     @objc(ssoHandler_destroy:)
@@ -199,7 +204,66 @@ extension MatrixSdk {
     func SsoHandler_url(id: String) -> String {
         return ssoHandler_store.get(id)!.url()
     }
-    
+
+    // MARK: - SyncServiceBuilder
+
+    @objc(syncServiceBuilder_destroy:)
+    func syncServiceBuilder_destroy(id: String) {
+        _ = syncServiceBuilder_store.remove(id)
+    }
+
+    @objc(syncServiceBuilder_finish:resolve:reject:)
+    func syncServiceBuilder_finish(id: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        Task {
+            do {
+                resolve(syncService_store.add(try await syncServiceBuilder_store.get(id)!.finish()))
+            } catch {
+                reject("ERROR", error.localizedDescription, nil)
+                return
+            }
+        }
+    }
+
+    // MARK: - SyncService
+
+    @objc(syncService_destroy:)
+    func syncService_destroy(id: String) {
+        _ = syncService_store.remove(id)
+    }
+
+    @objc(syncService_roomListService:)
+    func syncService_roomListService(id: String) -> String {
+        return roomListService_store.add(syncService_store.get(id)!.roomListService())
+    }
+
+    @objc(syncService_start:resolve:reject:)
+    func syncService_start(id: String, resolve:  @escaping RCTPromiseResolveBlock, reject:  @escaping RCTPromiseRejectBlock) {
+        Task {
+            await syncService_store.get(id)!.start()
+            resolve(nil)
+        }
+    }
+
+    @objc(syncService_stop:resolve:reject:)
+    func syncService_stop(id: String, resolve:  @escaping RCTPromiseResolveBlock, reject:  @escaping RCTPromiseRejectBlock) {
+        Task {
+            do {
+                try await syncService_store.get(id)!.stop()
+                resolve(nil)
+            } catch {
+                reject("ERROR", error.localizedDescription, nil)
+                return
+            }
+        }
+    }
+
+    // MARK: - Event Handling
+
+    @objc(supportedEvents)
+    override open func supportedEvents() -> [String] {
+        return [kEvent_RoomListService_stateUpdated]
+    }
+
     // MARK: - Misc
 
     @objc(createRandomSessionDirectory)

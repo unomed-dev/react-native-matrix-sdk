@@ -16,6 +16,9 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
+  # This appears to be required to make RCTEventEmitter available in Swift
+  s.public_header_files = 'ios/**/*.h'
+  
   # This appears to be required if we ever need to import react_native_matrix_sdk-Swift.h
   # s.header_dir = 'react_native_matrix_sdk'
 

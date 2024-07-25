@@ -25,34 +25,76 @@ import {
   Client,
   ClientBuilder,
   createRandomSessionDirectory,
+  RoomListService,
+  RoomListServiceStateListener,
+  SyncService,
   type Session,
 } from 'react-native-matrix-sdk';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
+let client: Client | null = null;
+let syncService: SyncService | null = null;
+let roomListService: RoomListService | null = null;
+let roomListServiceStateListener: RoomListServiceStateListener | null = null;
+
+const buildClient = async () => {
+  const builder = new ClientBuilder()
+    .homeserverUrl('https://...')
+    .sessionPath(createRandomSessionDirectory())
+    .slidingSyncProxy('https://...');
+
+  try {
+    return await builder.build();
+  } finally {
+    builder.destroy();
+  }
+};
+
+const startClient = async () => {
+  if (!client) {
+    return;
+  }
+
+  const syncServiceBuilder = client.syncService();
+  syncService = await syncServiceBuilder.finish();
+  syncServiceBuilder.destroy();
+
+  roomListServiceStateListener = new RoomListServiceStateListener((state) => {
+    console.log(`RoomListService state updated to ${state}`);
+  });
+
+  roomListService = syncService.roomListService();
+  roomListService.state(roomListServiceStateListener);
+
+  await syncService.start();
+};
+
+const destroyClient = async () => {
+  roomListServiceStateListener?.destroy();
+  roomListServiceStateListener = null;
+
+  roomListService?.destroy();
+  roomListService = null;
+
+  await syncService?.stop();
+  syncService?.destroy();
+  syncService = null;
+
+  client?.logout();
+  client?.destroy();
+  client = null;
+};
+
 export default function App() {
   let [isLoading, setIsLoading] = React.useState(false);
-  let [client, setClient] = React.useState<Client | null>(null);
   let [session, setSession] = React.useState<Session | null>(null);
-
-  const buildClient = React.useCallback(async () => {
-    const builder = new ClientBuilder()
-      .homeserverUrl('https://...')
-      .sessionPath(createRandomSessionDirectory());
-
-    try {
-      return await builder.build();
-    } finally {
-      builder.destroy();
-    }
-  }, []);
 
   const logInWithSso = React.useCallback(async () => {
     setIsLoading(true);
 
-    const theClient = await buildClient();
-    setClient(theClient);
+    client = await buildClient();
 
-    const ssoHandler = await theClient.startSsoLogin(
+    const ssoHandler = await client.startSsoLogin(
       'unomed.example://Main',
       undefined
     );
@@ -74,27 +116,27 @@ export default function App() {
       }
 
       await ssoHandler.finish(response.url);
-      setSession(theClient.session());
+      setSession(client.session());
+
+      await startClient();
     } catch (e) {
-      theClient.destroy();
+      destroyClient();
       console.error(e);
     } finally {
       ssoHandler.destroy();
       setIsLoading(false);
     }
-  }, [buildClient]);
+  }, []);
 
   const logOut = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      await client?.logout();
-      client?.destroy();
-      setClient(null);
+      destroyClient();
       setSession(null);
     } finally {
       setIsLoading(false);
     }
-  }, [client]);
+  }, []);
 
   if (isLoading) {
     return (

@@ -29,6 +29,7 @@ export interface Spec extends TurboModule {
     redirectUrl: string,
     idpId: string | undefined
   ): Promise<string>;
+  client_syncService(id: string): string;
   client_userId(id: string): string;
 
   // ClientBuilder
@@ -40,7 +41,22 @@ export interface Spec extends TurboModule {
   clientBuilder_homeserverUrl(id: string, url: string): string;
   clientBuilder_passphrase(id: string, passphrase: string | null): string;
   clientBuilder_sessionPath(id: string, path: string): string;
+  clientBuilder_slidingSyncProxy(
+    id: string,
+    slidingSyncProxy: string | null
+  ): string;
   clientBuilder_username(id: string, username: string): string;
+
+  // RoomListService
+
+  roomListService_destroy(id: string): void;
+
+  roomListService_state(id: string, dispatcherId: string): void;
+
+  // RoomListServiceStateEventDispatcher
+
+  roomListServiceStateEventDispatcher_init(): string;
+  roomListServiceStateEventDispatcher_destroy(id: string): void;
 
   // SsoHandler
 
@@ -48,6 +64,25 @@ export interface Spec extends TurboModule {
 
   ssoHandler_finish(id: string, callbackUrl: string): Promise<void>;
   ssoHandler_url(id: string): string;
+
+  // SyncServiceBuilder
+
+  syncServiceBuilder_destroy(id: string): void;
+
+  syncServiceBuilder_finish(id: string): Promise<string>;
+
+  // SyncService
+
+  syncService_destroy(id: string): void;
+
+  syncService_roomListService(id: string): string;
+  syncService_start(id: string): Promise<void>;
+  syncService_stop(id: string): Promise<void>;
+
+  // Event Handling
+
+  addListener(eventType: string): void;
+  removeListeners(count: number): void;
 
   // Misc
 

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { NativeEventEmitter } from 'react-native';
 import MatrixSdk from './NativeMatrixSdk';
 
 // Client
@@ -50,6 +51,10 @@ export class Client {
     return new SsoHandler(
       await MatrixSdk.client_startSsoLogin(this.id, redirectUrl, idpId)
     );
+  }
+
+  syncService(): SyncServiceBuilder {
+    return new SyncServiceBuilder(MatrixSdk.client_syncService(this.id));
   }
 
   userId(): string {
@@ -92,6 +97,12 @@ export class ClientBuilder {
     );
   }
 
+  slidingSyncProxy(slidingSyncProxy: string | null): ClientBuilder {
+    return new ClientBuilder(
+      MatrixSdk.clientBuilder_slidingSyncProxy(this.id, slidingSyncProxy)
+    );
+  }
+
   username(username: string): ClientBuilder {
     return new ClientBuilder(
       MatrixSdk.clientBuilder_username(this.id, username)
@@ -110,6 +121,58 @@ export type Session = {
   oidcData: string | null;
   slidingSyncProxy: string | null;
 };
+
+// RoomListService
+
+export class RoomListService {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  state(listener: RoomListServiceStateListener) {
+    MatrixSdk.roomListService_state(this.id, listener.dispatcherId);
+  }
+
+  destroy() {
+    MatrixSdk.roomListService_destroy(this.id);
+  }
+}
+
+// RoomListServiceStateListener
+
+export class RoomListServiceStateListener {
+  private _dispatcherId: string;
+
+  get dispatcherId(): string {
+    return this._dispatcherId;
+  }
+
+  private onUpdate: (state: string) => void;
+
+  constructor(onUpdate: (state: string) => void) {
+    this._dispatcherId = MatrixSdk.roomListServiceStateEventDispatcher_init();
+    this.onUpdate = onUpdate;
+    roomListServiceStateListener_store.set(this._dispatcherId, this);
+  }
+
+  destroy() {
+    roomListServiceStateListener_store.delete(this._dispatcherId);
+    MatrixSdk.roomListServiceStateEventDispatcher_destroy(this._dispatcherId);
+  }
+
+  receive(event: any) {
+    const state = event?.state;
+    if (!state) {
+      console.warn(
+        `[RoomListServiceStateListener] Ignoring unknown event ${event}`
+      );
+      return;
+    }
+    this.onUpdate(state);
+  }
+}
 
 // SsoHandler
 
@@ -132,6 +195,64 @@ export class SsoHandler {
     return MatrixSdk.ssoHandler_url(this.id);
   }
 }
+
+// SyncServiceBuilder
+
+export class SyncServiceBuilder {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  destroy() {
+    MatrixSdk.syncServiceBuilder_destroy(this.id);
+  }
+
+  async finish(): Promise<SyncService> {
+    return new SyncService(await MatrixSdk.syncServiceBuilder_finish(this.id));
+  }
+}
+
+// SyncService
+
+export class SyncService {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  destroy() {
+    MatrixSdk.syncService_destroy(this.id);
+  }
+
+  roomListService(): RoomListService {
+    return new RoomListService(MatrixSdk.syncService_roomListService(this.id));
+  }
+
+  start(): Promise<void> {
+    return MatrixSdk.syncService_start(this.id);
+  }
+
+  stop(): Promise<void> {
+    return MatrixSdk.syncService_stop(this.id);
+  }
+}
+
+// Event Handling
+
+const emitter = new NativeEventEmitter(MatrixSdk);
+const roomListServiceStateListener_store = new Map<
+  string,
+  RoomListServiceStateListener
+>();
+
+emitter.addListener('RoomListService_stateUpdated', (event) => {
+  roomListServiceStateListener_store.forEach((listener) =>
+    listener.receive(event)
+  );
+});
 
 // Misc
 

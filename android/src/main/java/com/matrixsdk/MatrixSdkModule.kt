@@ -15,33 +15,31 @@
 package com.matrixsdk
 
 import android.content.Context
-import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.modules.core.DeviceEventManagerModule
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.matrix.rustcomponents.sdk.Client
 import org.matrix.rustcomponents.sdk.ClientBuildException
 import org.matrix.rustcomponents.sdk.ClientBuilder
 import org.matrix.rustcomponents.sdk.ClientException
-import org.matrix.rustcomponents.sdk.Session
+import org.matrix.rustcomponents.sdk.RoomListService
 import org.matrix.rustcomponents.sdk.SsoException
 import org.matrix.rustcomponents.sdk.SsoHandler
+import org.matrix.rustcomponents.sdk.SyncService
+import org.matrix.rustcomponents.sdk.SyncServiceBuilder
+import org.matrix.rustcomponents.sdk.TaskHandle
 import java.io.File
 import java.util.UUID
 
-// region Keys
+// region Events
 
-private const val kSession_accessToken = "accessToken"
-private const val kSession_refreshToken = "refreshToken"
-private const val kSession_userId = "userId"
-private const val kSession_deviceId = "deviceId"
-private const val kSession_homeserverUrl = "homeserverUrl"
-private const val kSession_oidcData = "oidcData"
-private const val kSession_slidingSyncProxy = "slidingSyncProxy"
+private const val kEvent_RoomListService_stateUpdated = "RoomListService_stateUpdated"
 
 // endregion
 
@@ -49,7 +47,12 @@ private const val kSession_slidingSyncProxy = "slidingSyncProxy"
 
 private val client_store = ThreadSafeStore<Client>()
 private val clientBuilder_store = ThreadSafeStore<ClientBuilder>()
+private val roomListService_store = ThreadSafeStore<RoomListService>()
+private val roomListServiceStateEventDispatcher_store = ThreadSafeStore<RoomListServiceStateEventDispatcher>()
 private val ssoHandler_store = ThreadSafeStore<SsoHandler>()
+private val syncServiceBuilder_store = ThreadSafeStore<SyncServiceBuilder>()
+private val syncService_store = ThreadSafeStore<SyncService>()
+private val taskHandle_store = ThreadSafeStore<TaskHandle>()
 
 // endregion
 
@@ -61,9 +64,11 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
   }
 
   private val applicationContext: Context
+  private val eventEmitter: DeviceEventManagerModule.RCTDeviceEventEmitter
 
   constructor(reactContext: ReactApplicationContext) : super(reactContext) {
     applicationContext = reactContext.applicationContext
+    eventEmitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
   }
 
   override fun getName(): String {
@@ -76,6 +81,7 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     client_store.remove(id)
   }
 
+  @DelicateCoroutinesApi
   override fun client_displayName(id: String, promise: Promise) {
     GlobalScope.launch {
       try {
@@ -86,6 +92,7 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     }
   }
 
+  @DelicateCoroutinesApi
   override fun client_logout(id: String, promise: Promise) {
     GlobalScope.launch {
       try {
@@ -96,6 +103,7 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     }
   }
 
+  @DelicateCoroutinesApi
   override fun client_restoreSession(id: String, session: ReadableMap, promise: Promise) {
     GlobalScope.launch {
       try {
@@ -111,6 +119,7 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     return sessionToMap(client_store.get(id)!!.session())
   }
 
+  @DelicateCoroutinesApi
   override fun client_startSsoLogin(id: String, redirectUrl: String, idpId: String?, promise: Promise) {
     GlobalScope.launch {
       try {
@@ -119,6 +128,10 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
         promise.reject("ERROR", e.localizedMessage, null)
       }
     }
+  }
+
+  override fun client_syncService(id: String): String {
+    return syncServiceBuilder_store.add(client_store.get(id)!!.syncService())
   }
 
   override fun client_userId(id: String): String {
@@ -137,6 +150,7 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     clientBuilder_store.remove(id)
   }
 
+  @DelicateCoroutinesApi
   override fun clientBuilder_build(id: String, promise: Promise) {
     GlobalScope.launch {
       try {
@@ -159,42 +173,40 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     return clientBuilder_store.add(clientBuilder_store.remove(id)!!.sessionPath(path))
   }
 
+  override fun clientBuilder_slidingSyncProxy(id: String, slidingSyncProxy: String?): String {
+    return clientBuilder_store.add(clientBuilder_store.remove(id)!!.slidingSyncProxy(slidingSyncProxy))
+  }
+
   override fun clientBuilder_username(id: String, username: String): String {
     return clientBuilder_store.add(clientBuilder_store.remove(id)!!.username(username))
   }
 
   // endregion
 
-  // region Session
+  // region RoomListService
 
-  private fun sessionFromMap(map: ReadableMap): Session? {
-    val accessToken = map.getString(kSession_accessToken)
-    val userId = map.getString(kSession_userId)
-    val deviceId = map.getString(kSession_deviceId)
-    val homeserverUrl = map.getString(kSession_homeserverUrl)
-    if (accessToken == null || userId == null || deviceId == null || homeserverUrl == null) {
-      return null
-    }
-    return Session(
-      accessToken = accessToken,
-      refreshToken = map.getString(kSession_refreshToken),
-      userId = userId,
-      deviceId = deviceId,
-      homeserverUrl = homeserverUrl,
-      oidcData = map.getString(kSession_oidcData),
-      slidingSyncProxy = map.getString(kSession_slidingSyncProxy))
+  override fun roomListService_destroy(id: String) {
+    roomListService_store.remove(id)
   }
 
-  private fun sessionToMap(session: Session): WritableMap {
-    val map = Arguments.createMap()
-    map.putString(kSession_accessToken, session.accessToken)
-    map.putString(kSession_refreshToken, session.refreshToken)
-    map.putString(kSession_userId, session.userId)
-    map.putString(kSession_deviceId, session.deviceId)
-    map.putString(kSession_homeserverUrl, session.homeserverUrl)
-    map.putString(kSession_oidcData, session.oidcData)
-    map.putString(kSession_slidingSyncProxy, session.slidingSyncProxy)
-    return map
+  override fun roomListService_state(id: String, dispatcherId: String) {
+    val dispatcher = roomListServiceStateEventDispatcher_store.get(dispatcherId)!!
+    taskHandle_store.add(roomListService_store.get(id)!!.state(dispatcher), dispatcherId)
+  }
+
+  // endregion
+
+  // region RoomListServiceStateEventDispatcher
+
+  override fun roomListServiceStateEventDispatcher_init(): String {
+    return roomListServiceStateEventDispatcher_store.add(
+      RoomListServiceStateEventDispatcher(kEvent_RoomListService_stateUpdated, eventEmitter))
+  }
+
+  override fun roomListServiceStateEventDispatcher_destroy(id: String) {
+    taskHandle_store.get(id)?.cancel()
+    taskHandle_store.remove(id)
+    roomListServiceStateEventDispatcher_store.remove(id)
   }
 
   // endregion
@@ -205,6 +217,7 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     ssoHandler_store.remove(id)
   }
 
+  @DelicateCoroutinesApi
   override fun ssoHandler_finish(id: String, callbackUrl: String, promise: Promise) {
     GlobalScope.launch {
       try {
@@ -219,6 +232,69 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
   override fun ssoHandler_url(id: String): String {
     return ssoHandler_store.get(id)!!.url()
   }
+
+  // endregion
+
+  // region SyncServiceBuilder
+
+  override fun syncServiceBuilder_destroy(id: String) {
+    syncServiceBuilder_store.remove(id)
+  }
+
+  @DelicateCoroutinesApi
+  override fun syncServiceBuilder_finish(id: String, promise: Promise) {
+    GlobalScope.launch {
+      try {
+        promise.resolve(syncService_store.add(syncServiceBuilder_store.get(id)!!.finish()))
+      } catch (e: SsoException) {
+        promise.reject("ERROR", e.localizedMessage, null)
+      }
+    }
+  }
+
+  // endregion
+
+  // region SyncService
+
+  override fun syncService_destroy(id: String) {
+    syncService_store.remove(id)
+  }
+
+  override fun syncService_roomListService(id: String): String {
+    return roomListService_store.add(syncService_store.get(id)!!.roomListService())
+  }
+
+  @DelicateCoroutinesApi
+  override fun syncService_start(id: String, promise: Promise) {
+    GlobalScope.launch {
+      try {
+        syncService_store.get(id)!!.start()
+        promise.resolve(null)
+      } catch (e: SsoException) {
+        promise.reject("ERROR", e.localizedMessage, null)
+      }
+    }
+  }
+
+  @DelicateCoroutinesApi
+  override fun syncService_stop(id: String, promise: Promise) {
+    GlobalScope.launch {
+      try {
+        syncService_store.get(id)!!.stop()
+        promise.resolve(null)
+      } catch (e: SsoException) {
+        promise.reject("ERROR", e.localizedMessage, null)
+      }
+    }
+  }
+
+  // endregion
+
+  // region Event Handling
+
+  override fun addListener(eventType: String) {}
+
+  override fun removeListeners(count: Double) {}
 
   // endregion
 
