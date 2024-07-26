@@ -17,8 +17,102 @@ package com.matrixsdk
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
+import org.matrix.rustcomponents.sdk.RoomListEntriesUpdate
+import org.matrix.rustcomponents.sdk.RoomListEntry
 import org.matrix.rustcomponents.sdk.RoomListServiceState
 import org.matrix.rustcomponents.sdk.Session
+
+// region RoomListEntry
+
+private const val kRoomListEntry_type = "type"
+private const val kRoomListEntry_roomId = "roomId"
+
+fun roomListEntryToMap(entry: RoomListEntry): WritableMap {
+  return when (entry) {
+    is RoomListEntry.Empty -> Arguments.createMap().apply {
+      putString(kRoomListEntry_type, "empty")
+    }
+    is RoomListEntry.Invalidated -> Arguments.createMap().apply {
+      putString(kRoomListEntry_type, "invalidated")
+      putString(kRoomListEntry_roomId, entry.roomId)
+    }
+    is RoomListEntry.Filled -> Arguments.createMap().apply {
+      putString(kRoomListEntry_type, "filled")
+      putString(kRoomListEntry_roomId, entry.roomId)
+    }
+  }
+}
+
+// endregion
+
+// region RoomListEntriesResult
+
+fun roomListEntriesResultToMap(entries: List<RoomListEntry>, entriesStreamId: String): WritableMap {
+  return Arguments.createMap().apply {
+    putArray("entries", Arguments.createArray().apply { entries.forEach { pushMap(roomListEntryToMap(it)) } })
+    putString("entriesStreamId", entriesStreamId)
+  }
+}
+
+// endregion
+
+// region RoomListEntriesUpdate
+
+private const val kRoomListEntriesUpdate_index = "index"
+private const val kRoomListEntriesUpdate_length = "length"
+private const val kRoomListEntriesUpdate_type = "type"
+private const val kRoomListEntriesUpdate_value = "value"
+private const val kRoomListEntriesUpdate_values = "values"
+
+fun roomListEntriesUpdateToMap(update: RoomListEntriesUpdate): WritableMap {
+  return when (update) {
+    is RoomListEntriesUpdate.Append -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "append")
+      putArray(kRoomListEntriesUpdate_values, Arguments.createArray().apply { update.values.forEach { pushMap(roomListEntryToMap(it)) } })
+    }
+    is RoomListEntriesUpdate.Clear -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "clear")
+    }
+    is RoomListEntriesUpdate.PushFront -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "pushFront")
+      putMap(kRoomListEntriesUpdate_value, roomListEntryToMap(update.value))
+    }
+    is RoomListEntriesUpdate.PushBack -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "pushBack")
+      putMap(kRoomListEntriesUpdate_value, roomListEntryToMap(update.value))
+    }
+    is RoomListEntriesUpdate.PopFront -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "popFront")
+    }
+    is RoomListEntriesUpdate.PopBack -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "popBack")
+    }
+    is RoomListEntriesUpdate.Insert -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "insert")
+      putInt(kRoomListEntriesUpdate_index, update.index.toInt())
+      putMap(kRoomListEntriesUpdate_value, roomListEntryToMap(update.value))
+    }
+    is RoomListEntriesUpdate.Set -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "set")
+      putInt(kRoomListEntriesUpdate_index, update.index.toInt())
+      putMap(kRoomListEntriesUpdate_value, roomListEntryToMap(update.value))
+    }
+    is RoomListEntriesUpdate.Remove -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "remove")
+      putInt(kRoomListEntriesUpdate_index, update.index.toInt())
+    }
+    is RoomListEntriesUpdate.Truncate -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "truncate")
+      putInt(kRoomListEntriesUpdate_length, update.length.toInt())
+    }
+    is RoomListEntriesUpdate.Reset -> Arguments.createMap().apply {
+      putString(kRoomListEntriesUpdate_type, "reset")
+      putArray(kRoomListEntriesUpdate_values, Arguments.createArray().apply { update.values.forEach { pushMap(roomListEntryToMap(it)) } })
+    }
+  }
+}
+
+// endregion
 
 // region RoomListServiceState
 

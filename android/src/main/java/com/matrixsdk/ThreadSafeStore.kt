@@ -5,6 +5,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
+/// A thread-safe dictionary store for generic types
 class ThreadSafeStore<T> {
   private val lock = ReentrantReadWriteLock()
   private val store = HashMap<String, T>()

@@ -94,23 +94,47 @@ RCT_EXPORT_MODULE()
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
+// MARK: - RoomList
+
+- (void)roomList_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSDictionary *)roomList_entries:(NSString *)id listenerId:(NSString *)listenerId {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+// MARK: - RoomListEntriesListener
+
+- (NSString *)roomListEntriesListener_init {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)roomListEntriesListener_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
 // MARK: - RoomListService
 
 - (void)roomListService_destroy:(NSString *)id {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
-- (void)roomListService_state:(NSString *)id dispatcherId:(NSString *)dispatcherId {
+- (void)roomListService_allRooms:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
-// MARK: - RoomListServiceStateEventDispatcher
-
-- (NSString *)roomListServiceStateEventDispatcher_init {
+- (NSString *)roomListService_state:(NSString *)id listenerId:(NSString *)listenerId {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
-- (void)roomListServiceStateEventDispatcher_destroy:(NSString *)id {
+// MARK: - RoomListServiceStateListener
+
+- (NSString *)roomListServiceStateListener_init {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)roomListServiceStateListener_destroy:(NSString *)id {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
@@ -125,17 +149,6 @@ RCT_EXPORT_MODULE()
 }
 
 - (NSString *)ssoHandler_url:(NSString *)id {
-    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
-}
-
-// MARK: - SyncServiceBuilder
-
-- (void)syncServiceBuilder_destroy:(NSString *)id {
-    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
-}
-
-
-- (void)syncServiceBuilder_finish:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
@@ -156,6 +169,31 @@ RCT_EXPORT_MODULE()
 
 
 - (void)syncService_stop:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+// MARK: - SyncServiceBuilder
+
+- (void)syncServiceBuilder_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+
+- (void)syncServiceBuilder_finish:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+// MARK: - TaskHandle
+
+- (void)taskHandle_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)taskHandle_cancel:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSNumber *)taskHandle_isFinished:(NSString *)id {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 

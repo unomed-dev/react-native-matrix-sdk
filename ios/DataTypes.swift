@@ -12,6 +12,106 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// MARK: - RoomListEntry
+
+private let kRoomListEntry_type = "type"
+private let kRoomListEntry_roomId = "roomId"
+
+func roomListEntryToDictionary(_ entry: RoomListEntry) -> [AnyHashable: Any] {
+    switch entry {
+    case .empty:
+        return [
+            kRoomListEntry_type: "empty"
+        ]
+    case .invalidated(let roomId):
+        return [
+            kRoomListEntry_type: "invalidated",
+            kRoomListEntry_roomId: roomId
+        ]
+    case .filled(let roomId):
+        return [
+            kRoomListEntry_type: "filled",
+            kRoomListEntry_roomId: roomId
+        ]
+    }
+}
+
+// MARK: - RoomListEntriesResult
+
+func roomListEntriesResultToDictionary(entries: [RoomListEntry], entriesStreamId: String) -> [AnyHashable: Any] {
+    return [
+        "entries": entries.map(roomListEntryToDictionary),
+        "entriesStreamId": entriesStreamId
+    ]
+}
+
+// MARK: - RoomListEntriesUpdate
+
+private let kRoomListEntriesUpdate_index = "index"
+private let kRoomListEntriesUpdate_length = "length"
+private let kRoomListEntriesUpdate_type = "type"
+private let kRoomListEntriesUpdate_value = "value"
+private let kRoomListEntriesUpdate_values = "values"
+
+func roomListEntriesUpdateToDictionary(update: RoomListEntriesUpdate) -> [AnyHashable: Any] {
+    switch update {
+    case .append(let values):
+        return [
+            kRoomListEntriesUpdate_type: "append",
+            kRoomListEntriesUpdate_values: values.map(roomListEntryToDictionary)
+        ]
+    case .clear:
+        return [
+            kRoomListEntriesUpdate_type: "clear"
+        ]
+    case .pushFront(let value):
+        return [
+            kRoomListEntriesUpdate_type: "pushFront",
+            kRoomListEntriesUpdate_value: roomListEntryToDictionary(value)
+        ]
+    case .pushBack(let value):
+        return [
+            kRoomListEntriesUpdate_type: "pushBack",
+            kRoomListEntriesUpdate_value: roomListEntryToDictionary(value)
+        ]
+    case .popFront:
+        return [
+            kRoomListEntriesUpdate_type: "popFront"
+        ]
+    case .popBack:
+        return [
+            kRoomListEntriesUpdate_type: "popBack"
+        ]
+    case .insert(let index, let value):
+        return [
+            kRoomListEntriesUpdate_type: "insert",
+            kRoomListEntriesUpdate_index: index,
+            kRoomListEntriesUpdate_value: roomListEntryToDictionary(value)
+        ]
+    case .set(let index, let value):
+        return [
+            kRoomListEntriesUpdate_type: "set",
+            kRoomListEntriesUpdate_index: index,
+            kRoomListEntriesUpdate_value: roomListEntryToDictionary(value)
+        ]
+    case .remove(let index):
+        return [
+            kRoomListEntriesUpdate_type: "remove",
+            kRoomListEntriesUpdate_index: index
+        ]
+    case .truncate(let length):
+        return [
+            kRoomListEntriesUpdate_type: "truncate",
+            kRoomListEntriesUpdate_length: length
+        ]
+    case .reset(let values):
+        return [
+            kRoomListEntriesUpdate_type: "reset",
+            kRoomListEntriesUpdate_values: values.map(roomListEntryToDictionary)
+        ]
+    }
+}
+
 // MARK: - RoomListServiceState
 
 func roomListServiceStateToString(_ state: RoomListServiceState) -> String {

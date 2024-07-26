@@ -16,14 +16,17 @@ import Foundation
 
 // MARK: - Events
 
-private let kEvent_RoomListService_stateUpdated = "RoomListService_stateUpdated"
+private let kEvent_roomList_entriesUpdated = "RoomList_entriesUpdated"
+private let kEvent_roomListService_stateUpdated = "RoomListService_stateUpdated"
 
 // MARK: - Stores
 
 private let client_store = ThreadSafeStore<Client>()
 private let clientBuilder_store = ThreadSafeStore<ClientBuilder>()
+private let roomList_store = ThreadSafeStore<RoomList>()
+private let roomListEntriesListener_store = ThreadSafeStore<RoomListEntriesListener>()
 private let roomListService_store = ThreadSafeStore<RoomListService>()
-private let roomListServiceStateEventDispatcher_store = ThreadSafeStore<RoomListServiceStateEventDispatcher>()
+private let roomListServiceStateListener_store = ThreadSafeStore<RoomListServiceStateListener>()
 private let ssoHandler_store = ThreadSafeStore<SsoHandler>()
 private let syncServiceBuilder_store = ThreadSafeStore<SyncServiceBuilder>()
 private let syncService_store = ThreadSafeStore<SyncService>()
@@ -150,6 +153,36 @@ extension MatrixSdk {
         clientBuilder_store.add(clientBuilder_store.remove(id)!.username(username: username))
     }
 
+    // MARK: - RoomList
+
+    @objc(roomList_destroy:)
+    func roomList_destroy(id: String) {
+        _ = roomList_store.remove(id)
+    }
+
+    @objc(roomList_entries:listenerId:)
+    func roomList_entries(id: String, listenerId: String) -> [AnyHashable: Any] {
+        let listener = roomListEntriesListener_store.get(listenerId)!
+        let result = roomList_store.get(id)!.entries(listener: listener)
+        let entriesStreamId = taskHandle_store.add(result.entriesStream)
+        return roomListEntriesResultToDictionary(entries: result.entries, entriesStreamId: entriesStreamId)
+    }
+
+    // MARK: - RoomListEntriesListener
+
+    @objc(roomListEntriesListener_init)
+    func roomListEntriesListener_init() -> String {
+        return roomListEntriesListener_store.add(
+            DispatchingRoomListEntriesListener(
+                eventName: kEvent_roomList_entriesUpdated,
+                eventEmitter: self))
+    }
+
+    @objc(roomListEntriesListener_destroy:)
+    func roomListEntriesListener_destroy(id: String) {
+        _ = roomListEntriesListener_store.remove(id)
+    }
+
     // MARK: - RoomListService
 
     @objc(roomListService_destroy:)
@@ -157,27 +190,37 @@ extension MatrixSdk {
         _ = roomListService_store.remove(id)
     }
 
-    @objc(roomListService_state:dispatcherId:)
-    func roomListService_state(id: String, dispatcherId: String) {
-        let dispatcher = roomListServiceStateEventDispatcher_store.get(dispatcherId)!
-        _ = taskHandle_store.add(roomListService_store.get(id)!.state(listener: dispatcher), key: dispatcherId)
+    @objc(roomListService_allRooms:resolve:reject:)
+    func roomListService_allRooms(id: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        Task {
+            do {
+                resolve(roomList_store.add(try await roomListService_store.get(id)!.allRooms()))
+            } catch {
+                reject("ERROR", error.localizedDescription, nil)
+                return
+            }
+        }
     }
 
-    // MARK: - RoomListServiceStateEventDispatcher
+    @objc(roomListService_state:listenerId:)
+    func roomListService_state(id: String, listenerId: String) -> String {
+        let listener = roomListServiceStateListener_store.get(listenerId)!
+        return taskHandle_store.add(roomListService_store.get(id)!.state(listener: listener))
+    }
 
-    @objc(roomListServiceStateEventDispatcher_init)
-    func roomListServiceStateEventDispatcher_init() -> String {
-        return roomListServiceStateEventDispatcher_store.add(
-            RoomListServiceStateEventDispatcher(
-                eventName: kEvent_RoomListService_stateUpdated,
+    // MARK: - RoomListServiceStateListener
+
+    @objc(roomListServiceStateListener_init)
+    func roomListServiceStateListener_init() -> String {
+        return roomListServiceStateListener_store.add(
+            DispatchingRoomListServiceStateListener(
+                eventName: kEvent_roomListService_stateUpdated,
                 eventEmitter: self))
     }
 
-    @objc(roomListServiceStateEventDispatcher_destroy:)
-    func roomListServiceStateEventDispatcher_destroy(id: String) {
-        taskHandle_store.get(id)?.cancel()
-        _ = taskHandle_store.remove(id)
-        _ = roomListServiceStateEventDispatcher_store.remove(id)
+    @objc(roomListServiceStateListener_destroy:)
+    func roomListServiceStateListener_destroy(id: String) {
+        _ = roomListServiceStateListener_store.remove(id)
     }
 
     // MARK: - SsoHandler
@@ -203,25 +246,6 @@ extension MatrixSdk {
     @objc(ssoHandler_url:)
     func SsoHandler_url(id: String) -> String {
         return ssoHandler_store.get(id)!.url()
-    }
-
-    // MARK: - SyncServiceBuilder
-
-    @objc(syncServiceBuilder_destroy:)
-    func syncServiceBuilder_destroy(id: String) {
-        _ = syncServiceBuilder_store.remove(id)
-    }
-
-    @objc(syncServiceBuilder_finish:resolve:reject:)
-    func syncServiceBuilder_finish(id: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        Task {
-            do {
-                resolve(syncService_store.add(try await syncServiceBuilder_store.get(id)!.finish()))
-            } catch {
-                reject("ERROR", error.localizedDescription, nil)
-                return
-            }
-        }
     }
 
     // MARK: - SyncService
@@ -257,11 +281,50 @@ extension MatrixSdk {
         }
     }
 
+    // MARK: - SyncServiceBuilder
+
+    @objc(syncServiceBuilder_destroy:)
+    func syncServiceBuilder_destroy(id: String) {
+        _ = syncServiceBuilder_store.remove(id)
+    }
+
+    @objc(syncServiceBuilder_finish:resolve:reject:)
+    func syncServiceBuilder_finish(id: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        Task {
+            do {
+                resolve(syncService_store.add(try await syncServiceBuilder_store.get(id)!.finish()))
+            } catch {
+                reject("ERROR", error.localizedDescription, nil)
+                return
+            }
+        }
+    }
+
+    // MARK: - TaskHandle
+
+    @objc(taskHandle_destroy:)
+    func taskHandle_destroy(id: String) {
+        _ = taskHandle_store.remove(id)
+    }
+
+    @objc(taskHandle_cancel:)
+    func taskHandle_cancel(id: String) {
+        taskHandle_store.get(id)!.cancel()
+    }
+
+    @objc(taskHandle_isFinished:)
+    func taskHandle_isFinished(id: String) -> Bool {
+        return taskHandle_store.get(id)!.isFinished()
+    }
+
     // MARK: - Event Handling
 
     @objc(supportedEvents)
     override open func supportedEvents() -> [String] {
-        return [kEvent_RoomListService_stateUpdated]
+        return [
+            kEvent_roomList_entriesUpdated,
+            kEvent_roomListService_stateUpdated
+        ]
     }
 
     // MARK: - Misc

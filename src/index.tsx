@@ -110,6 +110,249 @@ export class ClientBuilder {
   }
 }
 
+// RoomList
+
+export class RoomList {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  destroy() {
+    MatrixSdk.roomList_destroy(this.id);
+  }
+
+  entries(listener: RoomListEntriesListener): RoomListEntriesResult {
+    const result = MatrixSdk.roomList_entries(this.id, listener.id) as {
+      entries: RoomListEntry[];
+      entriesStreamId: string;
+    };
+    return {
+      entries: result.entries,
+      entriesStream: new TaskHandle(result.entriesStreamId),
+    };
+  }
+}
+
+// RoomListEntriesListener
+
+export class RoomListEntriesListener {
+  private _id: string;
+
+  get id(): string {
+    return this._id;
+  }
+
+  private onUpdate: (roomEntriesUpdate: RoomListEntriesUpdate) => void;
+
+  constructor(onUpdate: (roomEntriesUpdate: RoomListEntriesUpdate) => void) {
+    this._id = MatrixSdk.roomListEntriesListener_init();
+    this.onUpdate = onUpdate;
+    roomListEntriesListener_store.set(this.id, this);
+  }
+
+  destroy() {
+    roomListEntriesListener_store.delete(this.id);
+    MatrixSdk.roomListEntriesListener_destroy(this.id);
+  }
+
+  receive(event: any) {
+    const roomEntriesUpdate = event?.roomEntriesUpdate as RoomListEntriesUpdate;
+    if (!roomEntriesUpdate) {
+      console.warn(`[RoomListEntriesListener] Ignoring unknown event ${event}`);
+      return;
+    }
+    this.onUpdate(roomEntriesUpdate);
+  }
+}
+
+// RoomListEntriesResult
+
+export type RoomListEntriesResult = {
+  entries: RoomListEntry[];
+  entriesStream: TaskHandle;
+};
+
+// RoomListEntriesUpdate
+
+export enum RoomListEntriesUpdateType {
+  Append = 'append',
+  Clear = 'clear',
+  PushFront = 'pushFront',
+  PushBack = 'pushBack',
+  PopFront = 'popFront',
+  PopBack = 'popBack',
+  Insert = 'insert',
+  Set = 'set',
+  Remove = 'remove',
+  Truncate = 'truncate',
+  Reset = 'reset',
+}
+
+export type RoomListEntriesUpdateAppend = {
+  type: RoomListEntriesUpdateType.Append;
+  values: RoomListEntry[];
+};
+
+export type RoomListEntriesUpdateClear = {
+  type: RoomListEntriesUpdateType.Clear;
+};
+
+export type RoomListEntriesUpdatePushFront = {
+  type: RoomListEntriesUpdateType.PushFront;
+  value: RoomListEntry;
+};
+
+export type RoomListEntriesUpdatePushBack = {
+  type: RoomListEntriesUpdateType.PushBack;
+  value: RoomListEntry;
+};
+
+export type RoomListEntriesUpdatePopFront = {
+  type: RoomListEntriesUpdateType.PopFront;
+};
+
+export type RoomListEntriesUpdatePopBack = {
+  type: RoomListEntriesUpdateType.PopBack;
+};
+
+export type RoomListEntriesUpdateInsert = {
+  type: RoomListEntriesUpdateType.Insert;
+  index: number;
+  value: RoomListEntry;
+};
+
+export type RoomListEntriesUpdateSet = {
+  type: RoomListEntriesUpdateType.Set;
+  index: number;
+  value: RoomListEntry;
+};
+
+export type RoomListEntriesUpdateRemove = {
+  type: RoomListEntriesUpdateType.Remove;
+  index: number;
+};
+
+export type RoomListEntriesUpdateTruncate = {
+  type: RoomListEntriesUpdateType.Truncate;
+  length: number;
+};
+
+export type RoomListEntriesUpdateReset = {
+  type: RoomListEntriesUpdateType.Reset;
+  values: RoomListEntry[];
+};
+
+export type RoomListEntriesUpdate =
+  | RoomListEntriesUpdateAppend
+  | RoomListEntriesUpdateClear
+  | RoomListEntriesUpdatePushFront
+  | RoomListEntriesUpdatePushBack
+  | RoomListEntriesUpdatePopFront
+  | RoomListEntriesUpdatePopBack
+  | RoomListEntriesUpdateInsert
+  | RoomListEntriesUpdateSet
+  | RoomListEntriesUpdateRemove
+  | RoomListEntriesUpdateTruncate
+  | RoomListEntriesUpdateReset;
+
+// RoomListEntry
+
+export enum RoomListEntryType {
+  Empty = 'empty',
+  Invalidated = 'invalidated',
+  Filled = 'filled',
+}
+
+export type RoomListEntryEmpty = {
+  type: RoomListEntryType.Empty;
+};
+
+export type RoomListEntryInvalidated = {
+  type: RoomListEntryType.Invalidated;
+  roomId: string;
+};
+
+export type RoomListEntryFilled = {
+  type: RoomListEntryType.Filled;
+  roomId: string;
+};
+
+export type RoomListEntry =
+  | RoomListEntryEmpty
+  | RoomListEntryInvalidated
+  | RoomListEntryFilled;
+
+// RoomListService
+
+export class RoomListService {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  destroy() {
+    MatrixSdk.roomListService_destroy(this.id);
+  }
+
+  async allRooms(): Promise<RoomList> {
+    return new RoomList(await MatrixSdk.roomListService_allRooms(this.id));
+  }
+
+  state(listener: RoomListServiceStateListener): TaskHandle {
+    return new TaskHandle(
+      MatrixSdk.roomListService_state(this.id, listener.id)
+    );
+  }
+}
+
+// RoomListServiceState
+
+export enum RoomListServiceState {
+  Initial = 'initial',
+  SettingUp = 'settingUp',
+  Recovering = 'recovering',
+  Running = 'running',
+  Error = 'error',
+  Terminated = 'terminated',
+}
+
+// RoomListServiceStateListener
+
+export class RoomListServiceStateListener {
+  private _id: string;
+
+  get id(): string {
+    return this._id;
+  }
+
+  private onUpdate: (state: RoomListServiceState) => void;
+
+  constructor(onUpdate: (state: RoomListServiceState) => void) {
+    this._id = MatrixSdk.roomListServiceStateListener_init();
+    this.onUpdate = onUpdate;
+    roomListServiceStateListener_store.set(this.id, this);
+  }
+
+  destroy() {
+    roomListServiceStateListener_store.delete(this.id);
+    MatrixSdk.roomListServiceStateListener_destroy(this.id);
+  }
+
+  receive(event: any) {
+    const state = event?.state as RoomListServiceState;
+    if (!state) {
+      console.warn(
+        `[RoomListServiceStateListener] Ignoring unknown event ${event}`
+      );
+      return;
+    }
+    this.onUpdate(state);
+  }
+}
+
 // Session
 
 export type Session = {
@@ -121,58 +364,6 @@ export type Session = {
   oidcData: string | null;
   slidingSyncProxy: string | null;
 };
-
-// RoomListService
-
-export class RoomListService {
-  private id: string;
-
-  constructor(id: string) {
-    this.id = id;
-  }
-
-  state(listener: RoomListServiceStateListener) {
-    MatrixSdk.roomListService_state(this.id, listener.dispatcherId);
-  }
-
-  destroy() {
-    MatrixSdk.roomListService_destroy(this.id);
-  }
-}
-
-// RoomListServiceStateListener
-
-export class RoomListServiceStateListener {
-  private _dispatcherId: string;
-
-  get dispatcherId(): string {
-    return this._dispatcherId;
-  }
-
-  private onUpdate: (state: string) => void;
-
-  constructor(onUpdate: (state: string) => void) {
-    this._dispatcherId = MatrixSdk.roomListServiceStateEventDispatcher_init();
-    this.onUpdate = onUpdate;
-    roomListServiceStateListener_store.set(this._dispatcherId, this);
-  }
-
-  destroy() {
-    roomListServiceStateListener_store.delete(this._dispatcherId);
-    MatrixSdk.roomListServiceStateEventDispatcher_destroy(this._dispatcherId);
-  }
-
-  receive(event: any) {
-    const state = event?.state;
-    if (!state) {
-      console.warn(
-        `[RoomListServiceStateListener] Ignoring unknown event ${event}`
-      );
-      return;
-    }
-    this.onUpdate(state);
-  }
-}
 
 // SsoHandler
 
@@ -193,24 +384,6 @@ export class SsoHandler {
 
   url(): string {
     return MatrixSdk.ssoHandler_url(this.id);
-  }
-}
-
-// SyncServiceBuilder
-
-export class SyncServiceBuilder {
-  private id: string;
-
-  constructor(id: string) {
-    this.id = id;
-  }
-
-  destroy() {
-    MatrixSdk.syncServiceBuilder_destroy(this.id);
-  }
-
-  async finish(): Promise<SyncService> {
-    return new SyncService(await MatrixSdk.syncServiceBuilder_finish(this.id));
   }
 }
 
@@ -240,9 +413,54 @@ export class SyncService {
   }
 }
 
+// SyncServiceBuilder
+
+export class SyncServiceBuilder {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  destroy() {
+    MatrixSdk.syncServiceBuilder_destroy(this.id);
+  }
+
+  async finish(): Promise<SyncService> {
+    return new SyncService(await MatrixSdk.syncServiceBuilder_finish(this.id));
+  }
+}
+
+// TaskHandle
+
+export class TaskHandle {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  destroy() {
+    MatrixSdk.taskHandle_destroy(this.id);
+  }
+
+  cancel() {
+    MatrixSdk.taskHandle_cancel(this.id);
+  }
+
+  isFinished(): boolean {
+    return MatrixSdk.taskHandle_isFinished(this.id);
+  }
+}
+
 // Event Handling
 
 const emitter = new NativeEventEmitter(MatrixSdk);
+
+const roomListEntriesListener_store = new Map<
+  string,
+  RoomListEntriesListener
+>();
 const roomListServiceStateListener_store = new Map<
   string,
   RoomListServiceStateListener

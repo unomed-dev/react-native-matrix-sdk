@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-private let kState = "state"
-
-/// Dispatches events for RoomListService state updates
-final class RoomListServiceStateEventDispatcher: RoomListServiceStateListener {
+final class DispatchingRoomListServiceStateListener: RoomListServiceStateListener {
     private let eventName: String
     private let eventEmitter: RCTEventEmitter
 
@@ -25,6 +22,8 @@ final class RoomListServiceStateEventDispatcher: RoomListServiceStateListener {
     }
 
     func onUpdate(state: RoomListServiceState) {
-        eventEmitter.sendEvent(withName: eventName, body: [kState: roomListServiceStateToString(state)])
+        eventEmitter.sendEvent(withName: eventName, body: [
+            "state": roomListServiceStateToString(state)
+        ])
     }
 }

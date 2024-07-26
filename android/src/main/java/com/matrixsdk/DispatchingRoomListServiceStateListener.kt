@@ -19,9 +19,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule
 import org.matrix.rustcomponents.sdk.RoomListServiceState
 import org.matrix.rustcomponents.sdk.RoomListServiceStateListener
 
-private const val kState = "state"
-
-class RoomListServiceStateEventDispatcher: RoomListServiceStateListener {
+class DispatchingRoomListServiceStateListener: RoomListServiceStateListener {
   private val eventName: String
   private val eventEmitter: DeviceEventManagerModule.RCTDeviceEventEmitter
 
@@ -32,7 +30,7 @@ class RoomListServiceStateEventDispatcher: RoomListServiceStateListener {
 
   override fun onUpdate(state: RoomListServiceState) {
     eventEmitter.emit(eventName, Arguments.createMap().apply {
-      putString(kState, roomListServiceStateToString(state))
+      putString("state", roomListServiceStateToString(state))
     })
   }
 }

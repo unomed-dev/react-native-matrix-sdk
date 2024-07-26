@@ -25,17 +25,30 @@ import {
   Client,
   ClientBuilder,
   createRandomSessionDirectory,
+  RoomList,
+  RoomListEntriesListener,
+  RoomListEntryType,
   RoomListService,
+  RoomListServiceState,
   RoomListServiceStateListener,
   SyncService,
+  TaskHandle,
+  type RoomListEntryFilled,
   type Session,
 } from 'react-native-matrix-sdk';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 let client: Client | null = null;
+
 let syncService: SyncService | null = null;
+
 let roomListService: RoomListService | null = null;
 let roomListServiceStateListener: RoomListServiceStateListener | null = null;
+let roomListServiceStateTaskHandle: TaskHandle | null = null;
+
+let allRoomsList: RoomList | null = null;
+let allRoomsListEntriesListener: RoomListEntriesListener | null = null;
+let allRoomsListEntriesTaskHandle: TaskHandle | null = null;
 
 const buildClient = async () => {
   const builder = new ClientBuilder()
@@ -50,7 +63,9 @@ const buildClient = async () => {
   }
 };
 
-const startClient = async () => {
+const startClient = async (
+  onRoomListServiceStateUpdate: (state: RoomListServiceState) => void
+) => {
   if (!client) {
     return;
   }
@@ -59,17 +74,31 @@ const startClient = async () => {
   syncService = await syncServiceBuilder.finish();
   syncServiceBuilder.destroy();
 
-  roomListServiceStateListener = new RoomListServiceStateListener((state) => {
-    console.log(`RoomListService state updated to ${state}`);
-  });
-
+  roomListServiceStateListener = new RoomListServiceStateListener(
+    onRoomListServiceStateUpdate
+  );
   roomListService = syncService.roomListService();
-  roomListService.state(roomListServiceStateListener);
+  roomListServiceStateTaskHandle = roomListService.state(
+    roomListServiceStateListener
+  );
 
   await syncService.start();
 };
 
 const destroyClient = async () => {
+  allRoomsListEntriesTaskHandle?.cancel();
+  allRoomsListEntriesTaskHandle?.destroy();
+  allRoomsListEntriesTaskHandle = null;
+
+  allRoomsListEntriesListener?.destroy();
+  allRoomsListEntriesListener = null;
+
+  allRoomsList?.destroy();
+  allRoomsList = null;
+
+  roomListServiceStateTaskHandle?.cancel();
+  roomListServiceStateTaskHandle = null;
+
   roomListServiceStateListener?.destroy();
   roomListServiceStateListener = null;
 
@@ -88,6 +117,9 @@ const destroyClient = async () => {
 export default function App() {
   let [isLoading, setIsLoading] = React.useState(false);
   let [session, setSession] = React.useState<Session | null>(null);
+  let [roomListServiceState, setRoomListServiceState] =
+    React.useState<RoomListServiceState>(RoomListServiceState.Initial);
+  let [rooms, setRooms] = React.useState<string[]>([]);
 
   const logInWithSso = React.useCallback(async () => {
     setIsLoading(true);
@@ -118,7 +150,46 @@ export default function App() {
       await ssoHandler.finish(response.url);
       setSession(client.session());
 
-      await startClient();
+      await startClient(async (state) => {
+        if (
+          state === RoomListServiceState.Running &&
+          roomListServiceState !== RoomListServiceState.Running
+        ) {
+          allRoomsListEntriesListener = new RoomListEntriesListener(
+            (roomEntriesUpdate) => {
+              console.log(
+                `RoomListEntriesListener fired: ${roomEntriesUpdate}`
+              );
+            }
+          );
+
+          allRoomsList = await roomListService!.allRooms();
+          const result = allRoomsList.entries(allRoomsListEntriesListener);
+          allRoomsListEntriesTaskHandle = result.entriesStream;
+
+          setRooms(
+            (
+              result.entries.filter(
+                (entry) => entry.type === RoomListEntryType.Filled
+              ) as RoomListEntryFilled[]
+            ).map((entry) => entry.roomId)
+          );
+        } else if (
+          state != RoomListServiceState.Running &&
+          roomListServiceState == RoomListServiceState.Running
+        ) {
+          allRoomsListEntriesTaskHandle?.cancel();
+          allRoomsListEntriesTaskHandle?.destroy();
+          allRoomsListEntriesTaskHandle = null;
+
+          allRoomsListEntriesListener?.destroy();
+          allRoomsListEntriesListener = null;
+
+          allRoomsList?.destroy();
+          allRoomsList = null;
+        }
+        setRoomListServiceState(state);
+      });
     } catch (e) {
       destroyClient();
       console.error(e);
@@ -126,7 +197,7 @@ export default function App() {
       ssoHandler.destroy();
       setIsLoading(false);
     }
-  }, []);
+  }, [roomListServiceState]);
 
   const logOut = React.useCallback(async () => {
     setIsLoading(true);
@@ -153,6 +224,14 @@ export default function App() {
         <View style={styles.box}>
           <Text style={styles.label}>Access token</Text>
           <Text>{session.accessToken}</Text>
+          <Text style={styles.label}>RoomListService state</Text>
+          <Text>{roomListServiceState}</Text>
+          <Text style={styles.label}>Rooms</Text>
+          {rooms.map((roomId) => (
+            <View key={roomId}>
+              <Text>{roomId}</Text>
+            </View>
+          ))}
           <Button title="Log out" onPress={logOut} />
         </View>
       )}

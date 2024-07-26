@@ -47,16 +47,28 @@ export interface Spec extends TurboModule {
   ): string;
   clientBuilder_username(id: string, username: string): string;
 
+  // RoomList
+
+  roomList_destroy(id: string): void;
+
+  roomList_entries(id: string, listenerId: string): Object;
+
+  // RoomListEntriesListener
+
+  roomListEntriesListener_init(): string;
+  roomListEntriesListener_destroy(id: string): void;
+
   // RoomListService
 
   roomListService_destroy(id: string): void;
 
-  roomListService_state(id: string, dispatcherId: string): void;
+  roomListService_allRooms(id: string): Promise<string>;
+  roomListService_state(id: string, listenerId: string): string;
 
-  // RoomListServiceStateEventDispatcher
+  // RoomListServiceStateListener
 
-  roomListServiceStateEventDispatcher_init(): string;
-  roomListServiceStateEventDispatcher_destroy(id: string): void;
+  roomListServiceStateListener_init(): string;
+  roomListServiceStateListener_destroy(id: string): void;
 
   // SsoHandler
 
@@ -65,12 +77,6 @@ export interface Spec extends TurboModule {
   ssoHandler_finish(id: string, callbackUrl: string): Promise<void>;
   ssoHandler_url(id: string): string;
 
-  // SyncServiceBuilder
-
-  syncServiceBuilder_destroy(id: string): void;
-
-  syncServiceBuilder_finish(id: string): Promise<string>;
-
   // SyncService
 
   syncService_destroy(id: string): void;
@@ -78,6 +84,19 @@ export interface Spec extends TurboModule {
   syncService_roomListService(id: string): string;
   syncService_start(id: string): Promise<void>;
   syncService_stop(id: string): Promise<void>;
+
+  // SyncServiceBuilder
+
+  syncServiceBuilder_destroy(id: string): void;
+
+  syncServiceBuilder_finish(id: string): Promise<string>;
+
+  // TaskHandle
+
+  taskHandle_destroy(id: string): void;
+
+  taskHandle_cancel(id: string): void;
+  taskHandle_isFinished(id: string): boolean;
 
   // Event Handling
 
