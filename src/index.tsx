@@ -110,6 +110,24 @@ export class ClientBuilder {
   }
 }
 
+// EventTimelineItem
+
+export class EventTimelineItem {
+  private id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  destroy() {
+    MatrixSdk.eventTimelineItem_destroy(this.id);
+  }
+
+  timestamp(): number {
+    return MatrixSdk.eventTimelineItem_timestamp(this.id);
+  }
+}
+
 // RoomList
 
 export class RoomList {
@@ -284,6 +302,45 @@ export type RoomListEntry =
   | RoomListEntryInvalidated
   | RoomListEntryFilled;
 
+// RoomListItem
+
+export class RoomListItem {
+  private _id: string;
+
+  constructor(id: string) {
+    this._id = id;
+  }
+
+  destroy() {
+    MatrixSdk.roomListItem_destroy(this._id);
+  }
+
+  avatarUrl(): string | null {
+    return MatrixSdk.roomListItem_avatarUrl(this._id);
+  }
+
+  displayName(): string | null {
+    return MatrixSdk.roomListItem_displayName(this._id);
+  }
+
+  id(): string {
+    return MatrixSdk.roomListItem_id(this._id);
+  }
+
+  initTimeline(): Promise<void> {
+    return MatrixSdk.roomListItem_initTimeline(this._id);
+  }
+
+  isTimelineInitialized(): boolean {
+    return MatrixSdk.roomListItem_isTimelineInitialized(this._id);
+  }
+
+  async latestEvent(): Promise<EventTimelineItem | null> {
+    const id = await MatrixSdk.roomListItem_latestEvent(this._id);
+    return id ? new EventTimelineItem(id) : null;
+  }
+}
+
 // RoomListService
 
 export class RoomListService {
@@ -299,6 +356,10 @@ export class RoomListService {
 
   async allRooms(): Promise<RoomList> {
     return new RoomList(await MatrixSdk.roomListService_allRooms(this.id));
+  }
+
+  room(roomId: string): RoomListItem {
+    return new RoomListItem(MatrixSdk.roomListService_room(this.id, roomId));
   }
 
   state(listener: RoomListServiceStateListener): TaskHandle {

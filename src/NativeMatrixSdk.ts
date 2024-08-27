@@ -47,6 +47,12 @@ export interface Spec extends TurboModule {
   ): string;
   clientBuilder_username(id: string, username: string): string;
 
+  // EventTimelineItem
+
+  eventTimelineItem_destroy(id: string): void;
+
+  eventTimelineItem_timestamp(id: string): number;
+
   // RoomList
 
   roomList_destroy(id: string): void;
@@ -58,11 +64,23 @@ export interface Spec extends TurboModule {
   roomListEntriesListener_init(): string;
   roomListEntriesListener_destroy(id: string): void;
 
+  // RoomListItem
+
+  roomListItem_destroy(id: string): void;
+
+  roomListItem_avatarUrl(id: string): string | null;
+  roomListItem_displayName(id: string): string | null;
+  roomListItem_id(id: string): string;
+  roomListItem_initTimeline(id: string): Promise<void>;
+  roomListItem_isTimelineInitialized(id: string): boolean;
+  roomListItem_latestEvent(id: string): Promise<string | null>;
+
   // RoomListService
 
   roomListService_destroy(id: string): void;
 
   roomListService_allRooms(id: string): Promise<string>;
+  roomListService_room(id: string, roomId: string): string;
   roomListService_state(id: string, listenerId: string): string;
 
   // RoomListServiceStateListener

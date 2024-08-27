@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'react-native-get-random-values';
+
 import { AppRegistry } from 'react-native';
 import App from './src/App';
 import { name as appName } from './app.json';

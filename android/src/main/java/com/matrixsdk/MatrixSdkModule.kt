@@ -28,8 +28,11 @@ import org.matrix.rustcomponents.sdk.Client
 import org.matrix.rustcomponents.sdk.ClientBuildException
 import org.matrix.rustcomponents.sdk.ClientBuilder
 import org.matrix.rustcomponents.sdk.ClientException
+import org.matrix.rustcomponents.sdk.EventTimelineItem
 import org.matrix.rustcomponents.sdk.RoomList
 import org.matrix.rustcomponents.sdk.RoomListEntriesListener
+import org.matrix.rustcomponents.sdk.RoomListException
+import org.matrix.rustcomponents.sdk.RoomListItem
 import org.matrix.rustcomponents.sdk.RoomListService
 import org.matrix.rustcomponents.sdk.RoomListServiceStateListener
 import org.matrix.rustcomponents.sdk.SsoException
@@ -51,8 +54,10 @@ private const val kEvent_roomListService_stateUpdated = "RoomListService_stateUp
 
 private val client_store = ThreadSafeStore<Client>()
 private val clientBuilder_store = ThreadSafeStore<ClientBuilder>()
+private val eventTimelineItem_store = ThreadSafeStore<EventTimelineItem>()
 private val roomList_store = ThreadSafeStore<RoomList>()
 private val roomListEntriesListener_store = ThreadSafeStore<RoomListEntriesListener>()
+private val roomListItem_store = ThreadSafeStore<RoomListItem>()
 private val roomListService_store = ThreadSafeStore<RoomListService>()
 private val roomListServiceStateListener_store = ThreadSafeStore<RoomListServiceStateListener>()
 private val ssoHandler_store = ThreadSafeStore<SsoHandler>()
@@ -187,6 +192,22 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     return clientBuilder_store.add(clientBuilder_store.remove(id)!!.username(username))
   }
 
+  // endregion
+
+  // region EventTimelineItem
+
+  override fun eventTimelineItem_destroy(id: String) {
+    eventTimelineItem_store.remove(id)
+  }
+
+  override fun eventTimelineItem_timestamp(id: String): Double {
+    return eventTimelineItem_store.get(id)!!.timestamp().toDouble()
+  }
+
+  // endregion
+
+  // region RoomList
+
   override fun roomList_destroy(id: String) {
     roomList_store.remove(id)
   }
@@ -213,6 +234,52 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
 
   // endregion
 
+  // region RoomListItem
+
+  override fun roomListItem_destroy(id: String) {
+    roomListItem_store.remove(id)
+  }
+
+  override fun roomListItem_avatarUrl(id: String): String? {
+    return roomListItem_store.get(id)!!.avatarUrl()
+  }
+
+  override fun roomListItem_displayName(id: String): String? {
+    return roomListItem_store.get(id)!!.displayName()
+  }
+
+  override fun roomListItem_id(id: String): String {
+    return roomListItem_store.get(id)!!.id()
+  }
+
+  override fun roomListItem_initTimeline(id: String, promise: Promise) {
+    GlobalScope.launch {
+      try {
+        roomListItem_store.get(id)!!.initTimeline(null, null)
+        promise.resolve(null)
+      } catch (e: RoomListException) {
+        promise.reject("ERROR", e.localizedMessage, null)
+      }
+    }
+  }
+
+  override fun roomListItem_isTimelineInitialized(id: String): Boolean {
+    return roomListItem_store.get(id)!!.isTimelineInitialized()
+  }
+
+  override fun roomListItem_latestEvent(id: String, promise: Promise) {
+    GlobalScope.launch {
+      val eventTimelineItem = roomListItem_store.get(id)!!.latestEvent()
+      if (eventTimelineItem != null) {
+        promise.resolve(eventTimelineItem_store.add(eventTimelineItem))
+      } else {
+        promise.resolve(null)
+      }
+    }
+  }
+
+  // endregion
+
   // region RoomListService
 
   override fun roomListService_destroy(id: String) {
@@ -228,6 +295,10 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
         promise.reject("ERROR", e.localizedMessage, null)
       }
     }
+  }
+
+  override fun roomListService_room(id: String, roomId: String): String {
+    return roomListItem_store.add(roomListService_store.get(id)!!.room(roomId))
   }
 
   override fun roomListService_state(id: String, listenerId: String): String {

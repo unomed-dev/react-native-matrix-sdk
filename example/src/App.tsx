@@ -36,7 +36,12 @@ import {
   type RoomListEntryFilled,
   type Session,
 } from 'react-native-matrix-sdk';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { v4 as uuid } from 'uuid';
+
+const HOMESERVER = '...';
+const SLIDING_SYNC_PROXY = '...';
 
 let client: Client | null = null;
 
@@ -50,11 +55,32 @@ let allRoomsList: RoomList | null = null;
 let allRoomsListEntriesListener: RoomListEntriesListener | null = null;
 let allRoomsListEntriesTaskHandle: TaskHandle | null = null;
 
+type Credentials = {
+  homeserverUrl: string;
+  sessionPath: string;
+  username: string;
+  passphrase: string;
+  session?: Session;
+};
+
+const getCredentials = async () => {
+  const json = await AsyncStorage.getItem('mx_session');
+  return json ? (JSON.parse(json) as Credentials) : null;
+};
+
+const storeCredentials = async (credentials: Credentials) => {
+  await AsyncStorage.setItem('mx_session', JSON.stringify(credentials));
+};
+
+// const clearCredentials = async () => {
+//   await AsyncStorage.removeItem('mx_session');
+// };
+
 const buildClient = async () => {
   const builder = new ClientBuilder()
-    .homeserverUrl('https://...')
+    .homeserverUrl(HOMESERVER)
     .sessionPath(createRandomSessionDirectory())
-    .slidingSyncProxy('https://...');
+    .slidingSyncProxy(SLIDING_SYNC_PROXY);
 
   try {
     return await builder.build();
@@ -70,6 +96,7 @@ const startClient = async (
     return;
   }
 
+  console.log('Creating SyncService...');
   const syncServiceBuilder = client.syncService();
   syncService = await syncServiceBuilder.finish();
   syncServiceBuilder.destroy();
@@ -82,7 +109,9 @@ const startClient = async (
     roomListServiceStateListener
   );
 
+  console.log('Starting SyncService...');
   await syncService.start();
+  console.log('SyncService started...');
 };
 
 const destroyClient = async () => {
@@ -114,43 +143,76 @@ const destroyClient = async () => {
   client = null;
 };
 
+type RoomViewModel = {
+  id: string;
+  name: string | null;
+  latestEventTimestamp: number | null;
+};
+
 export default function App() {
   let [isLoading, setIsLoading] = React.useState(false);
   let [session, setSession] = React.useState<Session | null>(null);
   let [roomListServiceState, setRoomListServiceState] =
     React.useState<RoomListServiceState>(RoomListServiceState.Initial);
-  let [rooms, setRooms] = React.useState<string[]>([]);
+  let [rooms, setRooms] = React.useState<RoomViewModel[]>([]);
 
   const logInWithSso = React.useCallback(async () => {
     setIsLoading(true);
 
+    const credentials: Credentials = (await getCredentials()) ?? {
+      homeserverUrl: HOMESERVER,
+      sessionPath: createRandomSessionDirectory(),
+      username: uuid(),
+      passphrase: uuid(),
+    };
+
     client = await buildClient();
 
-    const ssoHandler = await client.startSsoLogin(
-      'unomed.example://Main',
-      undefined
-    );
-
-    try {
-      const response = await InAppBrowser.openAuth(
-        ssoHandler.url(),
+    if (credentials.session) {
+      await client.restoreSession(credentials.session);
+    } else {
+      const ssoHandler = await client.startSsoLogin(
         'unomed.example://Main',
-        {
-          ephemeralWebSession: false,
-          showTitle: false,
-          enableUrlBarHiding: true,
-          enableDefaultShare: false,
-        }
+        undefined
       );
 
-      if (response.type !== 'success') {
-        throw 'SSO login failed';
+      try {
+        const response = await InAppBrowser.openAuth(
+          ssoHandler.url(),
+          'unomed.example://Main',
+          {
+            ephemeralWebSession: false,
+            showTitle: false,
+            enableUrlBarHiding: true,
+            enableDefaultShare: false,
+          }
+        );
+
+        if (response.type !== 'success') {
+          throw 'SSO login failed';
+        }
+
+        console.log('Finishing SSO login...');
+        await ssoHandler.finish(response.url);
+        console.log('SSO login finished...');
+        setSession(client.session());
+
+        credentials.session = client.session();
+        await storeCredentials(credentials);
+      } catch (e) {
+        destroyClient();
+        console.error(e);
+        setIsLoading(false);
+        return;
+      } finally {
+        ssoHandler.destroy();
       }
+    }
 
-      await ssoHandler.finish(response.url);
-      setSession(client.session());
-
+    try {
+      console.log('Starting client...');
       await startClient(async (state) => {
+        console.log(`RoomListService switched to state ${state}`);
         if (
           state === RoomListServiceState.Running &&
           roomListServiceState !== RoomListServiceState.Running
@@ -167,16 +229,42 @@ export default function App() {
           const result = allRoomsList.entries(allRoomsListEntriesListener);
           allRoomsListEntriesTaskHandle = result.entriesStream;
 
-          setRooms(
-            (
-              result.entries.filter(
-                (entry) => entry.type === RoomListEntryType.Filled
-              ) as RoomListEntryFilled[]
-            ).map((entry) => entry.roomId)
+          const filledEntries = result.entries.filter(
+            (entry) => entry.type === RoomListEntryType.Filled
+          ) as RoomListEntryFilled[];
+
+          const roomListItems = filledEntries.map((entry) =>
+            roomListService!.room(entry.roomId)
           );
+
+          for (const item of roomListItems) {
+            if (!item.isTimelineInitialized()) {
+              await item.initTimeline();
+            }
+          }
+          // await Promise.allSettled(roomListItems.filter(item => !item.isTimelineInitialized()).map(item => item.initTimeline()));
+
+          const latestEvents = (
+            await Promise.allSettled(
+              roomListItems.map((item) => item.latestEvent())
+            )
+          ).map((promiseResult) =>
+            promiseResult.status === 'fulfilled' ? promiseResult.value : null
+          );
+
+          setRooms(
+            roomListItems.map((item, index) => ({
+              id: item.id(),
+              name: item.displayName(),
+              latestEventTimestamp: latestEvents[index]?.timestamp() ?? null,
+            }))
+          );
+
+          roomListItems.forEach((item) => item.destroy());
+          latestEvents.forEach((event) => event?.destroy());
         } else if (
-          state != RoomListServiceState.Running &&
-          roomListServiceState == RoomListServiceState.Running
+          state !== RoomListServiceState.Running &&
+          roomListServiceState === RoomListServiceState.Running
         ) {
           allRoomsListEntriesTaskHandle?.cancel();
           allRoomsListEntriesTaskHandle?.destroy();
@@ -193,8 +281,8 @@ export default function App() {
     } catch (e) {
       destroyClient();
       console.error(e);
+      return;
     } finally {
-      ssoHandler.destroy();
       setIsLoading(false);
     }
   }, [roomListServiceState]);
@@ -227,9 +315,12 @@ export default function App() {
           <Text style={styles.label}>RoomListService state</Text>
           <Text>{roomListServiceState}</Text>
           <Text style={styles.label}>Rooms</Text>
-          {rooms.map((roomId) => (
-            <View key={roomId}>
-              <Text>{roomId}</Text>
+          {rooms.map((room) => (
+            <View key={room.id}>
+              <Text>{room.name}</Text>
+              {room.latestEventTimestamp && (
+                <Text>({room.latestEventTimestamp})</Text>
+              )}
             </View>
           ))}
           <Button title="Log out" onPress={logOut} />

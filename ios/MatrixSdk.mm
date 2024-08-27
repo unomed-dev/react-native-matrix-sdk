@@ -94,6 +94,16 @@ RCT_EXPORT_MODULE()
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
+// MARK: - EventTimelineItem
+
+- (void)eventTimelineItem_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSNumber *)eventTimelineItem_timestamp:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
 // MARK: - RoomList
 
 - (void)roomList_destroy:(NSString *)id {
@@ -114,6 +124,36 @@ RCT_EXPORT_MODULE()
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
+// MARK: - RoomListItem
+
+- (void)roomListItem_destroy:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString * _Nullable)roomListItem_avatarUrl:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString * _Nullable)roomListItem_displayName:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)roomListItem_id:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)roomListItem_initTimeline:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSNumber *)roomListItem_isTimelineInitialized:(NSString *)id {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (void)roomListItem_latestEvent:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
 // MARK: - RoomListService
 
 - (void)roomListService_destroy:(NSString *)id {
@@ -121,6 +161,10 @@ RCT_EXPORT_MODULE()
 }
 
 - (void)roomListService_allRooms:(NSString *)id resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
+}
+
+- (NSString *)roomListService_room:(NSString *)id roomId:(NSString *)roomId {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 

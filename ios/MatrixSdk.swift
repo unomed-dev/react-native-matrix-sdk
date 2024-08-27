@@ -23,8 +23,10 @@ private let kEvent_roomListService_stateUpdated = "RoomListService_stateUpdated"
 
 private let client_store = ThreadSafeStore<Client>()
 private let clientBuilder_store = ThreadSafeStore<ClientBuilder>()
+private let eventTimelineItem_store = ThreadSafeStore<EventTimelineItem>()
 private let roomList_store = ThreadSafeStore<RoomList>()
 private let roomListEntriesListener_store = ThreadSafeStore<RoomListEntriesListener>()
+private let roomListItem_store = ThreadSafeStore<RoomListItem>()
 private let roomListService_store = ThreadSafeStore<RoomListService>()
 private let roomListServiceStateListener_store = ThreadSafeStore<RoomListServiceStateListener>()
 private let ssoHandler_store = ThreadSafeStore<SsoHandler>()
@@ -153,6 +155,18 @@ extension MatrixSdk {
         clientBuilder_store.add(clientBuilder_store.remove(id)!.username(username: username))
     }
 
+    // MARK: - EventTimelineItem
+
+    @objc(eventTimelineItem_destroy:)
+    func eventTimelineItem_destroy(id: String) {
+        _ = eventTimelineItem_store.remove(id)
+    }
+
+    @objc(eventTimelineItem_timestamp:)
+    func eventTimelineItem_timestamp(id: String) -> NSNumber {
+        eventTimelineItem_store.get(id)!.timestamp() as NSNumber
+    }
+
     // MARK: - RoomList
 
     @objc(roomList_destroy:)
@@ -172,7 +186,7 @@ extension MatrixSdk {
 
     @objc(roomListEntriesListener_init)
     func roomListEntriesListener_init() -> String {
-        return roomListEntriesListener_store.add(
+        roomListEntriesListener_store.add(
             DispatchingRoomListEntriesListener(
                 eventName: kEvent_roomList_entriesUpdated,
                 eventEmitter: self))
@@ -181,6 +195,57 @@ extension MatrixSdk {
     @objc(roomListEntriesListener_destroy:)
     func roomListEntriesListener_destroy(id: String) {
         _ = roomListEntriesListener_store.remove(id)
+    }
+
+    // MARK: - RoomListItem
+
+    @objc(roomListItem_destroy:)
+    func roomListItem_destroy(id: String) {
+        _ = roomListItem_store.remove(id)
+    }
+
+    @objc(roomListItem_avatarUrl:)
+    func roomListItem_avatarUrl(id: String) -> String? {
+        roomListItem_store.get(id)!.avatarUrl()
+    }
+
+    @objc(roomListItem_displayName:)
+    func roomListItem_displayName(id: String) -> String? {
+        roomListItem_store.get(id)!.displayName()
+    }
+
+    @objc(roomListItem_id:)
+    func roomListItem_id(id: String) -> String {
+        roomListItem_store.get(id)!.id()
+    }
+
+    @objc(roomListItem_initTimeline:resolve:reject:)
+    func roomListItem_initTimeline(id: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        Task {
+            do {
+                try await roomListItem_store.get(id)!.initTimeline(eventTypeFilter: nil, internalIdPrefix: nil)
+                resolve(nil)
+            } catch {
+                reject("ERROR", error.localizedDescription, nil)
+                return
+            }
+        }
+    }
+
+    @objc(roomListItem_isTimelineInitialized:)
+    func roomListItem_isTimelineInitialized(id: String) -> NSNumber {
+        return NSNumber(value: roomListItem_store.get(id)!.isTimelineInitialized())
+    }
+
+    @objc(roomListItem_latestEvent:resolve:reject:)
+    func roomListItem_latestEvent(id: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        Task {
+            if let eventTimelineItem = await roomListItem_store.get(id)!.latestEvent() {
+                resolve(eventTimelineItem_store.add(eventTimelineItem))
+            } else {
+                resolve(nil)
+            }
+        }
     }
 
     // MARK: - RoomListService
@@ -200,6 +265,11 @@ extension MatrixSdk {
                 return
             }
         }
+    }
+
+    @objc(roomListService_room:roomId:)
+    func roomListService_room(id: String, roomId: String) -> String {
+        roomListItem_store.add(try! roomListService_store.get(id)!.room(roomId: roomId))
     }
 
     @objc(roomListService_state:listenerId:)
