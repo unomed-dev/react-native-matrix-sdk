@@ -40,10 +40,14 @@ export interface Spec extends TurboModule {
   clientBuilder_build(id: string): Promise<string>;
   clientBuilder_homeserverUrl(id: string, url: string): string;
   clientBuilder_passphrase(id: string, passphrase: string | null): string;
-  clientBuilder_sessionPath(id: string, path: string): string;
-  clientBuilder_slidingSyncProxy(
+  clientBuilder_sessionPaths(
     id: string,
-    slidingSyncProxy: string | null
+    dataPath: string,
+    cachePath: string
+  ): string;
+  clientBuilder_slidingSyncVersionBuilder(
+    id: string,
+    versionBuilder: Object
   ): string;
   clientBuilder_username(id: string, username: string): string;
 
@@ -57,7 +61,7 @@ export interface Spec extends TurboModule {
 
   roomList_destroy(id: string): void;
 
-  roomList_entries(id: string, listenerId: string): Object;
+  roomList_entries(id: string, listenerId: string): string;
 
   // RoomListEntriesListener
 

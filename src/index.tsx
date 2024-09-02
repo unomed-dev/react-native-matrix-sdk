@@ -91,15 +91,17 @@ export class ClientBuilder {
     );
   }
 
-  sessionPath(path: string): ClientBuilder {
+  sessionPaths(dataPath: string, cachePath: string): ClientBuilder {
     return new ClientBuilder(
-      MatrixSdk.clientBuilder_sessionPath(this.id, path)
+      MatrixSdk.clientBuilder_sessionPaths(this.id, dataPath, cachePath)
     );
   }
 
-  slidingSyncProxy(slidingSyncProxy: string | null): ClientBuilder {
+  slidingSyncVersionBuilder(
+    versionBuilder: SlidingSyncVersionBuilder
+  ): ClientBuilder {
     return new ClientBuilder(
-      MatrixSdk.clientBuilder_slidingSyncProxy(this.id, slidingSyncProxy)
+      MatrixSdk.clientBuilder_slidingSyncVersionBuilder(this.id, versionBuilder)
     );
   }
 
@@ -141,15 +143,8 @@ export class RoomList {
     MatrixSdk.roomList_destroy(this.id);
   }
 
-  entries(listener: RoomListEntriesListener): RoomListEntriesResult {
-    const result = MatrixSdk.roomList_entries(this.id, listener.id) as {
-      entries: RoomListEntry[];
-      entriesStreamId: string;
-    };
-    return {
-      entries: result.entries,
-      entriesStream: new TaskHandle(result.entriesStreamId),
-    };
+  entries(listener: RoomListEntriesListener): TaskHandle {
+    return new TaskHandle(MatrixSdk.roomList_entries(this.id, listener.id));
   }
 }
 
@@ -162,9 +157,9 @@ export class RoomListEntriesListener {
     return this._id;
   }
 
-  private onUpdate: (roomEntriesUpdate: RoomListEntriesUpdate) => void;
+  private onUpdate: (roomEntriesUpdate: RoomListEntriesUpdate[]) => void;
 
-  constructor(onUpdate: (roomEntriesUpdate: RoomListEntriesUpdate) => void) {
+  constructor(onUpdate: (roomEntriesUpdate: RoomListEntriesUpdate[]) => void) {
     this._id = MatrixSdk.roomListEntriesListener_init();
     this.onUpdate = onUpdate;
     roomListEntriesListener_store.set(this.id, this);
@@ -176,7 +171,8 @@ export class RoomListEntriesListener {
   }
 
   receive(event: any) {
-    const roomEntriesUpdate = event?.roomEntriesUpdate as RoomListEntriesUpdate;
+    const roomEntriesUpdate =
+      event?.roomEntriesUpdate as RoomListEntriesUpdate[];
     if (!roomEntriesUpdate) {
       console.warn(`[RoomListEntriesListener] Ignoring unknown event ${event}`);
       return;
@@ -184,13 +180,6 @@ export class RoomListEntriesListener {
     this.onUpdate(roomEntriesUpdate);
   }
 }
-
-// RoomListEntriesResult
-
-export type RoomListEntriesResult = {
-  entries: RoomListEntry[];
-  entriesStream: TaskHandle;
-};
 
 // RoomListEntriesUpdate
 
@@ -210,7 +199,7 @@ export enum RoomListEntriesUpdateType {
 
 export type RoomListEntriesUpdateAppend = {
   type: RoomListEntriesUpdateType.Append;
-  values: RoomListEntry[];
+  values: string[];
 };
 
 export type RoomListEntriesUpdateClear = {
@@ -219,12 +208,12 @@ export type RoomListEntriesUpdateClear = {
 
 export type RoomListEntriesUpdatePushFront = {
   type: RoomListEntriesUpdateType.PushFront;
-  value: RoomListEntry;
+  value: string;
 };
 
 export type RoomListEntriesUpdatePushBack = {
   type: RoomListEntriesUpdateType.PushBack;
-  value: RoomListEntry;
+  value: string;
 };
 
 export type RoomListEntriesUpdatePopFront = {
@@ -238,13 +227,13 @@ export type RoomListEntriesUpdatePopBack = {
 export type RoomListEntriesUpdateInsert = {
   type: RoomListEntriesUpdateType.Insert;
   index: number;
-  value: RoomListEntry;
+  value: string;
 };
 
 export type RoomListEntriesUpdateSet = {
   type: RoomListEntriesUpdateType.Set;
   index: number;
-  value: RoomListEntry;
+  value: string;
 };
 
 export type RoomListEntriesUpdateRemove = {
@@ -259,7 +248,7 @@ export type RoomListEntriesUpdateTruncate = {
 
 export type RoomListEntriesUpdateReset = {
   type: RoomListEntriesUpdateType.Reset;
-  values: RoomListEntry[];
+  values: string[];
 };
 
 export type RoomListEntriesUpdate =
@@ -274,33 +263,6 @@ export type RoomListEntriesUpdate =
   | RoomListEntriesUpdateRemove
   | RoomListEntriesUpdateTruncate
   | RoomListEntriesUpdateReset;
-
-// RoomListEntry
-
-export enum RoomListEntryType {
-  Empty = 'empty',
-  Invalidated = 'invalidated',
-  Filled = 'filled',
-}
-
-export type RoomListEntryEmpty = {
-  type: RoomListEntryType.Empty;
-};
-
-export type RoomListEntryInvalidated = {
-  type: RoomListEntryType.Invalidated;
-  roomId: string;
-};
-
-export type RoomListEntryFilled = {
-  type: RoomListEntryType.Filled;
-  roomId: string;
-};
-
-export type RoomListEntry =
-  | RoomListEntryEmpty
-  | RoomListEntryInvalidated
-  | RoomListEntryFilled;
 
 // RoomListItem
 
@@ -423,8 +385,72 @@ export type Session = {
   deviceId: string;
   homeserverUrl: string;
   oidcData: string | null;
-  slidingSyncProxy: string | null;
+  slidingSyncVersion: SlidingSyncVersion;
 };
+
+// SlidingSyncVersion
+
+export enum SlidingSyncVersionType {
+  None = 'none',
+  Proxy = 'proxy',
+  Native = 'native',
+}
+
+export type SlidingSyncVersionNone = {
+  type: SlidingSyncVersionType.None;
+};
+
+export type SlidingSyncVersionProxy = {
+  type: SlidingSyncVersionType.Proxy;
+  url: string;
+};
+
+export type SlidingSyncVersionNative = {
+  type: SlidingSyncVersionType.Native;
+};
+
+export type SlidingSyncVersion =
+  | SlidingSyncVersionNone
+  | SlidingSyncVersionProxy
+  | SlidingSyncVersionNative;
+
+// SlidingSyncVersionBuilder
+
+export enum SlidingSyncVersionBuilderType {
+  None = 'none',
+  Proxy = 'proxy',
+  Native = 'native',
+  DiscoverProxy = 'discoverProxy',
+  DiscoverNative = 'discoverNative',
+}
+
+export type SlidingSyncVersionBuilderNone = {
+  type: SlidingSyncVersionBuilderType.None;
+};
+
+export type SlidingSyncVersionBuilderProxy = {
+  type: SlidingSyncVersionBuilderType.Proxy;
+  url: string;
+};
+
+export type SlidingSyncVersionBuilderNative = {
+  type: SlidingSyncVersionBuilderType.Native;
+};
+
+export type SlidingSyncVersionBuilderDiscoverProxy = {
+  type: SlidingSyncVersionBuilderType.DiscoverProxy;
+};
+
+export type SlidingSyncVersionBuilderDiscoverNative = {
+  type: SlidingSyncVersionBuilderType.DiscoverNative;
+};
+
+export type SlidingSyncVersionBuilder =
+  | SlidingSyncVersionBuilderNone
+  | SlidingSyncVersionBuilderProxy
+  | SlidingSyncVersionBuilderNative
+  | SlidingSyncVersionBuilderDiscoverProxy
+  | SlidingSyncVersionBuilderDiscoverNative;
 
 // SsoHandler
 
@@ -526,6 +552,10 @@ const roomListServiceStateListener_store = new Map<
   string,
   RoomListServiceStateListener
 >();
+
+emitter.addListener('RoomList_entriesUpdated', (event) => {
+  roomListEntriesListener_store.forEach((listener) => listener.receive(event));
+});
 
 emitter.addListener('RoomListService_stateUpdated', (event) => {
   roomListServiceStateListener_store.forEach((listener) =>

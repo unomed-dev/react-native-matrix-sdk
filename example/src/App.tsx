@@ -27,13 +27,13 @@ import {
   createRandomSessionDirectory,
   RoomList,
   RoomListEntriesListener,
-  RoomListEntryType,
+  RoomListEntriesUpdateType,
   RoomListService,
   RoomListServiceState,
   RoomListServiceStateListener,
+  SlidingSyncVersionBuilderType,
   SyncService,
   TaskHandle,
-  type RoomListEntryFilled,
   type Session,
 } from 'react-native-matrix-sdk';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -77,10 +77,14 @@ const storeCredentials = async (credentials: Credentials) => {
 // };
 
 const buildClient = async () => {
+  const sessionPath = createRandomSessionDirectory();
   const builder = new ClientBuilder()
     .homeserverUrl(HOMESERVER)
-    .sessionPath(createRandomSessionDirectory())
-    .slidingSyncProxy(SLIDING_SYNC_PROXY);
+    .sessionPaths(sessionPath, sessionPath)
+    .slidingSyncVersionBuilder({
+      type: SlidingSyncVersionBuilderType.Proxy,
+      url: SLIDING_SYNC_PROXY,
+    });
 
   try {
     return await builder.build();
@@ -170,6 +174,7 @@ export default function App() {
 
     if (credentials.session) {
       await client.restoreSession(credentials.session);
+      setSession(credentials.session);
     } else {
       const ssoHandler = await client.startSsoLogin(
         'unomed.example://Main',
@@ -222,46 +227,112 @@ export default function App() {
               console.log(
                 `RoomListEntriesListener fired: ${roomEntriesUpdate}`
               );
+
+              for (const update of roomEntriesUpdate) {
+                switch (update.type) {
+                  case RoomListEntriesUpdateType.Append: {
+                    const roomItems = update.values.map((roomId) =>
+                      roomListService!.room(roomId)
+                    );
+                    setRooms(
+                      rooms.concat(
+                        roomItems.map((roomItem) => ({
+                          id: roomItem.id(),
+                          name: roomItem.displayName(),
+                          latestEventTimestamp: null,
+                        }))
+                      )
+                    );
+                    roomItems.forEach((roomItem) => roomItem.destroy());
+                    break;
+                  }
+                  case RoomListEntriesUpdateType.Clear:
+                    setRooms([]);
+                    break;
+                  case RoomListEntriesUpdateType.Insert: {
+                    const roomItem = roomListService!.room(update.value);
+                    setRooms(
+                      rooms.splice(update.index, 0, {
+                        id: roomItem.id(),
+                        name: roomItem.displayName(),
+                        latestEventTimestamp: null,
+                      })
+                    );
+                    roomItem.destroy();
+                    break;
+                  }
+                  case RoomListEntriesUpdateType.PopBack:
+                    setRooms(rooms.slice(0, rooms.length - 1));
+                    break;
+                  case RoomListEntriesUpdateType.PopFront:
+                    setRooms(rooms.slice(1));
+                    break;
+                  case RoomListEntriesUpdateType.PushBack: {
+                    const roomItem = roomListService!.room(update.value);
+                    setRooms([
+                      ...rooms,
+                      {
+                        id: roomItem.id(),
+                        name: roomItem.displayName(),
+                        latestEventTimestamp: null,
+                      },
+                    ]);
+                    roomItem.destroy();
+                    break;
+                  }
+                  case RoomListEntriesUpdateType.PushFront: {
+                    const roomItem = roomListService!.room(update.value);
+                    setRooms(
+                      rooms.splice(0, 0, {
+                        id: roomItem.id(),
+                        name: roomItem.displayName(),
+                        latestEventTimestamp: null,
+                      })
+                    );
+                    roomItem.destroy();
+                    break;
+                  }
+                  case RoomListEntriesUpdateType.Remove:
+                    setRooms(rooms.splice(update.index, 1));
+                    break;
+                  case RoomListEntriesUpdateType.Reset: {
+                    const roomItems = update.values.map((roomId) =>
+                      roomListService!.room(roomId)
+                    );
+                    setRooms(
+                      roomItems.map((roomItem) => ({
+                        id: roomItem.id(),
+                        name: roomItem.displayName(),
+                        latestEventTimestamp: null,
+                      }))
+                    );
+                    roomItems.forEach((roomItem) => roomItem.destroy());
+                    break;
+                  }
+                  case RoomListEntriesUpdateType.Set: {
+                    const roomItem = roomListService!.room(update.value);
+                    setRooms(
+                      rooms.splice(update.index, 1, {
+                        id: roomItem.id(),
+                        name: roomItem.displayName(),
+                        latestEventTimestamp: null,
+                      })
+                    );
+                    roomItem.destroy();
+                    break;
+                  }
+                  case RoomListEntriesUpdateType.Truncate:
+                    setRooms(rooms.slice(0, rooms.length - update.length));
+                    break;
+                }
+              }
             }
           );
 
           allRoomsList = await roomListService!.allRooms();
-          const result = allRoomsList.entries(allRoomsListEntriesListener);
-          allRoomsListEntriesTaskHandle = result.entriesStream;
-
-          const filledEntries = result.entries.filter(
-            (entry) => entry.type === RoomListEntryType.Filled
-          ) as RoomListEntryFilled[];
-
-          const roomListItems = filledEntries.map((entry) =>
-            roomListService!.room(entry.roomId)
+          allRoomsListEntriesTaskHandle = allRoomsList.entries(
+            allRoomsListEntriesListener
           );
-
-          for (const item of roomListItems) {
-            if (!item.isTimelineInitialized()) {
-              await item.initTimeline();
-            }
-          }
-          // await Promise.allSettled(roomListItems.filter(item => !item.isTimelineInitialized()).map(item => item.initTimeline()));
-
-          const latestEvents = (
-            await Promise.allSettled(
-              roomListItems.map((item) => item.latestEvent())
-            )
-          ).map((promiseResult) =>
-            promiseResult.status === 'fulfilled' ? promiseResult.value : null
-          );
-
-          setRooms(
-            roomListItems.map((item, index) => ({
-              id: item.id(),
-              name: item.displayName(),
-              latestEventTimestamp: latestEvents[index]?.timestamp() ?? null,
-            }))
-          );
-
-          roomListItems.forEach((item) => item.destroy());
-          latestEvents.forEach((event) => event?.destroy());
         } else if (
           state !== RoomListServiceState.Running &&
           roomListServiceState === RoomListServiceState.Running
@@ -285,7 +356,7 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [roomListServiceState]);
+  }, [roomListServiceState, rooms]);
 
   const logOut = React.useCallback(async () => {
     setIsLoading(true);

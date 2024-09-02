@@ -82,11 +82,11 @@ RCT_EXPORT_MODULE()
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
-- (NSString *)clientBuilder_sessionPath:(NSString *)id path:(NSString *)path {
+- (NSString *)clientBuilder_sessionPaths:(NSString *)id dataPath:(NSString *)dataPath cachePath:(NSString *)cachePath {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
-- (NSString *)clientBuilder_slidingSyncProxy:(NSString *)id slidingSyncProxy:(NSString * _Nullable)slidingSyncProxy {
+- (NSString *)clientBuilder_slidingSyncVersionBuilder:(NSString *)id versionBuilder:(NSDictionary *)versionBuilder {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
@@ -110,7 +110,7 @@ RCT_EXPORT_MODULE()
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 
-- (NSDictionary *)roomList_entries:(NSString *)id listenerId:(NSString *)listenerId {
+- (NSString *)roomList_entries:(NSString *)id listenerId:(NSString *)listenerId {
     @throw [NSException exceptionWithName:@"Implemented in Swift" reason:nil userInfo:nil];
 }
 

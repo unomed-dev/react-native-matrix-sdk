@@ -18,43 +18,10 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import org.matrix.rustcomponents.sdk.RoomListEntriesUpdate
-import org.matrix.rustcomponents.sdk.RoomListEntry
 import org.matrix.rustcomponents.sdk.RoomListServiceState
 import org.matrix.rustcomponents.sdk.Session
-
-// region RoomListEntry
-
-private const val kRoomListEntry_type = "type"
-private const val kRoomListEntry_roomId = "roomId"
-
-fun roomListEntryToMap(entry: RoomListEntry): WritableMap {
-  return when (entry) {
-    is RoomListEntry.Empty -> Arguments.createMap().apply {
-      putString(kRoomListEntry_type, "empty")
-    }
-    is RoomListEntry.Invalidated -> Arguments.createMap().apply {
-      putString(kRoomListEntry_type, "invalidated")
-      putString(kRoomListEntry_roomId, entry.roomId)
-    }
-    is RoomListEntry.Filled -> Arguments.createMap().apply {
-      putString(kRoomListEntry_type, "filled")
-      putString(kRoomListEntry_roomId, entry.roomId)
-    }
-  }
-}
-
-// endregion
-
-// region RoomListEntriesResult
-
-fun roomListEntriesResultToMap(entries: List<RoomListEntry>, entriesStreamId: String): WritableMap {
-  return Arguments.createMap().apply {
-    putArray("entries", Arguments.createArray().apply { entries.forEach { pushMap(roomListEntryToMap(it)) } })
-    putString("entriesStreamId", entriesStreamId)
-  }
-}
-
-// endregion
+import org.matrix.rustcomponents.sdk.SlidingSyncVersion
+import org.matrix.rustcomponents.sdk.SlidingSyncVersionBuilder
 
 // region RoomListEntriesUpdate
 
@@ -68,18 +35,18 @@ fun roomListEntriesUpdateToMap(update: RoomListEntriesUpdate): WritableMap {
   return when (update) {
     is RoomListEntriesUpdate.Append -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "append")
-      putArray(kRoomListEntriesUpdate_values, Arguments.createArray().apply { update.values.forEach { pushMap(roomListEntryToMap(it)) } })
+      putArray(kRoomListEntriesUpdate_values, Arguments.createArray().apply { update.values.forEach { pushString(it.id()) } })
     }
     is RoomListEntriesUpdate.Clear -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "clear")
     }
     is RoomListEntriesUpdate.PushFront -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "pushFront")
-      putMap(kRoomListEntriesUpdate_value, roomListEntryToMap(update.value))
+      putString(kRoomListEntriesUpdate_value, update.value.id())
     }
     is RoomListEntriesUpdate.PushBack -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "pushBack")
-      putMap(kRoomListEntriesUpdate_value, roomListEntryToMap(update.value))
+      putString(kRoomListEntriesUpdate_value, update.value.id())
     }
     is RoomListEntriesUpdate.PopFront -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "popFront")
@@ -90,12 +57,12 @@ fun roomListEntriesUpdateToMap(update: RoomListEntriesUpdate): WritableMap {
     is RoomListEntriesUpdate.Insert -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "insert")
       putInt(kRoomListEntriesUpdate_index, update.index.toInt())
-      putMap(kRoomListEntriesUpdate_value, roomListEntryToMap(update.value))
+      putString(kRoomListEntriesUpdate_value, update.value.id())
     }
     is RoomListEntriesUpdate.Set -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "set")
       putInt(kRoomListEntriesUpdate_index, update.index.toInt())
-      putMap(kRoomListEntriesUpdate_value, roomListEntryToMap(update.value))
+      putString(kRoomListEntriesUpdate_value, update.value.id())
     }
     is RoomListEntriesUpdate.Remove -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "remove")
@@ -107,7 +74,7 @@ fun roomListEntriesUpdateToMap(update: RoomListEntriesUpdate): WritableMap {
     }
     is RoomListEntriesUpdate.Reset -> Arguments.createMap().apply {
       putString(kRoomListEntriesUpdate_type, "reset")
-      putArray(kRoomListEntriesUpdate_values, Arguments.createArray().apply { update.values.forEach { pushMap(roomListEntryToMap(it)) } })
+      putArray(kRoomListEntriesUpdate_values, Arguments.createArray().apply { update.values.forEach { pushString(it.id()) } })
     }
   }
 }
@@ -137,14 +104,15 @@ private const val kSession_userId = "userId"
 private const val kSession_deviceId = "deviceId"
 private const val kSession_homeserverUrl = "homeserverUrl"
 private const val kSession_oidcData = "oidcData"
-private const val kSession_slidingSyncProxy = "slidingSyncProxy"
+private const val kSession_slidingSyncVersion = "slidingSyncVersion"
 
 fun sessionFromMap(map: ReadableMap): Session? {
   val accessToken = map.getString(kSession_accessToken)
   val userId = map.getString(kSession_userId)
   val deviceId = map.getString(kSession_deviceId)
   val homeserverUrl = map.getString(kSession_homeserverUrl)
-  if (accessToken == null || userId == null || deviceId == null || homeserverUrl == null) {
+  val slidingSyncVersion = map.getMap(kSession_slidingSyncVersion)
+  if (accessToken == null || userId == null || deviceId == null || homeserverUrl == null || slidingSyncVersion == null) {
     return null
   }
   return Session(
@@ -154,7 +122,7 @@ fun sessionFromMap(map: ReadableMap): Session? {
     deviceId = deviceId,
     homeserverUrl = homeserverUrl,
     oidcData = map.getString(kSession_oidcData),
-    slidingSyncProxy = map.getString(kSession_slidingSyncProxy))
+    slidingSyncVersion = slidingSyncVersionFromMap(slidingSyncVersion)!!)
 }
 
 fun sessionToMap(session: Session): WritableMap {
@@ -165,8 +133,68 @@ fun sessionToMap(session: Session): WritableMap {
   map.putString(kSession_deviceId, session.deviceId)
   map.putString(kSession_homeserverUrl, session.homeserverUrl)
   map.putString(kSession_oidcData, session.oidcData)
-  map.putString(kSession_slidingSyncProxy, session.slidingSyncProxy)
+  map.putMap(kSession_slidingSyncVersion, slidingSyncVersionToMap(session.slidingSyncVersion))
   return map
+}
+
+// endregion
+
+// region SlidingSyncVersion
+
+// MARK: - SlidingSyncVersion
+
+private const val kSlidingSyncVersion_type = "type"
+private const val kSlidingSyncVersion_type_none = "none"
+private const val kSlidingSyncVersion_type_proxy = "proxy"
+private const val kSlidingSyncVersion_type_native = "native"
+private const val kSlidingSyncVersion_url = "url"
+
+fun slidingSyncVersionFromMap(map: ReadableMap): SlidingSyncVersion? {
+  return when (map.getString(kSlidingSyncVersion_type)) {
+    kSlidingSyncVersion_type_none -> SlidingSyncVersion.None
+    kSlidingSyncVersion_type_proxy -> {
+      val url = map.getString(kSlidingSyncVersion_url) ?: return null
+      return SlidingSyncVersion.Proxy(url)
+    }
+    kSlidingSyncVersion_type_native -> SlidingSyncVersion.Native
+    else -> null
+  }
+}
+
+fun slidingSyncVersionToMap(version: SlidingSyncVersion): WritableMap {
+  return when (version) {
+    is SlidingSyncVersion.None -> Arguments.createMap().apply {
+      putString(kSlidingSyncVersion_type, kSlidingSyncVersion_type_none)
+    }
+    is SlidingSyncVersion.Proxy ->Arguments.createMap().apply {
+      putString(kSlidingSyncVersion_type, kSlidingSyncVersion_type_proxy)
+      putString(kSlidingSyncVersion_url, version.url)
+    }
+    is SlidingSyncVersion.Native -> Arguments.createMap().apply {
+      putString(kSlidingSyncVersion_type, kSlidingSyncVersion_type_native)
+    }
+  }
+}
+
+// endregion
+
+// region SlidingSyncVersionBuilder
+
+private const val kSlidingSyncVersionBuilder_type = "type"
+private const val kSlidingSyncVersionBuilder_url = "url"
+
+fun slidingSyncVersionBuilderFromMap(map: ReadableMap): SlidingSyncVersionBuilder? {
+  return when (map.getString(kSlidingSyncVersionBuilder_type)) {
+    "none" -> SlidingSyncVersionBuilder.None
+    "proxy" -> {
+      val url = map.getString(kSlidingSyncVersionBuilder_url) ?: return null
+      return SlidingSyncVersionBuilder.Proxy(url)
+    }
+    "native" -> SlidingSyncVersionBuilder.Native
+    "discoverProxy" -> SlidingSyncVersionBuilder.DiscoverProxy
+    "discoverNative" -> SlidingSyncVersionBuilder.DiscoverNative
+    else -> null
+  }
 }
 
 // endregion

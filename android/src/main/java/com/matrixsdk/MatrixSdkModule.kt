@@ -180,12 +180,14 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     return clientBuilder_store.add(clientBuilder_store.remove(id)!!.passphrase(passphrase))
   }
 
-  override fun clientBuilder_sessionPath(id: String, path: String): String {
-    return clientBuilder_store.add(clientBuilder_store.remove(id)!!.sessionPath(path))
+  override fun clientBuilder_sessionPaths(id: String, dataPath: String, cachePath: String): String {
+    return clientBuilder_store.add(clientBuilder_store.remove(id)!!.sessionPaths(dataPath, cachePath))
   }
 
-  override fun clientBuilder_slidingSyncProxy(id: String, slidingSyncProxy: String?): String {
-    return clientBuilder_store.add(clientBuilder_store.remove(id)!!.slidingSyncProxy(slidingSyncProxy))
+  override fun clientBuilder_slidingSyncVersionBuilder(id: String, versionBuilder: ReadableMap): String {
+    return clientBuilder_store.add(
+      clientBuilder_store.remove(id)!!.slidingSyncVersionBuilder(
+        slidingSyncVersionBuilderFromMap(versionBuilder)!!))
   }
 
   override fun clientBuilder_username(id: String, username: String): String {
@@ -212,11 +214,9 @@ class MatrixSdkModule : NativeMatrixSdkSpec {
     roomList_store.remove(id)
   }
 
-  override fun roomList_entries(id: String, listenerId: String): WritableMap {
+  override fun roomList_entries(id: String, listenerId: String): String {
     val listener = roomListEntriesListener_store.get(listenerId)!!
-    val result = roomList_store.get(id)!!.entries(listener)
-    val entriesStreamId = taskHandle_store.add(result.entriesStream)
-    return roomListEntriesResultToMap(result.entries, entriesStreamId)
+    return taskHandle_store.add(roomList_store.get(id)!!.entries(listener))
   }
 
   // endregion

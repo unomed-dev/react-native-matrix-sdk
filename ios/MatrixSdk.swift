@@ -140,14 +140,16 @@ extension MatrixSdk {
         clientBuilder_store.add(clientBuilder_store.remove(id)!.passphrase(passphrase: passphrase))
     }
 
-    @objc(clientBuilder_sessionPath:path:)
-    func clientBuilder_sessionPath(id: String, path: String) -> String {
-        clientBuilder_store.add(clientBuilder_store.remove(id)!.sessionPath(path: path))
+    @objc(clientBuilder_sessionPaths:dataPath:cachePath:)
+    func clientBuilder_sessionPaths(id: String, dataPath: String, cachePath: String) -> String {
+        clientBuilder_store.add(clientBuilder_store.remove(id)!.sessionPaths(dataPath: dataPath, cachePath: cachePath))
     }
 
-    @objc(clientBuilder_slidingSyncProxy:slidingSyncProxy:)
-    func clientBuilder_slidingSyncProxy(id: String, slidingSyncProxy: String?) -> String {
-        clientBuilder_store.add(clientBuilder_store.remove(id)!.slidingSyncProxy(slidingSyncProxy: slidingSyncProxy))
+    @objc(clientBuilder_slidingSyncVersionBuilder:versionBuilder:)
+    func clientBuilder_slidingSyncVersionBuilder(id: String, versionBuilder: [AnyHashable: Any]) -> String {
+        clientBuilder_store.add(
+            clientBuilder_store.remove(id)!.slidingSyncVersionBuilder(
+                versionBuilder: slidingSyncVersionBuilderFromDictionary(versionBuilder)!))
     }
 
     @objc(clientBuilder_username:username:)
@@ -175,11 +177,9 @@ extension MatrixSdk {
     }
 
     @objc(roomList_entries:listenerId:)
-    func roomList_entries(id: String, listenerId: String) -> [AnyHashable: Any] {
+    func roomList_entries(id: String, listenerId: String) -> String {
         let listener = roomListEntriesListener_store.get(listenerId)!
-        let result = roomList_store.get(id)!.entries(listener: listener)
-        let entriesStreamId = taskHandle_store.add(result.entriesStream)
-        return roomListEntriesResultToDictionary(entries: result.entries, entriesStreamId: entriesStreamId)
+        return taskHandle_store.add(roomList_store.get(id)!.entries(listener: listener))
     }
 
     // MARK: - RoomListEntriesListener
