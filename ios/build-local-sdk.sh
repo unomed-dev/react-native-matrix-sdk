@@ -17,7 +17,9 @@ rm -rvf "${target}"/*.xcframework
   
 announce "Building bindings"
 pushd "$1"
-unset SDKROOT && cargo xtask swift build-framework \
+# Due to https://github.com/matrix-org/matrix-rust-sdk/issues/4009 the bindings causes
+# crashes in debug mode
+unset SDKROOT && cargo xtask swift build-framework --release \
   --target aarch64-apple-ios-sim # Simulator on Apple Silicon Mac
   # --target x86_64-apple-ios    # Simulator on Intel Mac
   # --target aarch64-apple-ios   # Device

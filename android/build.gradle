@@ -118,7 +118,7 @@ dependencies {
     implementation "net.java.dev.jna:jna:5.14.0@aar"
     artifacts.add("default", file("matrix-rust-sdk.aar"))
   } else {
-    implementation "org.matrix.rustcomponents:sdk-android:0.2.40"
+    implementation "org.matrix.rustcomponents:sdk-android:0.2.46"
   }
 }
 

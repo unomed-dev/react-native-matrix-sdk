@@ -28,7 +28,7 @@ Pod::Spec.new do |s|
     :src_dir => "matrix-rust-components-swift-#{version}",
     :src_zip => "matrix-rust-components-swift-#{version}.zip",
     :src_url => "https://github.com/matrix-org/matrix-rust-components-swift/archive/refs/tags/v#{version}.zip"
-  } }.call("1.1.68")
+  } }.call("1.2.0")
 
   # Comment out when using locally built FFI bindings
   s.prepare_command = <<-CMD
