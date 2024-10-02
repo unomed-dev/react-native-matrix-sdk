@@ -4,7 +4,7 @@ set -e
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 
-ubrn="$root/node_modules/.bin/uniffi-bindgen-react-native"
+ubrn="yarn run ubrn"
 config="$root/uniffi.yaml"
 modules=("matrix_sdk_ffi" "matrix_sdk_ui")
 

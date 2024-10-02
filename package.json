@@ -75,7 +75,7 @@
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2",
-    "uniffi-bindgen-react-native": "https://github.com/jhugman/uniffi-bindgen-react-native#4adf6d9190ea2eac852e3be7ee83b0b2271e4b18"
+    "uniffi-bindgen-react-native": "https://github.com/jhugman/uniffi-bindgen-react-native#46f81224e4aae9a05dc7c8e209b4750c014f4d02"
   },
   "resolutions": {
     "@types/react": "^18.2.44"
@@ -162,7 +162,7 @@
     ]
   },
   "codegenConfig": {
-    "name": "RNMatrixSdkSpec",
+    "name": "NativeReactNativeMatrixSdkSpec",
     "type": "modules",
     "jsSrcsDir": "src"
   }

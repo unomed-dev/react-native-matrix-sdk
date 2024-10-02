@@ -3,13 +3,13 @@
 #include "generated/matrix_sdk_ffi.hpp"
 #include "generated/matrix_sdk_ui.hpp"
 
-namespace matrixsdk {
+namespace reactnativematrixsdk {
 	using namespace facebook;
 
 	uint8_t installRustCrate(jsi::Runtime &runtime, std::shared_ptr<react::CallInvoker> callInvoker) {
 		NativeMatrixSdkFfi::registerModule(runtime, callInvoker);
 		NativeMatrixSdkUi::registerModule(runtime, callInvoker);
-		return false;
+		return true;
 	}
 
 	uint8_t cleanupRustCrate(jsi::Runtime &runtime) {

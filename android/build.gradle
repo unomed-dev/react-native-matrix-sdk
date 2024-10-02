@@ -22,11 +22,11 @@ if (isNewArchitectureEnabled()) {
 }
 
 def getExtOrDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["MatrixSdk_" + name]
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["ReactNativeMatrixSdk_" + name]
 }
 
 def getExtOrIntegerDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["MatrixSdk_" + name]).toInteger()
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["ReactNativeMatrixSdk_" + name]).toInteger()
 }
 
 def supportsNamespace() {
@@ -40,7 +40,7 @@ def supportsNamespace() {
 
 android {
   if (supportsNamespace()) {
-    namespace "com.matrixsdk"
+    namespace "com.reactnativematrixsdk"
 
     sourceSets {
       main {
@@ -123,7 +123,7 @@ dependencies {
 if (isNewArchitectureEnabled()) {
   react {
     jsRootDir = file("../src/")
-    libraryName = "MatrixSdk"
-    codegenJavaPackageName = "com.matrixsdk"
+    libraryName = "ReactNativeMatrixSdk"
+    codegenJavaPackageName = "com.reactnativematrixsdk"
   }
 }

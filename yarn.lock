@@ -10814,7 +10814,7 @@ __metadata:
     release-it: ^15.0.0
     turbo: ^1.10.7
     typescript: ^5.2.2
-    uniffi-bindgen-react-native: "https://github.com/jhugman/uniffi-bindgen-react-native#4adf6d9190ea2eac852e3be7ee83b0b2271e4b18"
+    uniffi-bindgen-react-native: "https://github.com/jhugman/uniffi-bindgen-react-native#46f81224e4aae9a05dc7c8e209b4750c014f4d02"
   peerDependencies:
     react: "*"
     react-native: "*"
@@ -12724,13 +12724,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uniffi-bindgen-react-native@https://github.com/jhugman/uniffi-bindgen-react-native#4adf6d9190ea2eac852e3be7ee83b0b2271e4b18":
+"uniffi-bindgen-react-native@https://github.com/jhugman/uniffi-bindgen-react-native#46f81224e4aae9a05dc7c8e209b4750c014f4d02":
   version: 0.0.1
-  resolution: "uniffi-bindgen-react-native@https://github.com/jhugman/uniffi-bindgen-react-native.git#commit=4adf6d9190ea2eac852e3be7ee83b0b2271e4b18"
+  resolution: "uniffi-bindgen-react-native@https://github.com/jhugman/uniffi-bindgen-react-native.git#commit=46f81224e4aae9a05dc7c8e209b4750c014f4d02"
   bin:
-    ubrn: ./bin/cli
-    uniffi-bindgen-react-native: ./bin/cli
-  checksum: a9c37cf80d2eac26f6339975563d6f4af5fe96d6e04e8ab7b4c8715a8411c2b369403e9f8401eb6bc099315c839ad47a7acba38aef57c518c34550eec8801e48
+    ubrn: ./bin/cli.cjs
+    uniffi-bindgen-react-native: ./bin/cli.cjs
+  checksum: ea2dbf3c2ecd67f6362ddf0a5b1c4592c3802fac23371da0cdf319e6c38e56e85eb51adb359c7b4e85edc6c19aa01e826a45453065982e5f3c0226868369e412
   languageName: node
   linkType: hard
 
