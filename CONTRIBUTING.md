@@ -84,32 +84,13 @@ yarn test
 ```
 
 
-### Local matrix-rust-sdk
+### Regenerating the module
 
-By default the project is set up to consume the FFI bindings of [matrix-rust-sdk] via public
-releases of [matrix-rust-components-kotlin] and [matrix-rust-components-swift]. To build the
-bindings from a local checkout, follow the steps below.
-
-For Android, run
+To regenerate the Turbo Module, run:
 
 ```sh
-android/build-local-sdk.sh PATH_TO_MATRIX_RUST_COMPONENTS_KOTLIN_CHECKOUT PATH_TO_RUST_SDK_CHECKOUT"
+yarn generate
 ```
-
-To revert back to using the prebuilt remote bindings, delete the `.aar` file under `android/libs`
-and the Kotlin files in `android/src/main/java/org` and `android/src/main/java/uniffi`.
-
-For iOS, run
-
-```sh
-ios/build-local-sdk.sh PATH_TO_RUST_SDK_CHECKOUT
-```
-
-Afterwards, comment out `prepare_command` in `react-native-matrix-sdk.podspec` and run
-`pod install` in `example/ios`.
-
-The script will build the bindings for the simulator on Apple Silicon Macs. If you need to
-build for a different architecture, change the `--target` argument inside the script.
 
 
 ### Commit message convention
