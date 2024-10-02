@@ -64,5 +64,7 @@ Made with [create-react-native-library]
 
 [contributing guide]: CONTRIBUTING.md
 [create-react-native-library]: https://github.com/callstack/react-native-builder-bob
+[example/src/App.tsx]: example/src/App.tsx
 [matrix-rust-sdk]: https://github.com/matrix-org/matrix-rust-sdk
+[src/index.ts]: src/index.ts
 [uniffi-bindgen-react-native]: https://github.com/jhugman/uniffi-bindgen-react-native
