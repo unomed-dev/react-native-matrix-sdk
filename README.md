@@ -34,6 +34,13 @@ const config = {
 };
 ```
 
+On the first build or any time you update the version of matrix-rust-sdk, you'll have
+to rebuild the Rust code and regenerate the module with
+
+```sh
+yarn generate
+```
+
 In future, you will be able to install the module from npm.
 
 ```sh
