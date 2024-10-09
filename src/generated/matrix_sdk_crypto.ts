@@ -375,6 +375,74 @@ const FfiConverterTypeCollectStrategy = (() => {
 })();
 
 /**
+ * The state of an identity - verified, pinned etc.
+ */
+export enum IdentityState {
+  /**
+   * The user is verified with us
+   */
+  Verified,
+  /**
+   * Either this is the first identity we have seen for this user, or the
+   * user has acknowledged a change of identity explicitly e.g. by
+   * clicking OK on a notification.
+   */
+  Pinned,
+  /**
+   * The user's identity has changed since it was pinned. The user should be
+   * notified about this and given the opportunity to acknowledge the
+   * change, which will make the new identity pinned.
+   * When the user acknowledges the change, the app should call
+   * [`crate::OtherUserIdentity::pin_current_master_key`].
+   */
+  PinViolation,
+  /**
+   * The user's identity has changed, and before that it was verified. This
+   * is a serious problem. The user can either verify again to make this
+   * identity verified, or withdraw verification
+   * [`UserIdentity::withdraw_verification`] to make it pinned.
+   */
+  VerificationViolation,
+}
+
+const FfiConverterTypeIdentityState = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = IdentityState;
+  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return IdentityState.Verified;
+        case 2:
+          return IdentityState.Pinned;
+        case 3:
+          return IdentityState.PinViolation;
+        case 4:
+          return IdentityState.VerificationViolation;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case IdentityState.Verified:
+          return ordinalConverter.write(1, into);
+        case IdentityState.Pinned:
+          return ordinalConverter.write(2, into);
+        case IdentityState.PinViolation:
+          return ordinalConverter.write(3, into);
+        case IdentityState.VerificationViolation:
+          return ordinalConverter.write(4, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
  * The local trust state of a device.
  */
 export enum LocalTrust {
@@ -878,6 +946,7 @@ export default Object.freeze({
   converters: {
     FfiConverterTypeCollectStrategy,
     FfiConverterTypeDecryptionSettings,
+    FfiConverterTypeIdentityState,
     FfiConverterTypeLocalTrust,
     FfiConverterTypeSignatureState,
     FfiConverterTypeTrustRequirement,

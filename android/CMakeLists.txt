@@ -27,6 +27,10 @@ include_directories(
 add_library(
     ${CMAKE_PROJECT_NAME} SHARED
     ../cpp/react-native-matrix-sdk.cpp
+    ../cpp/generated/matrix_sdk.cpp
+    ../cpp/generated/matrix_sdk_base.cpp
+    ../cpp/generated/matrix_sdk_common.cpp
+    ../cpp/generated/matrix_sdk_crypto.cpp
     ../cpp/generated/matrix_sdk_ffi.cpp
     ../cpp/generated/matrix_sdk_ui.cpp
     cpp-adapter.cpp

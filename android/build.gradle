@@ -40,7 +40,7 @@ def supportsNamespace() {
 
 android {
   if (supportsNamespace()) {
-    namespace "com.reactnativematrixsdk"
+    namespace "com.matrixsdk"
 
     sourceSets {
       main {
@@ -124,6 +124,6 @@ if (isNewArchitectureEnabled()) {
   react {
     jsRootDir = file("../src/")
     libraryName = "ReactNativeMatrixSdk"
-    codegenJavaPackageName = "com.reactnativematrixsdk"
+    codegenJavaPackageName = "com.matrixsdk"
   }
 }

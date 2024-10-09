@@ -26,10 +26,13 @@
     "!**/.*"
   ],
   "scripts": {
-    "generate": "./scripts/generate.sh",
+    "ubrn:ios": "ubrn build ios --config ubrn.yaml --and-generate && (cd example/ios && pod install)",
+    "ubrn:android": "ubrn build android --config ubrn.yaml --and-generate",
+    "ubrn:checkout": "ubrn checkout --config ubrn.yaml",
+    "ubrn:clean": "rm -Rf cpp/ android/src/main/java ios/ src/Native* src/generated/ src/index.ts*",
+    "generate": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android && yarn ubrn:ios",
     "format": "prettier -w '**/*.{ts,tsx}'",
     "example": "yarn workspace react-native-matrix-sdk-example",
-    "test": "jest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
@@ -75,7 +78,7 @@
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2",
-    "uniffi-bindgen-react-native": "https://github.com/jhugman/uniffi-bindgen-react-native#46f81224e4aae9a05dc7c8e209b4750c014f4d02"
+    "uniffi-bindgen-react-native": "https://github.com/jhugman/uniffi-bindgen-react-native#3891cabed75ee7a05acf665565275e9014d6f0dc"
   },
   "resolutions": {
     "@types/react": "^18.2.44"

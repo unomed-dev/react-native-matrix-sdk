@@ -486,6 +486,10 @@ interface NativeModuleInterface {
     passphrase: ArrayBuffer,
     progressListener: bigint
   ): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_encryption_get_user_identity(
+    ptr: bigint,
+    userId: ArrayBuffer
+  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_encryption_is_last_device(
     ptr: bigint
   ): bigint;
@@ -995,6 +999,11 @@ interface NativeModuleInterface {
     ptr: bigint,
     newValue: number
   ): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_identity_status_changes(
+    ptr: bigint,
+    listener: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_room_info_updates(
     ptr: bigint,
     listener: bigint,
@@ -1082,11 +1091,6 @@ interface NativeModuleInterface {
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): void;
-  uniffi_matrix_sdk_ffi_fn_method_roomlist_entries(
-    ptr: bigint,
-    listener: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_roomlist_entries_with_dynamic_adapters(
     ptr: bigint,
     pageSize: number,
@@ -1712,6 +1716,19 @@ interface NativeModuleInterface {
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): number;
+  uniffi_matrix_sdk_ffi_fn_clone_useridentity(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
+  uniffi_matrix_sdk_ffi_fn_free_useridentity(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): void;
+  uniffi_matrix_sdk_ffi_fn_method_useridentity_master_key(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_method_useridentity_pin(ptr: bigint): bigint;
   uniffi_matrix_sdk_ffi_fn_clone_widgetdriver(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -2089,6 +2106,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_encryption_ed25519_key(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_backups(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_recovery(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_encryption_get_user_identity(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_is_last_device(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_recover(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_recover_and_reset(): number;
@@ -2200,6 +2218,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_room_set_name(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_set_topic(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_set_unread_flag(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_room_info_updates(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_typing_notifications(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_suggested_role_for_user(): number;
@@ -2217,7 +2236,6 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_next_page(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_results(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_search(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_roomlist_entries(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlist_entries_with_dynamic_adapters(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlist_loading_state(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlist_room(): number;
@@ -2321,6 +2339,8 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_has_notifications(): number;
   uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_highlight_count(): number;
   uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_notification_count(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin(): number;
   uniffi_matrix_sdk_ffi_checksum_method_widgetdriver_run(): number;
   uniffi_matrix_sdk_ffi_checksum_method_widgetdriverhandle_recv(): number;
   uniffi_matrix_sdk_ffi_checksum_method_widgetdriverhandle_send(): number;
@@ -2338,6 +2358,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_clientsessiondelegate_retrieve_session_from_keychain(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientsessiondelegate_save_session_in_keychain(): number;
   uniffi_matrix_sdk_ffi_checksum_method_enablerecoveryprogresslistener_on_update(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_identitystatuschangelistener_call(): number;
   uniffi_matrix_sdk_ffi_checksum_method_ignoreduserslistener_call(): number;
   uniffi_matrix_sdk_ffi_checksum_method_notificationsettingsdelegate_settings_did_change(): number;
   uniffi_matrix_sdk_ffi_checksum_method_paginationstatuslistener_on_update(): number;
@@ -2378,6 +2399,9 @@ interface NativeModuleInterface {
   ): void;
   uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(
     vtable: UniffiVTableCallbackInterfaceEnableRecoveryProgressListener
+  ): void;
+  uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
+    vtable: UniffiVTableCallbackInterfaceIdentityStatusChangeListener
   ): void;
   uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(
     vtable: UniffiVTableCallbackInterfaceIgnoredUsersListener
@@ -2587,6 +2611,10 @@ interface NativeModuleInterface {
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): UniffiRustArcPtr;
+  uniffi_internal_fn_method_useridentity_ffi__bless_pointer(
+    pointer: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): UniffiRustArcPtr;
   uniffi_internal_fn_method_widgetdriver_ffi__bless_pointer(
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -2761,6 +2789,12 @@ type UniffiCallbackInterfaceEnableRecoveryProgressListenerMethod0 = (
   uniffiOutReturn: /*pointer*/ bigint,
   callStatus: UniffiRustCallStatus
 ) => void;
+type UniffiCallbackInterfaceIdentityStatusChangeListenerMethod0 = (
+  uniffiHandle: bigint,
+  identityStatusChange: ArrayBuffer,
+  uniffiOutReturn: /*pointer*/ bigint,
+  callStatus: UniffiRustCallStatus
+) => void;
 type UniffiCallbackInterfaceIgnoredUsersListenerMethod0 = (
   uniffiHandle: bigint,
   ignoredUserIds: ArrayBuffer,
@@ -2926,6 +2960,10 @@ export type UniffiVTableCallbackInterfaceClientSessionDelegate = {
 };
 export type UniffiVTableCallbackInterfaceEnableRecoveryProgressListener = {
   onUpdate: UniffiCallbackInterfaceEnableRecoveryProgressListenerMethod0;
+  uniffiFree: UniffiCallbackInterfaceFree;
+};
+export type UniffiVTableCallbackInterfaceIdentityStatusChangeListener = {
+  call: UniffiCallbackInterfaceIdentityStatusChangeListenerMethod0;
   uniffiFree: UniffiCallbackInterfaceFree;
 };
 export type UniffiVTableCallbackInterfaceIgnoredUsersListener = {

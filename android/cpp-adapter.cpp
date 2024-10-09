@@ -10,7 +10,7 @@ namespace react = facebook::react;
 // Installer coming from ReactNativeMatrixSdkModule
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_reactnativematrixsdk_ReactNativeMatrixSdkModule_nativeInstallRustCrate(
+Java_com_matrixsdk_ReactNativeMatrixSdkModule_nativeInstallRustCrate(
     JNIEnv *env,
     jclass type,
     jlong rtPtr,
@@ -49,7 +49,7 @@ Java_com_reactnativematrixsdk_ReactNativeMatrixSdkModule_nativeInstallRustCrate(
 
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_reactnativematrixsdk_ReactNativeMatrixSdkModule_nativeCleanupRustCrate(JNIEnv *env, jclass type, jlong rtPtr) {
+Java_com_matrixsdk_ReactNativeMatrixSdkModule_nativeCleanupRustCrate(JNIEnv *env, jclass type, jlong rtPtr) {
     auto runtime = reinterpret_cast<jsi::Runtime *>(rtPtr);
     return reactnativematrixsdk::cleanupRustCrate(*runtime);
 }

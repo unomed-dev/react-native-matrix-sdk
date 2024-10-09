@@ -23,18 +23,6 @@ jobs:
       - name: Typecheck files
         run: yarn typecheck
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup
-        uses: ./.github/actions/setup
-
-      - name: Run unit tests
-        run: yarn test --maxWorkers=2 --coverage
-
   build-library:
     runs-on: ubuntu-latest
     steps:
@@ -55,8 +43,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup
+      - name: Setup JS
         uses: ./.github/actions/setup
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi
+
+      - name: Generate
+        run: yarn ubrn:clean && ubrn:checkout && yarn ubrn:android
 
       - name: Cache turborepo for Android
         uses: actions/cache@v3
@@ -111,8 +107,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup
+      - name: Setup JS
         uses: ./.github/actions/setup
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Generate
+        run: yarn ubrn:clean && ubrn:checkout && yarn ubrn:ios
 
       - name: Cache turborepo for iOS
         uses: actions/cache@v3

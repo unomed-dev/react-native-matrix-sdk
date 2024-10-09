@@ -120,7 +120,7 @@ export enum ShieldStateCode {
   /**
    * The sender was previously verified but changed their identity.
    */
-  PreviouslyVerified,
+  VerificationViolation,
 }
 
 const FfiConverterTypeShieldStateCode = (() => {
@@ -140,7 +140,7 @@ const FfiConverterTypeShieldStateCode = (() => {
         case 5:
           return ShieldStateCode.SentInClear;
         case 6:
-          return ShieldStateCode.PreviouslyVerified;
+          return ShieldStateCode.VerificationViolation;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -157,7 +157,7 @@ const FfiConverterTypeShieldStateCode = (() => {
           return ordinalConverter.write(4, into);
         case ShieldStateCode.SentInClear:
           return ordinalConverter.write(5, into);
-        case ShieldStateCode.PreviouslyVerified:
+        case ShieldStateCode.VerificationViolation:
           return ordinalConverter.write(6, into);
       }
     }

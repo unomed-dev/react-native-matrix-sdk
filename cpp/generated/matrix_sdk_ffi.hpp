@@ -388,6 +388,9 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_enable_recovery(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_get_user_identity(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_is_last_device(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -823,6 +826,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_identity_status_changes(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_room_info_updates(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -889,9 +896,6 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_free_roomlist(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roomlist_entries(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -1369,6 +1373,18 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_unreadnotificationscount_notification_count(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_useridentity(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_free_useridentity(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_useridentity_master_key(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_useridentity_pin(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_widgetdriver(
@@ -2031,6 +2047,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_encryption_get_user_identity(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_encryption_is_last_device(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2421,6 +2441,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_room_info_updates(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2480,9 +2504,6 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_search(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_roomlist_entries(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2841,6 +2862,12 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_notification_count(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_widgetdriver_run(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2901,6 +2928,10 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_enablerecoveryprogresslistener_on_update(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_identitystatuschangelistener_call(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -3022,6 +3053,10 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -3227,6 +3262,9 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_internal_fn_method_unreadnotificationscount_ffi__bless_pointer(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_internal_fn_method_useridentity_ffi__bless_pointer(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_internal_fn_method_widgetdriver_ffi__bless_pointer(

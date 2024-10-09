@@ -36,6 +36,7 @@ import nativeModule, {
   type UniffiVTableCallbackInterfaceClientDelegate,
   type UniffiVTableCallbackInterfaceClientSessionDelegate,
   type UniffiVTableCallbackInterfaceEnableRecoveryProgressListener,
+  type UniffiVTableCallbackInterfaceIdentityStatusChangeListener,
   type UniffiVTableCallbackInterfaceIgnoredUsersListener,
   type UniffiVTableCallbackInterfaceNotificationSettingsDelegate,
   type UniffiVTableCallbackInterfacePaginationStatusListener,
@@ -66,6 +67,7 @@ import {
 import { ShieldStateCode } from './matrix_sdk_common';
 import {
   CollectStrategy,
+  IdentityState,
   TrustRequirement,
   UtdCause,
 } from './matrix_sdk_crypto';
@@ -132,6 +134,7 @@ const { FfiConverterTypeShieldStateCode } =
   uniffiMatrixSdkCommonModule.converters;
 const {
   FfiConverterTypeCollectStrategy,
+  FfiConverterTypeIdentityState,
   FfiConverterTypeTrustRequirement,
   FfiConverterTypeUtdCause,
 } = uniffiMatrixSdkCryptoModule.converters;
@@ -864,6 +867,56 @@ const uniffiCallbackInterfaceEnableRecoveryProgressListener: {
 // FfiConverter protocol for callback interfaces
 const FfiConverterTypeEnableRecoveryProgressListener =
   new FfiConverterCallback<EnableRecoveryProgressListener>();
+
+export interface IdentityStatusChangeListener {
+  call(identityStatusChange: Array<IdentityStatusChange>): void;
+}
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+const uniffiCallbackInterfaceIdentityStatusChangeListener: {
+  vtable: UniffiVTableCallbackInterfaceIdentityStatusChangeListener;
+  register: () => void;
+} = {
+  // Create the VTable using a series of closures.
+  // ts automatically converts these into C callback functions.
+  vtable: {
+    call: (
+      uniffiHandle: bigint,
+      identityStatusChange: ArrayBuffer,
+      uniffiOutReturn: /*pointer*/ bigint,
+      uniffiCallStatus: UniffiRustCallStatus
+    ) => {
+      const uniffiMakeCall = (): void => {
+        const jsCallback =
+          FfiConverterTypeIdentityStatusChangeListener.lift(uniffiHandle);
+        return jsCallback.call(
+          FfiConverterArrayTypeIdentityStatusChange.lift(identityStatusChange)
+        );
+      };
+
+      const uniffiWriteReturn = (obj: any) => {};
+      uniffiTraitInterfaceCall(
+        /*callStatus:*/ uniffiCallStatus,
+        /*makeCall:*/ uniffiMakeCall,
+        /*writeReturn:*/ uniffiWriteReturn,
+        /*lowerString:*/ FfiConverterString.lower
+      );
+    },
+    uniffiFree: (uniffiHandle: UniffiHandle): void => {
+      // IdentityStatusChangeListener: this will throw a stale handle error if the handle isn't found.
+      FfiConverterTypeIdentityStatusChangeListener.drop(uniffiHandle);
+    },
+  },
+  register: () => {
+    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
+      uniffiCallbackInterfaceIdentityStatusChangeListener.vtable
+    );
+  },
+};
+
+// FfiConverter protocol for callback interfaces
+const FfiConverterTypeIdentityStatusChangeListener =
+  new FfiConverterCallback<IdentityStatusChangeListener>();
 
 export interface IgnoredUsersListener {
   call(ignoredUserIds: Array<string>): void;
@@ -2038,9 +2091,27 @@ const FfiConverterTypeAudioInfo = (() => {
 })();
 
 export type AudioMessageContent = {
+  /**
+   * The original body field, deserialized from the event. Prefer the use of
+   * `filename` and `caption` over this.
+   */
   body: string;
+  /**
+   * The original formatted body field, deserialized from the event. Prefer
+   * the use of `filename` and `formatted_caption` over this.
+   */
   formatted: FormattedBody | undefined;
-  filename: string | undefined;
+  /**
+   * The original filename field, deserialized from the event. Prefer the use
+   * of `filename` over this.
+   */
+  rawFilename: string | undefined;
+  /**
+   * The computed filename, for use in a client.
+   */
+  filename: string;
+  caption: string | undefined;
+  formattedCaption: FormattedBody | undefined;
   source: MediaSourceInterface;
   info: AudioInfo | undefined;
   audio: UnstableAudioDetailsContent | undefined;
@@ -2084,7 +2155,10 @@ const FfiConverterTypeAudioMessageContent = (() => {
       return {
         body: FfiConverterString.read(from),
         formatted: FfiConverterOptionalTypeFormattedBody.read(from),
-        filename: FfiConverterOptionalString.read(from),
+        rawFilename: FfiConverterOptionalString.read(from),
+        filename: FfiConverterString.read(from),
+        caption: FfiConverterOptionalString.read(from),
+        formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
         source: FfiConverterTypeMediaSource.read(from),
         info: FfiConverterOptionalTypeAudioInfo.read(from),
         audio: FfiConverterOptionalTypeUnstableAudioDetailsContent.read(from),
@@ -2094,7 +2168,10 @@ const FfiConverterTypeAudioMessageContent = (() => {
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterString.write(value.body, into);
       FfiConverterOptionalTypeFormattedBody.write(value.formatted, into);
-      FfiConverterOptionalString.write(value.filename, into);
+      FfiConverterOptionalString.write(value.rawFilename, into);
+      FfiConverterString.write(value.filename, into);
+      FfiConverterOptionalString.write(value.caption, into);
+      FfiConverterOptionalTypeFormattedBody.write(value.formattedCaption, into);
       FfiConverterTypeMediaSource.write(value.source, into);
       FfiConverterOptionalTypeAudioInfo.write(value.info, into);
       FfiConverterOptionalTypeUnstableAudioDetailsContent.write(
@@ -2107,7 +2184,12 @@ const FfiConverterTypeAudioMessageContent = (() => {
       return (
         FfiConverterString.allocationSize(value.body) +
         FfiConverterOptionalTypeFormattedBody.allocationSize(value.formatted) +
-        FfiConverterOptionalString.allocationSize(value.filename) +
+        FfiConverterOptionalString.allocationSize(value.rawFilename) +
+        FfiConverterString.allocationSize(value.filename) +
+        FfiConverterOptionalString.allocationSize(value.caption) +
+        FfiConverterOptionalTypeFormattedBody.allocationSize(
+          value.formattedCaption
+        ) +
         FfiConverterTypeMediaSource.allocationSize(value.source) +
         FfiConverterOptionalTypeAudioInfo.allocationSize(value.info) +
         FfiConverterOptionalTypeUnstableAudioDetailsContent.allocationSize(
@@ -2873,9 +2955,27 @@ const FfiConverterTypeFileInfo = (() => {
 })();
 
 export type FileMessageContent = {
+  /**
+   * The original body field, deserialized from the event. Prefer the use of
+   * `filename` and `caption` over this.
+   */
   body: string;
+  /**
+   * The original formatted body field, deserialized from the event. Prefer
+   * the use of `filename` and `formatted_caption` over this.
+   */
   formatted: FormattedBody | undefined;
-  filename: string | undefined;
+  /**
+   * The original filename field, deserialized from the event. Prefer the use
+   * of `filename` over this.
+   */
+  rawFilename: string | undefined;
+  /**
+   * The computed filename, for use in a client.
+   */
+  filename: string;
+  caption: string | undefined;
+  formattedCaption: FormattedBody | undefined;
   source: MediaSourceInterface;
   info: FileInfo | undefined;
 };
@@ -2917,7 +3017,10 @@ const FfiConverterTypeFileMessageContent = (() => {
       return {
         body: FfiConverterString.read(from),
         formatted: FfiConverterOptionalTypeFormattedBody.read(from),
-        filename: FfiConverterOptionalString.read(from),
+        rawFilename: FfiConverterOptionalString.read(from),
+        filename: FfiConverterString.read(from),
+        caption: FfiConverterOptionalString.read(from),
+        formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
         source: FfiConverterTypeMediaSource.read(from),
         info: FfiConverterOptionalTypeFileInfo.read(from),
       };
@@ -2925,7 +3028,10 @@ const FfiConverterTypeFileMessageContent = (() => {
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterString.write(value.body, into);
       FfiConverterOptionalTypeFormattedBody.write(value.formatted, into);
-      FfiConverterOptionalString.write(value.filename, into);
+      FfiConverterOptionalString.write(value.rawFilename, into);
+      FfiConverterString.write(value.filename, into);
+      FfiConverterOptionalString.write(value.caption, into);
+      FfiConverterOptionalTypeFormattedBody.write(value.formattedCaption, into);
       FfiConverterTypeMediaSource.write(value.source, into);
       FfiConverterOptionalTypeFileInfo.write(value.info, into);
     }
@@ -2933,7 +3039,12 @@ const FfiConverterTypeFileMessageContent = (() => {
       return (
         FfiConverterString.allocationSize(value.body) +
         FfiConverterOptionalTypeFormattedBody.allocationSize(value.formatted) +
-        FfiConverterOptionalString.allocationSize(value.filename) +
+        FfiConverterOptionalString.allocationSize(value.rawFilename) +
+        FfiConverterString.allocationSize(value.filename) +
+        FfiConverterOptionalString.allocationSize(value.caption) +
+        FfiConverterOptionalTypeFormattedBody.allocationSize(
+          value.formattedCaption
+        ) +
         FfiConverterTypeMediaSource.allocationSize(value.source) +
         FfiConverterOptionalTypeFileInfo.allocationSize(value.info)
       );
@@ -3062,6 +3173,71 @@ const FfiConverterTypeHttpPusherData = (() => {
   return new FFIConverter();
 })();
 
+export type IdentityStatusChange = {
+  /**
+   * The user ID of the user whose identity status changed
+   */
+  userId: string;
+  /**
+   * The new state of the identity of the user.
+   */
+  changedTo: IdentityState;
+};
+
+/**
+ * Generated factory for {@link IdentityStatusChange} record objects.
+ */
+export const IdentityStatusChange = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      IdentityStatusChange,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link IdentityStatusChange}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link IdentityStatusChange}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<IdentityStatusChange>,
+  });
+})();
+
+const FfiConverterTypeIdentityStatusChange = (() => {
+  type TypeName = IdentityStatusChange;
+  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        userId: FfiConverterString.read(from),
+        changedTo: FfiConverterTypeIdentityState.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.userId, into);
+      FfiConverterTypeIdentityState.write(value.changedTo, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterString.allocationSize(value.userId) +
+        FfiConverterTypeIdentityState.allocationSize(value.changedTo)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type ImageInfo = {
   height: /*u64*/ bigint | undefined;
   width: /*u64*/ bigint | undefined;
@@ -3143,9 +3319,27 @@ const FfiConverterTypeImageInfo = (() => {
 })();
 
 export type ImageMessageContent = {
+  /**
+   * The original body field, deserialized from the event. Prefer the use of
+   * `filename` and `caption` over this.
+   */
   body: string;
+  /**
+   * The original formatted body field, deserialized from the event. Prefer
+   * the use of `filename` and `formatted_caption` over this.
+   */
   formatted: FormattedBody | undefined;
-  filename: string | undefined;
+  /**
+   * The original filename field, deserialized from the event. Prefer the use
+   * of `filename` over this.
+   */
+  rawFilename: string | undefined;
+  /**
+   * The computed filename, for use in a client.
+   */
+  filename: string;
+  caption: string | undefined;
+  formattedCaption: FormattedBody | undefined;
   source: MediaSourceInterface;
   info: ImageInfo | undefined;
 };
@@ -3187,7 +3381,10 @@ const FfiConverterTypeImageMessageContent = (() => {
       return {
         body: FfiConverterString.read(from),
         formatted: FfiConverterOptionalTypeFormattedBody.read(from),
-        filename: FfiConverterOptionalString.read(from),
+        rawFilename: FfiConverterOptionalString.read(from),
+        filename: FfiConverterString.read(from),
+        caption: FfiConverterOptionalString.read(from),
+        formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
         source: FfiConverterTypeMediaSource.read(from),
         info: FfiConverterOptionalTypeImageInfo.read(from),
       };
@@ -3195,7 +3392,10 @@ const FfiConverterTypeImageMessageContent = (() => {
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterString.write(value.body, into);
       FfiConverterOptionalTypeFormattedBody.write(value.formatted, into);
-      FfiConverterOptionalString.write(value.filename, into);
+      FfiConverterOptionalString.write(value.rawFilename, into);
+      FfiConverterString.write(value.filename, into);
+      FfiConverterOptionalString.write(value.caption, into);
+      FfiConverterOptionalTypeFormattedBody.write(value.formattedCaption, into);
       FfiConverterTypeMediaSource.write(value.source, into);
       FfiConverterOptionalTypeImageInfo.write(value.info, into);
     }
@@ -3203,7 +3403,12 @@ const FfiConverterTypeImageMessageContent = (() => {
       return (
         FfiConverterString.allocationSize(value.body) +
         FfiConverterOptionalTypeFormattedBody.allocationSize(value.formatted) +
-        FfiConverterOptionalString.allocationSize(value.filename) +
+        FfiConverterOptionalString.allocationSize(value.rawFilename) +
+        FfiConverterString.allocationSize(value.filename) +
+        FfiConverterOptionalString.allocationSize(value.caption) +
+        FfiConverterOptionalTypeFormattedBody.allocationSize(
+          value.formattedCaption
+        ) +
         FfiConverterTypeMediaSource.allocationSize(value.source) +
         FfiConverterOptionalTypeImageInfo.allocationSize(value.info)
       );
@@ -5583,7 +5788,7 @@ const FfiConverterTypeRoomPreview = (() => {
 
 export type RoomSubscription = {
   requiredState: Array<RequiredState> | undefined;
-  timelineLimit: /*u32*/ number | undefined;
+  timelineLimit: /*u32*/ number;
   includeHeroes: boolean | undefined;
 };
 
@@ -5623,7 +5828,7 @@ const FfiConverterTypeRoomSubscription = (() => {
     read(from: RustBuffer): TypeName {
       return {
         requiredState: FfiConverterOptionalArrayTypeRequiredState.read(from),
-        timelineLimit: FfiConverterOptionalUInt32.read(from),
+        timelineLimit: FfiConverterUInt32.read(from),
         includeHeroes: FfiConverterOptionalBool.read(from),
       };
     }
@@ -5632,7 +5837,7 @@ const FfiConverterTypeRoomSubscription = (() => {
         value.requiredState,
         into
       );
-      FfiConverterOptionalUInt32.write(value.timelineLimit, into);
+      FfiConverterUInt32.write(value.timelineLimit, into);
       FfiConverterOptionalBool.write(value.includeHeroes, into);
     }
     allocationSize(value: TypeName): number {
@@ -5640,7 +5845,7 @@ const FfiConverterTypeRoomSubscription = (() => {
         FfiConverterOptionalArrayTypeRequiredState.allocationSize(
           value.requiredState
         ) +
-        FfiConverterOptionalUInt32.allocationSize(value.timelineLimit) +
+        FfiConverterUInt32.allocationSize(value.timelineLimit) +
         FfiConverterOptionalBool.allocationSize(value.includeHeroes)
       );
     }
@@ -6612,9 +6817,27 @@ const FfiConverterTypeVideoInfo = (() => {
 })();
 
 export type VideoMessageContent = {
+  /**
+   * The original body field, deserialized from the event. Prefer the use of
+   * `filename` and `caption` over this.
+   */
   body: string;
+  /**
+   * The original formatted body field, deserialized from the event. Prefer
+   * the use of `filename` and `formatted_caption` over this.
+   */
   formatted: FormattedBody | undefined;
-  filename: string | undefined;
+  /**
+   * The original filename field, deserialized from the event. Prefer the use
+   * of `filename` over this.
+   */
+  rawFilename: string | undefined;
+  /**
+   * The computed filename, for use in a client.
+   */
+  filename: string;
+  caption: string | undefined;
+  formattedCaption: FormattedBody | undefined;
   source: MediaSourceInterface;
   info: VideoInfo | undefined;
 };
@@ -6656,7 +6879,10 @@ const FfiConverterTypeVideoMessageContent = (() => {
       return {
         body: FfiConverterString.read(from),
         formatted: FfiConverterOptionalTypeFormattedBody.read(from),
-        filename: FfiConverterOptionalString.read(from),
+        rawFilename: FfiConverterOptionalString.read(from),
+        filename: FfiConverterString.read(from),
+        caption: FfiConverterOptionalString.read(from),
+        formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
         source: FfiConverterTypeMediaSource.read(from),
         info: FfiConverterOptionalTypeVideoInfo.read(from),
       };
@@ -6664,7 +6890,10 @@ const FfiConverterTypeVideoMessageContent = (() => {
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterString.write(value.body, into);
       FfiConverterOptionalTypeFormattedBody.write(value.formatted, into);
-      FfiConverterOptionalString.write(value.filename, into);
+      FfiConverterOptionalString.write(value.rawFilename, into);
+      FfiConverterString.write(value.filename, into);
+      FfiConverterOptionalString.write(value.caption, into);
+      FfiConverterOptionalTypeFormattedBody.write(value.formattedCaption, into);
       FfiConverterTypeMediaSource.write(value.source, into);
       FfiConverterOptionalTypeVideoInfo.write(value.info, into);
     }
@@ -6672,7 +6901,12 @@ const FfiConverterTypeVideoMessageContent = (() => {
       return (
         FfiConverterString.allocationSize(value.body) +
         FfiConverterOptionalTypeFormattedBody.allocationSize(value.formatted) +
-        FfiConverterOptionalString.allocationSize(value.filename) +
+        FfiConverterOptionalString.allocationSize(value.rawFilename) +
+        FfiConverterString.allocationSize(value.filename) +
+        FfiConverterOptionalString.allocationSize(value.caption) +
+        FfiConverterOptionalTypeFormattedBody.allocationSize(
+          value.formattedCaption
+        ) +
         FfiConverterTypeMediaSource.allocationSize(value.source) +
         FfiConverterOptionalTypeVideoInfo.allocationSize(value.info)
       );
@@ -25785,6 +26019,18 @@ export interface EncryptionInterface {
     progressListener: EnableRecoveryProgressListener,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<string>;
+  /**
+   * Get the E2EE identity of a user.
+   *
+   * Returns Ok(None) if this user does not exist.
+   *
+   * Returns an error if there was a problem contacting the crypto store, or
+   * if our client is not logged in.
+   */
+  getUserIdentity(
+    userId: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<UserIdentityInterface | undefined>;
   isLastDevice(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<boolean>;
@@ -26083,6 +26329,52 @@ export class Encryption
         /*asyncOpts:*/ asyncOpts_,
         /*errorHandler:*/ FfiConverterTypeRecoveryError.lift.bind(
           FfiConverterTypeRecoveryError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Get the E2EE identity of a user.
+   *
+   * Returns Ok(None) if this user does not exist.
+   *
+   * Returns an error if there was a problem contacting the crypto store, or
+   * if our client is not logged in.
+   */
+  public async getUserIdentity(
+    userId: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<UserIdentityInterface | undefined> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_get_user_identity(
+            uniffiTypeEncryptionObjectFactory.clonePointer(this),
+            FfiConverterString.lower(userId)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterOptionalTypeUserIdentity.lift.bind(
+          FfiConverterOptionalTypeUserIdentity
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
         )
       );
     } catch (__error: any) {
@@ -29192,6 +29484,9 @@ export interface RoomInterface {
     newValue: boolean,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
+  subscribeToIdentityStatusChanges(
+    listener: IdentityStatusChangeListener
+  ): TaskHandleInterface;
   subscribeToRoomInfoUpdates(listener: RoomInfoListener): TaskHandleInterface;
   subscribeToTypingNotifications(
     listener: TypingNotificationsListener
@@ -31321,6 +31616,23 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
+  public subscribeToIdentityStatusChanges(
+    listener: IdentityStatusChangeListener
+  ): TaskHandleInterface {
+    return FfiConverterTypeTaskHandle.lift(
+      rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_identity_status_changes(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterTypeIdentityStatusChangeListener.lower(listener),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
   public subscribeToRoomInfoUpdates(
     listener: RoomInfoListener
   ): TaskHandleInterface {
@@ -32095,7 +32407,6 @@ const FfiConverterTypeRoomDirectorySearch = new FfiConverterObject(
 );
 
 export interface RoomListInterface {
-  entries(listener: RoomListEntriesListener): TaskHandleInterface;
   entriesWithDynamicAdapters(
     pageSize: /*u32*/ number,
     listener: RoomListEntriesListener
@@ -32119,21 +32430,6 @@ export class RoomList
     this[pointerLiteralSymbol] = pointer;
     this[destructorGuardSymbol] =
       uniffiTypeRoomListObjectFactory.bless(pointer);
-  }
-
-  public entries(listener: RoomListEntriesListener): TaskHandleInterface {
-    return FfiConverterTypeTaskHandle.lift(
-      rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlist_entries(
-            uniffiTypeRoomListObjectFactory.clonePointer(this),
-            FfiConverterTypeRoomListEntriesListener.lower(listener),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
   }
 
   public entriesWithDynamicAdapters(
@@ -37396,6 +37692,206 @@ const FfiConverterTypeUnreadNotificationsCount = new FfiConverterObject(
 );
 
 /**
+ * The E2EE identity of a user.
+ */
+export interface UserIdentityInterface {
+  /**
+   * Get the public part of the Master key of this user identity.
+   *
+   * The public part of the Master key is usually used to uniquely identify
+   * the identity.
+   *
+   * Returns None if the master key does not actually contain any keys.
+   */
+  masterKey(): string | undefined;
+  /**
+   * Remember this identity, ensuring it does not result in a pin violation.
+   *
+   * When we first see a user, we assume their cryptographic identity has not
+   * been tampered with by the homeserver or another entity with
+   * man-in-the-middle capabilities. We remember this identity and call this
+   * action "pinning".
+   *
+   * If the identity presented for the user changes later on, the newly
+   * presented identity is considered to be in "pin violation". This
+   * method explicitly accepts the new identity, allowing it to replace
+   * the previously pinned one and bringing it out of pin violation.
+   *
+   * UIs should display a warning to the user when encountering an identity
+   * which is not verified and is in pin violation.
+   */
+  pin(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
+}
+
+/**
+ * The E2EE identity of a user.
+ */
+export class UserIdentity
+  extends UniffiAbstractObject
+  implements UserIdentityInterface
+{
+  readonly [uniffiTypeNameSymbol] = 'UserIdentity';
+  readonly [destructorGuardSymbol]: UniffiRustArcPtr;
+  readonly [pointerLiteralSymbol]: UnsafeMutableRawPointer;
+  // No primary constructor declared for this class.
+  private constructor(pointer: UnsafeMutableRawPointer) {
+    super();
+    this[pointerLiteralSymbol] = pointer;
+    this[destructorGuardSymbol] =
+      uniffiTypeUserIdentityObjectFactory.bless(pointer);
+  }
+
+  /**
+   * Get the public part of the Master key of this user identity.
+   *
+   * The public part of the Master key is usually used to uniquely identify
+   * the identity.
+   *
+   * Returns None if the master key does not actually contain any keys.
+   */
+  public masterKey(): string | undefined {
+    return FfiConverterOptionalString.lift(
+      rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_useridentity_master_key(
+            uniffiTypeUserIdentityObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Remember this identity, ensuring it does not result in a pin violation.
+   *
+   * When we first see a user, we assume their cryptographic identity has not
+   * been tampered with by the homeserver or another entity with
+   * man-in-the-middle capabilities. We remember this identity and call this
+   * action "pinning".
+   *
+   * If the identity presented for the user changes later on, the newly
+   * presented identity is considered to be in "pin violation". This
+   * method explicitly accepts the new identity, allowing it to replace
+   * the previously pinned one and bringing it out of pin violation.
+   *
+   * UIs should display a warning to the user when encountering an identity
+   * which is not verified and is in pin violation.
+   */
+  public async pin(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_useridentity_pin(
+            uniffiTypeUserIdentityObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
+   */
+  uniffiDestroy(): void {
+    if ((this as any)[destructorGuardSymbol]) {
+      const pointer = uniffiTypeUserIdentityObjectFactory.pointer(this);
+      uniffiTypeUserIdentityObjectFactory.freePointer(pointer);
+      this[destructorGuardSymbol].markDestroyed();
+      delete (this as any)[destructorGuardSymbol];
+    }
+  }
+
+  static instanceOf(obj: any): obj is UserIdentity {
+    return uniffiTypeUserIdentityObjectFactory.isConcreteType(obj);
+  }
+}
+
+const uniffiTypeUserIdentityObjectFactory: UniffiObjectFactory<UserIdentityInterface> =
+  {
+    create(pointer: UnsafeMutableRawPointer): UserIdentityInterface {
+      const instance = Object.create(UserIdentity.prototype);
+      instance[pointerLiteralSymbol] = pointer;
+      instance[destructorGuardSymbol] = this.bless(pointer);
+      instance[uniffiTypeNameSymbol] = 'UserIdentity';
+      return instance;
+    },
+
+    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+      return rustCall(
+        /*caller:*/ (status) =>
+          nativeModule().uniffi_internal_fn_method_useridentity_ffi__bless_pointer(
+            p,
+            status
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    pointer(obj: UserIdentityInterface): UnsafeMutableRawPointer {
+      if ((obj as any)[destructorGuardSymbol] === undefined) {
+        throw new UniffiInternalError.UnexpectedNullPointer();
+      }
+      return (obj as any)[pointerLiteralSymbol];
+    },
+
+    clonePointer(obj: UserIdentityInterface): UnsafeMutableRawPointer {
+      const pointer = this.pointer(obj);
+      return rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_useridentity(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    freePointer(pointer: UnsafeMutableRawPointer): void {
+      rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().uniffi_matrix_sdk_ffi_fn_free_useridentity(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    isConcreteType(obj: any): obj is UserIdentityInterface {
+      return (
+        obj[destructorGuardSymbol] &&
+        obj[uniffiTypeNameSymbol] === 'UserIdentity'
+      );
+    },
+  };
+// FfiConverter for UserIdentityInterface
+const FfiConverterTypeUserIdentity = new FfiConverterObject(
+  uniffiTypeUserIdentityObjectFactory
+);
+
+/**
  * An object that handles all interactions of a widget living inside a webview
  * or IFrame with the Matrix world.
  */
@@ -37898,6 +38394,11 @@ const FfiConverterArrayArrayBuffer = new FfiConverterArray(
   FfiConverterArrayBuffer
 );
 
+// FfiConverter for Array<IdentityStatusChange>
+const FfiConverterArrayTypeIdentityStatusChange = new FfiConverterArray(
+  FfiConverterTypeIdentityStatusChange
+);
+
 // FfiConverter for Array<PollAnswer>
 const FfiConverterArrayTypePollAnswer = new FfiConverterArray(
   FfiConverterTypePollAnswer
@@ -38047,6 +38548,11 @@ const FfiConverterOptionalTypeTimelineEventTypeFilter =
 // FfiConverter for TimelineItemInterface | undefined
 const FfiConverterOptionalTypeTimelineItem = new FfiConverterOptional(
   FfiConverterTypeTimelineItem
+);
+
+// FfiConverter for UserIdentityInterface | undefined
+const FfiConverterOptionalTypeUserIdentity = new FfiConverterOptional(
+  FfiConverterTypeUserIdentity
 );
 
 // FfiConverter for Array<RequiredState> | undefined
@@ -39084,6 +39590,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_get_user_identity() !==
+    40601
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_encryption_get_user_identity'
+    );
+  }
+  if (
     nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_is_last_device() !==
     27955
   ) {
@@ -39965,6 +40479,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes() !==
+    14290
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes'
+    );
+  }
+  if (
     nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_room_info_updates() !==
     48209
   ) {
@@ -40096,14 +40618,6 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_search'
-    );
-  }
-  if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlist_entries() !==
-    25290
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlist_entries'
     );
   }
   if (
@@ -40929,6 +41443,22 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key() !==
+    4041
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key'
+    );
+  }
+  if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin() !==
+    62925
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin'
+    );
+  }
+  if (
     nativeModule().uniffi_matrix_sdk_ffi_checksum_method_widgetdriver_run() !==
     7519
   ) {
@@ -41062,6 +41592,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_enablerecoveryprogresslistener_on_update'
+    );
+  }
+  if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_identitystatuschangelistener_call() !==
+    57311
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_identitystatuschangelistener_call'
     );
   }
   if (
@@ -41270,6 +41808,7 @@ function uniffiEnsureInitialized() {
   uniffiCallbackInterfaceClientDelegate.register();
   uniffiCallbackInterfaceClientSessionDelegate.register();
   uniffiCallbackInterfaceEnableRecoveryProgressListener.register();
+  uniffiCallbackInterfaceIdentityStatusChangeListener.register();
   uniffiCallbackInterfaceIgnoredUsersListener.register();
   uniffiCallbackInterfaceNotificationSettingsDelegate.register();
   uniffiCallbackInterfacePaginationStatusListener.register();
@@ -41331,6 +41870,7 @@ export default Object.freeze({
     FfiConverterTypeHomeserverLoginDetails,
     FfiConverterTypeHttpPusherData,
     FfiConverterTypeIdentityResetHandle,
+    FfiConverterTypeIdentityStatusChange,
     FfiConverterTypeImageInfo,
     FfiConverterTypeImageMessageContent,
     FfiConverterTypeInReplyToDetails,
@@ -41449,6 +41989,7 @@ export default Object.freeze({
     FfiConverterTypeUnreadNotificationsCount,
     FfiConverterTypeUnstableAudioDetailsContent,
     FfiConverterTypeUnstableVoiceContent,
+    FfiConverterTypeUserIdentity,
     FfiConverterTypeUserPowerLevelUpdate,
     FfiConverterTypeUserProfile,
     FfiConverterTypeVerificationState,
