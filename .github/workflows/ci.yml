@@ -51,6 +51,9 @@ jobs:
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi
 
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
       - name: Generate
         run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android
 
