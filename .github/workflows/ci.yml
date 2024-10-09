@@ -129,6 +129,7 @@ jobs:
           echo 'export NVM_DIR="$HOME/.nvm"' > example/ios/.xcode.env
           echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> example/ios/.xcode.env
           echo 'export NODE_BINARY=$(command -v node)' >> example/ios/.xcode.env
+          cat example/ios/.xcode.env
 
       - name: Generate
         run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:ios
