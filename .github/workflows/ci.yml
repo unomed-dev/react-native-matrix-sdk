@@ -52,7 +52,7 @@ jobs:
           targets: aarch64-linux-android,armv7-linux-androideabi
 
       - name: Generate
-        run: yarn ubrn:clean && ubrn:checkout && yarn ubrn:android
+        run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android
 
       - name: Cache turborepo for Android
         uses: actions/cache@v3
@@ -116,7 +116,7 @@ jobs:
           targets: aarch64-apple-ios,aarch64-apple-ios-sim
 
       - name: Generate
-        run: yarn ubrn:clean && ubrn:checkout && yarn ubrn:ios
+        run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:ios
 
       - name: Cache turborepo for iOS
         uses: actions/cache@v3
