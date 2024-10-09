@@ -118,6 +118,13 @@ jobs:
         with:
           targets: aarch64-apple-ios,aarch64-apple-ios-sim
 
+      - name: Fix .xcode.env
+        run: |
+          # Workaround for https://github.com/facebook/react-native/issues/35657
+          echo 'export NVM_DIR="$HOME/.nvm"' > example/ios/.xcode.env
+          echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> example/ios/.xcode.env
+          echo 'export NODE_BINARY=$(command -v node)' >> example/ios/.xcode.env
+
       - name: Generate
         run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:ios
 
