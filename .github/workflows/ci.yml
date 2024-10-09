@@ -57,6 +57,11 @@ jobs:
       - name: Generate
         run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android
 
+      - name: Reset build.gradle
+        run: |
+          # Work around https://github.com/jhugman/uniffi-bindgen-react-native/issues/106
+          git checkout -- android/build.gradle
+
       - name: Cache turborepo for Android
         uses: actions/cache@v4
         with:
@@ -120,7 +125,7 @@ jobs:
 
       - name: Fix .xcode.env
         run: |
-          # Workaround for https://github.com/facebook/react-native/issues/35657
+          # Work around for https://github.com/facebook/react-native/issues/35657
           echo 'export NVM_DIR="$HOME/.nvm"' > example/ios/.xcode.env
           echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> example/ios/.xcode.env
           echo 'export NODE_BINARY=$(command -v node)' >> example/ios/.xcode.env
