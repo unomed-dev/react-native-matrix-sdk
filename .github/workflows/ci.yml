@@ -121,9 +121,7 @@ jobs:
       - name: Fix .xcode.env
         run: |
           # Work around for https://github.com/facebook/react-native/issues/35657
-          echo 'export NVM_DIR="$HOME/.nvm"' > example/ios/.xcode.env
-          echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> example/ios/.xcode.env
-          echo 'export NODE_BINARY=$(command -v node)' >> example/ios/.xcode.env
+          echo "export NODE_BINARY=$(which node)" >> example/ios/.xcode.env
           cat example/ios/.xcode.env
 
       - name: Generate
