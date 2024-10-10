@@ -8052,6 +8052,16 @@ const FfiConverterTypeBackupUploadState = (() => {
 })();
 
 // Flat error type: ClientBuildError
+export enum ClientBuildError_Tags {
+  InvalidServerName = 'InvalidServerName',
+  ServerUnreachable = 'ServerUnreachable',
+  WellKnownLookupFailed = 'WellKnownLookupFailed',
+  WellKnownDeserializationError = 'WellKnownDeserializationError',
+  SlidingSync = 'SlidingSync',
+  SlidingSyncVersion = 'SlidingSyncVersion',
+  Sdk = 'Sdk',
+  Generic = 'Generic',
+}
 export const ClientBuildError = (() => {
   class InvalidServerName extends UniffiError {
     /**
@@ -8064,6 +8074,9 @@ export const ClientBuildError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = ClientBuildError_Tags.InvalidServerName;
+
     constructor(message: string) {
       super('ClientBuildError', 'InvalidServerName', message);
     }
@@ -8083,6 +8096,9 @@ export const ClientBuildError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = ClientBuildError_Tags.ServerUnreachable;
+
     constructor(message: string) {
       super('ClientBuildError', 'ServerUnreachable', message);
     }
@@ -8102,6 +8118,9 @@ export const ClientBuildError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 3;
+
+    public readonly tag = ClientBuildError_Tags.WellKnownLookupFailed;
+
     constructor(message: string) {
       super('ClientBuildError', 'WellKnownLookupFailed', message);
     }
@@ -8121,6 +8140,9 @@ export const ClientBuildError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 4;
+
+    public readonly tag = ClientBuildError_Tags.WellKnownDeserializationError;
+
     constructor(message: string) {
       super('ClientBuildError', 'WellKnownDeserializationError', message);
     }
@@ -8140,6 +8162,9 @@ export const ClientBuildError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 5;
+
+    public readonly tag = ClientBuildError_Tags.SlidingSync;
+
     constructor(message: string) {
       super('ClientBuildError', 'SlidingSync', message);
     }
@@ -8159,6 +8184,9 @@ export const ClientBuildError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 6;
+
+    public readonly tag = ClientBuildError_Tags.SlidingSyncVersion;
+
     constructor(message: string) {
       super('ClientBuildError', 'SlidingSyncVersion', message);
     }
@@ -8178,6 +8206,9 @@ export const ClientBuildError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 7;
+
+    public readonly tag = ClientBuildError_Tags.Sdk;
+
     constructor(message: string) {
       super('ClientBuildError', 'Sdk', message);
     }
@@ -8197,6 +8228,9 @@ export const ClientBuildError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 8;
+
+    public readonly tag = ClientBuildError_Tags.Generic;
+
     constructor(message: string) {
       super('ClientBuildError', 'Generic', message);
     }
@@ -8207,17 +8241,7 @@ export const ClientBuildError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(
-    e: any
-  ): e is
-    | InvalidServerName
-    | ServerUnreachable
-    | WellKnownLookupFailed
-    | WellKnownDeserializationError
-    | SlidingSync
-    | SlidingSyncVersion
-    | Sdk
-    | Generic {
+  function instanceOf(e: any): e is ClientBuildError {
     return (e as any)[uniffiTypeNameSymbol] === 'ClientBuildError';
   }
   return {
@@ -11256,6 +11280,10 @@ const FfiConverterTypeMatrixId = (() => {
 })();
 
 // Flat error type: MediaInfoError
+export enum MediaInfoError_Tags {
+  MissingField = 'MissingField',
+  InvalidField = 'InvalidField',
+}
 export const MediaInfoError = (() => {
   class MissingField extends UniffiError {
     /**
@@ -11268,6 +11296,9 @@ export const MediaInfoError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = MediaInfoError_Tags.MissingField;
+
     constructor(message: string) {
       super('MediaInfoError', 'MissingField', message);
     }
@@ -11287,6 +11318,9 @@ export const MediaInfoError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = MediaInfoError_Tags.InvalidField;
+
     constructor(message: string) {
       super('MediaInfoError', 'InvalidField', message);
     }
@@ -11297,7 +11331,7 @@ export const MediaInfoError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(e: any): e is MissingField | InvalidField {
+  function instanceOf(e: any): e is MediaInfoError {
     return (e as any)[uniffiTypeNameSymbol] === 'MediaInfoError';
   }
   return {
@@ -13828,6 +13862,14 @@ const FfiConverterTypeNotifyType = (() => {
 })();
 
 // Flat error type: OidcError
+export enum OidcError_Tags {
+  NotSupported = 'NotSupported',
+  MetadataInvalid = 'MetadataInvalid',
+  RegistrationsPathInvalid = 'RegistrationsPathInvalid',
+  CallbackUrlInvalid = 'CallbackUrlInvalid',
+  Cancelled = 'Cancelled',
+  Generic = 'Generic',
+}
 export const OidcError = (() => {
   class NotSupported extends UniffiError {
     /**
@@ -13840,6 +13882,9 @@ export const OidcError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = OidcError_Tags.NotSupported;
+
     constructor(message: string) {
       super('OidcError', 'NotSupported', message);
     }
@@ -13859,6 +13904,9 @@ export const OidcError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = OidcError_Tags.MetadataInvalid;
+
     constructor(message: string) {
       super('OidcError', 'MetadataInvalid', message);
     }
@@ -13878,6 +13926,9 @@ export const OidcError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 3;
+
+    public readonly tag = OidcError_Tags.RegistrationsPathInvalid;
+
     constructor(message: string) {
       super('OidcError', 'RegistrationsPathInvalid', message);
     }
@@ -13897,6 +13948,9 @@ export const OidcError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 4;
+
+    public readonly tag = OidcError_Tags.CallbackUrlInvalid;
+
     constructor(message: string) {
       super('OidcError', 'CallbackUrlInvalid', message);
     }
@@ -13916,6 +13970,9 @@ export const OidcError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 5;
+
+    public readonly tag = OidcError_Tags.Cancelled;
+
     constructor(message: string) {
       super('OidcError', 'Cancelled', message);
     }
@@ -13935,6 +13992,9 @@ export const OidcError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 6;
+
+    public readonly tag = OidcError_Tags.Generic;
+
     constructor(message: string) {
       super('OidcError', 'Generic', message);
     }
@@ -13945,15 +14005,7 @@ export const OidcError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(
-    e: any
-  ): e is
-    | NotSupported
-    | MetadataInvalid
-    | RegistrationsPathInvalid
-    | CallbackUrlInvalid
-    | Cancelled
-    | Generic {
+  function instanceOf(e: any): e is OidcError {
     return (e as any)[uniffiTypeNameSymbol] === 'OidcError';
   }
   return {
@@ -14919,6 +14971,19 @@ const FfiConverterTypeOtherState = (() => {
 })();
 
 // Flat error type: ParseError
+export enum ParseError_Tags {
+  EmptyHost = 'EmptyHost',
+  IdnaError = 'IdnaError',
+  InvalidPort = 'InvalidPort',
+  InvalidIpv4Address = 'InvalidIpv4Address',
+  InvalidIpv6Address = 'InvalidIpv6Address',
+  InvalidDomainCharacter = 'InvalidDomainCharacter',
+  RelativeUrlWithoutBase = 'RelativeUrlWithoutBase',
+  RelativeUrlWithCannotBeABaseBase = 'RelativeUrlWithCannotBeABaseBase',
+  SetHostOnCannotBeABaseUrl = 'SetHostOnCannotBeABaseUrl',
+  Overflow = 'Overflow',
+  Other = 'Other',
+}
 export const ParseError = (() => {
   class EmptyHost extends UniffiError {
     /**
@@ -14931,6 +14996,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = ParseError_Tags.EmptyHost;
+
     constructor(message: string) {
       super('ParseError', 'EmptyHost', message);
     }
@@ -14950,6 +15018,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = ParseError_Tags.IdnaError;
+
     constructor(message: string) {
       super('ParseError', 'IdnaError', message);
     }
@@ -14969,6 +15040,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 3;
+
+    public readonly tag = ParseError_Tags.InvalidPort;
+
     constructor(message: string) {
       super('ParseError', 'InvalidPort', message);
     }
@@ -14988,6 +15062,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 4;
+
+    public readonly tag = ParseError_Tags.InvalidIpv4Address;
+
     constructor(message: string) {
       super('ParseError', 'InvalidIpv4Address', message);
     }
@@ -15007,6 +15084,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 5;
+
+    public readonly tag = ParseError_Tags.InvalidIpv6Address;
+
     constructor(message: string) {
       super('ParseError', 'InvalidIpv6Address', message);
     }
@@ -15026,6 +15106,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 6;
+
+    public readonly tag = ParseError_Tags.InvalidDomainCharacter;
+
     constructor(message: string) {
       super('ParseError', 'InvalidDomainCharacter', message);
     }
@@ -15045,6 +15128,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 7;
+
+    public readonly tag = ParseError_Tags.RelativeUrlWithoutBase;
+
     constructor(message: string) {
       super('ParseError', 'RelativeUrlWithoutBase', message);
     }
@@ -15064,6 +15150,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 8;
+
+    public readonly tag = ParseError_Tags.RelativeUrlWithCannotBeABaseBase;
+
     constructor(message: string) {
       super('ParseError', 'RelativeUrlWithCannotBeABaseBase', message);
     }
@@ -15083,6 +15172,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 9;
+
+    public readonly tag = ParseError_Tags.SetHostOnCannotBeABaseUrl;
+
     constructor(message: string) {
       super('ParseError', 'SetHostOnCannotBeABaseUrl', message);
     }
@@ -15102,6 +15194,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 10;
+
+    public readonly tag = ParseError_Tags.Overflow;
+
     constructor(message: string) {
       super('ParseError', 'Overflow', message);
     }
@@ -15121,6 +15216,9 @@ export const ParseError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 11;
+
+    public readonly tag = ParseError_Tags.Other;
+
     constructor(message: string) {
       super('ParseError', 'Other', message);
     }
@@ -15131,20 +15229,7 @@ export const ParseError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(
-    e: any
-  ): e is
-    | EmptyHost
-    | IdnaError
-    | InvalidPort
-    | InvalidIpv4Address
-    | InvalidIpv6Address
-    | InvalidDomainCharacter
-    | RelativeUrlWithoutBase
-    | RelativeUrlWithCannotBeABaseBase
-    | SetHostOnCannotBeABaseUrl
-    | Overflow
-    | Other {
+  function instanceOf(e: any): e is ParseError {
     return (e as any)[uniffiTypeNameSymbol] === 'ParseError';
   }
   return {
@@ -15686,6 +15771,9 @@ const FfiConverterTypePusherKind = (() => {
 })();
 
 // Flat error type: QrCodeDecodeError
+export enum QrCodeDecodeError_Tags {
+  Crypto = 'Crypto',
+}
 /**
  * Error type for the decoding of the [`QrCodeData`].
  */
@@ -15701,6 +15789,9 @@ export const QrCodeDecodeError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = QrCodeDecodeError_Tags.Crypto;
+
     constructor(message: string) {
       super('QrCodeDecodeError', 'Crypto', message);
     }
@@ -15711,7 +15802,7 @@ export const QrCodeDecodeError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(e: any): e is Crypto {
+  function instanceOf(e: any): e is QrCodeDecodeError {
     return (e as any)[uniffiTypeNameSymbol] === 'QrCodeDecodeError';
   }
   return {
@@ -17064,6 +17155,14 @@ const FfiConverterTypeRoomDirectorySearchEntryUpdate = (() => {
 })();
 
 // Flat error type: RoomError
+export enum RoomError_Tags {
+  InvalidAttachmentData = 'InvalidAttachmentData',
+  InvalidAttachmentMimeType = 'InvalidAttachmentMimeType',
+  InvalidMediaInfo = 'InvalidMediaInfo',
+  TimelineUnavailable = 'TimelineUnavailable',
+  InvalidThumbnailData = 'InvalidThumbnailData',
+  FailedSendingAttachment = 'FailedSendingAttachment',
+}
 export const RoomError = (() => {
   class InvalidAttachmentData extends UniffiError {
     /**
@@ -17076,6 +17175,9 @@ export const RoomError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = RoomError_Tags.InvalidAttachmentData;
+
     constructor(message: string) {
       super('RoomError', 'InvalidAttachmentData', message);
     }
@@ -17095,6 +17197,9 @@ export const RoomError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = RoomError_Tags.InvalidAttachmentMimeType;
+
     constructor(message: string) {
       super('RoomError', 'InvalidAttachmentMimeType', message);
     }
@@ -17114,6 +17219,9 @@ export const RoomError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 3;
+
+    public readonly tag = RoomError_Tags.InvalidMediaInfo;
+
     constructor(message: string) {
       super('RoomError', 'InvalidMediaInfo', message);
     }
@@ -17133,6 +17241,9 @@ export const RoomError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 4;
+
+    public readonly tag = RoomError_Tags.TimelineUnavailable;
+
     constructor(message: string) {
       super('RoomError', 'TimelineUnavailable', message);
     }
@@ -17152,6 +17263,9 @@ export const RoomError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 5;
+
+    public readonly tag = RoomError_Tags.InvalidThumbnailData;
+
     constructor(message: string) {
       super('RoomError', 'InvalidThumbnailData', message);
     }
@@ -17171,6 +17285,9 @@ export const RoomError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 6;
+
+    public readonly tag = RoomError_Tags.FailedSendingAttachment;
+
     constructor(message: string) {
       super('RoomError', 'FailedSendingAttachment', message);
     }
@@ -17181,15 +17298,7 @@ export const RoomError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(
-    e: any
-  ): e is
-    | InvalidAttachmentData
-    | InvalidAttachmentMimeType
-    | InvalidMediaInfo
-    | TimelineUnavailable
-    | InvalidThumbnailData
-    | FailedSendingAttachment {
+  function instanceOf(e: any): e is RoomError {
     return (e as any)[uniffiTypeNameSymbol] === 'RoomError';
   }
   return {
@@ -20090,6 +20199,11 @@ const FfiConverterTypeSlidingSyncVersionBuilder = (() => {
 })();
 
 // Flat error type: SsoError
+export enum SsoError_Tags {
+  CallbackUrlInvalid = 'CallbackUrlInvalid',
+  LoginWithTokenFailed = 'LoginWithTokenFailed',
+  Generic = 'Generic',
+}
 export const SsoError = (() => {
   class CallbackUrlInvalid extends UniffiError {
     /**
@@ -20102,6 +20216,9 @@ export const SsoError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = SsoError_Tags.CallbackUrlInvalid;
+
     constructor(message: string) {
       super('SsoError', 'CallbackUrlInvalid', message);
     }
@@ -20121,6 +20238,9 @@ export const SsoError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = SsoError_Tags.LoginWithTokenFailed;
+
     constructor(message: string) {
       super('SsoError', 'LoginWithTokenFailed', message);
     }
@@ -20140,6 +20260,9 @@ export const SsoError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 3;
+
+    public readonly tag = SsoError_Tags.Generic;
+
     constructor(message: string) {
       super('SsoError', 'Generic', message);
     }
@@ -20150,9 +20273,7 @@ export const SsoError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(
-    e: any
-  ): e is CallbackUrlInvalid | LoginWithTokenFailed | Generic {
+  function instanceOf(e: any): e is SsoError {
     return (e as any)[uniffiTypeNameSymbol] === 'SsoError';
   }
   return {
@@ -21171,6 +21292,11 @@ const FfiConverterTypeStateEventType = (() => {
 })();
 
 // Flat error type: SteadyStateError
+export enum SteadyStateError_Tags {
+  BackupDisabled = 'BackupDisabled',
+  Connection = 'Connection',
+  Lagged = 'Lagged',
+}
 export const SteadyStateError = (() => {
   class BackupDisabled extends UniffiError {
     /**
@@ -21183,6 +21309,9 @@ export const SteadyStateError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = SteadyStateError_Tags.BackupDisabled;
+
     constructor(message: string) {
       super('SteadyStateError', 'BackupDisabled', message);
     }
@@ -21202,6 +21331,9 @@ export const SteadyStateError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = SteadyStateError_Tags.Connection;
+
     constructor(message: string) {
       super('SteadyStateError', 'Connection', message);
     }
@@ -21221,6 +21353,9 @@ export const SteadyStateError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 3;
+
+    public readonly tag = SteadyStateError_Tags.Lagged;
+
     constructor(message: string) {
       super('SteadyStateError', 'Lagged', message);
     }
@@ -21231,7 +21366,7 @@ export const SteadyStateError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(e: any): e is BackupDisabled | Connection | Lagged {
+  function instanceOf(e: any): e is SteadyStateError {
     return (e as any)[uniffiTypeNameSymbol] === 'SteadyStateError';
   }
   return {

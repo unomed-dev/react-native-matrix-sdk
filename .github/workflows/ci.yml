@@ -57,11 +57,6 @@ jobs:
       - name: Generate
         run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android
 
-      - name: Reset build.gradle
-        run: |
-          # Work around https://github.com/jhugman/uniffi-bindgen-react-native/issues/106
-          git checkout -- android/build.gradle
-
       - name: Cache turborepo for Android
         uses: actions/cache@v4
         with:

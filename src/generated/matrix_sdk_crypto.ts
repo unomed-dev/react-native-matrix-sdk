@@ -502,6 +502,15 @@ const FfiConverterTypeLocalTrust = (() => {
 })();
 
 // Flat error type: LoginQrCodeDecodeError
+export enum LoginQrCodeDecodeError_Tags {
+  NotEnoughData = 'NotEnoughData',
+  NotUtf8 = 'NotUtf8',
+  UrlParse = 'UrlParse',
+  InvalidMode = 'InvalidMode',
+  InvalidVersion = 'InvalidVersion',
+  Base64 = 'Base64',
+  InvalidPrefix = 'InvalidPrefix',
+}
 /**
  * Error type for the decoding of the [`QrCodeData`].
  */
@@ -520,6 +529,9 @@ export const LoginQrCodeDecodeError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = LoginQrCodeDecodeError_Tags.NotEnoughData;
+
     constructor(message: string) {
       super('LoginQrCodeDecodeError', 'NotEnoughData', message);
     }
@@ -542,6 +554,9 @@ export const LoginQrCodeDecodeError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = LoginQrCodeDecodeError_Tags.NotUtf8;
+
     constructor(message: string) {
       super('LoginQrCodeDecodeError', 'NotUtf8', message);
     }
@@ -564,6 +579,9 @@ export const LoginQrCodeDecodeError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 3;
+
+    public readonly tag = LoginQrCodeDecodeError_Tags.UrlParse;
+
     constructor(message: string) {
       super('LoginQrCodeDecodeError', 'UrlParse', message);
     }
@@ -587,6 +605,9 @@ export const LoginQrCodeDecodeError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 4;
+
+    public readonly tag = LoginQrCodeDecodeError_Tags.InvalidMode;
+
     constructor(message: string) {
       super('LoginQrCodeDecodeError', 'InvalidMode', message);
     }
@@ -609,6 +630,9 @@ export const LoginQrCodeDecodeError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 5;
+
+    public readonly tag = LoginQrCodeDecodeError_Tags.InvalidVersion;
+
     constructor(message: string) {
       super('LoginQrCodeDecodeError', 'InvalidVersion', message);
     }
@@ -632,6 +656,9 @@ export const LoginQrCodeDecodeError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 6;
+
+    public readonly tag = LoginQrCodeDecodeError_Tags.Base64;
+
     constructor(message: string) {
       super('LoginQrCodeDecodeError', 'Base64', message);
     }
@@ -654,6 +681,9 @@ export const LoginQrCodeDecodeError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 7;
+
+    public readonly tag = LoginQrCodeDecodeError_Tags.InvalidPrefix;
+
     constructor(message: string) {
       super('LoginQrCodeDecodeError', 'InvalidPrefix', message);
     }
@@ -664,16 +694,7 @@ export const LoginQrCodeDecodeError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(
-    e: any
-  ): e is
-    | NotEnoughData
-    | NotUtf8
-    | UrlParse
-    | InvalidMode
-    | InvalidVersion
-    | Base64
-    | InvalidPrefix {
+  function instanceOf(e: any): e is LoginQrCodeDecodeError {
     return (e as any)[uniffiTypeNameSymbol] === 'LoginQrCodeDecodeError';
   }
   return {

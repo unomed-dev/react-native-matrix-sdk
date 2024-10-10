@@ -369,6 +369,17 @@ const FfiConverterTypePaginatorState = (() => {
 })();
 
 // Flat error type: QrCodeLoginError
+export enum QrCodeLoginError_Tags {
+  Oidc = 'Oidc',
+  LoginFailure = 'LoginFailure',
+  UnexpectedMessage = 'UnexpectedMessage',
+  SecureChannel = 'SecureChannel',
+  CrossProcessRefreshLock = 'CrossProcessRefreshLock',
+  UserIdDiscovery = 'UserIdDiscovery',
+  SessionTokens = 'SessionTokens',
+  DeviceKeyUpload = 'DeviceKeyUpload',
+  SecretImport = 'SecretImport',
+}
 /**
  * The error type for failures while trying to log in a new device using a QR
  * code.
@@ -388,6 +399,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 1;
+
+    public readonly tag = QrCodeLoginError_Tags.Oidc;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'Oidc', message);
     }
@@ -410,6 +424,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 2;
+
+    public readonly tag = QrCodeLoginError_Tags.LoginFailure;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'LoginFailure', message);
     }
@@ -432,6 +449,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 3;
+
+    public readonly tag = QrCodeLoginError_Tags.UnexpectedMessage;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'UnexpectedMessage', message);
     }
@@ -454,6 +474,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 4;
+
+    public readonly tag = QrCodeLoginError_Tags.SecureChannel;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'SecureChannel', message);
     }
@@ -476,6 +499,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 5;
+
+    public readonly tag = QrCodeLoginError_Tags.CrossProcessRefreshLock;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'CrossProcessRefreshLock', message);
     }
@@ -499,6 +525,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 6;
+
+    public readonly tag = QrCodeLoginError_Tags.UserIdDiscovery;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'UserIdDiscovery', message);
     }
@@ -522,6 +551,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 7;
+
+    public readonly tag = QrCodeLoginError_Tags.SessionTokens;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'SessionTokens', message);
     }
@@ -544,6 +576,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 8;
+
+    public readonly tag = QrCodeLoginError_Tags.DeviceKeyUpload;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'DeviceKeyUpload', message);
     }
@@ -567,6 +602,9 @@ export const QrCodeLoginError = (() => {
      * This field is private and should not be used.
      */
     readonly [variantOrdinalSymbol] = 9;
+
+    public readonly tag = QrCodeLoginError_Tags.SecretImport;
+
     constructor(message: string) {
       super('QrCodeLoginError', 'SecretImport', message);
     }
@@ -577,18 +615,7 @@ export const QrCodeLoginError = (() => {
   }
 
   // Utility function which does not rely on instanceof.
-  function instanceOf(
-    e: any
-  ): e is
-    | Oidc
-    | LoginFailure
-    | UnexpectedMessage
-    | SecureChannel
-    | CrossProcessRefreshLock
-    | UserIdDiscovery
-    | SessionTokens
-    | DeviceKeyUpload
-    | SecretImport {
+  function instanceOf(e: any): e is QrCodeLoginError {
     return (e as any)[uniffiTypeNameSymbol] === 'QrCodeLoginError';
   }
   return {
