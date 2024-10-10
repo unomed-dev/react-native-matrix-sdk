@@ -18,8 +18,8 @@ path.
 npm add ../react-native-matrix-sdk
 ```
 
-Additionally you need to change `metro.config.js` to find and watch the module's source
-code.
+You might have to run `yarn prepare` in case it's not executed by default. Additionally you
+need to change `metro.config.js` to find and watch the module's source code.
 
 ```js
 const config = {
