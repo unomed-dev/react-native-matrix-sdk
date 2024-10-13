@@ -158,6 +158,10 @@ jobs:
         if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
         run: |
           cd example/ios
+
+          # Work around '[!] CocoaPods could not find compatible versions for pod "hermes-engine"'
+          pod update hermes-engine --no-repo-update
+
           pod install
         env:
           NO_FLIPPER: 1
