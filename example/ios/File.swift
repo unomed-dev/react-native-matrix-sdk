@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  MatrixSdkExample
+//  ReactNativeMatrixSdkExample
 //
 
 import Foundation

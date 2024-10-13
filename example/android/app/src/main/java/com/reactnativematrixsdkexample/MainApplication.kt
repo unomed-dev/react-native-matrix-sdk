@@ -1,4 +1,4 @@
-package com.matrixsdkexample
+package com.reactnativematrixsdkexample
 
 import android.app.Application
 import com.facebook.react.PackageList

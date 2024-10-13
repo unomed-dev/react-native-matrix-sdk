@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text, TextInput, Button } from 'react-native';
-import { ClientBuilder } from 'react-native-matrix-sdk';
+import { ClientBuilder } from '@unomed/react-native-matrix-sdk';
 
 export default function App() {
   const [homeserver, setHomeserver] = React.useState("https://matrix.org");

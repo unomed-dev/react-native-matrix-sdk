@@ -16,7 +16,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'MatrixSdkExample' do
+target 'ReactNativeMatrixSdkExample' do
   config = use_native_modules!
 
   use_react_native!(
@@ -28,7 +28,7 @@ target 'MatrixSdkExample' do
   # TODO: Remove once the pod has been published
   pod 'uniffi-bindgen-react-native', :path => '../../node_modules/uniffi-bindgen-react-native'
 
-  target 'MatrixSdkExampleTests' do
+  target 'ReactNativeMatrixSdkExampleTests' do
     inherit! :complete
     # Pods for testing
   end

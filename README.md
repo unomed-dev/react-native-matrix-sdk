@@ -44,7 +44,7 @@ yarn generate
 In future, you will be able to install the module from npm.
 
 ```sh
-npm install react-native-matrix-sdk
+npm install @unomed/react-native-matrix-sdk
 ```
 
 

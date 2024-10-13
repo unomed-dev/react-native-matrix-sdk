@@ -2,15 +2,15 @@
 #include <jni.h>
 #include <jsi/jsi.h>
 #include <ReactCommon/CallInvokerHolder.h>
-#include "react-native-matrix-sdk.h"
+#include "unomed-react-native-matrix-sdk.h"
 
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
-// Installer coming from ReactNativeMatrixSdkModule
+// Installer coming from UnomedReactNativeMatrixSdkModule
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_matrixsdk_ReactNativeMatrixSdkModule_nativeInstallRustCrate(
+Java_com_unomedmatrixsdk_UnomedReactNativeMatrixSdkModule_nativeInstallRustCrate(
     JNIEnv *env,
     jclass type,
     jlong rtPtr,
@@ -44,12 +44,12 @@ Java_com_matrixsdk_ReactNativeMatrixSdkModule_nativeInstallRustCrate(
     auto jsCallInvoker = nativePointer->getCallInvoker();
 
     auto runtime = reinterpret_cast<jsi::Runtime *>(rtPtr);
-    return reactnativematrixsdk::installRustCrate(*runtime, jsCallInvoker);
+    return unomedreactnativematrixsdk::installRustCrate(*runtime, jsCallInvoker);
 }
 
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_matrixsdk_ReactNativeMatrixSdkModule_nativeCleanupRustCrate(JNIEnv *env, jclass type, jlong rtPtr) {
+Java_com_unomedmatrixsdk_UnomedReactNativeMatrixSdkModule_nativeCleanupRustCrate(JNIEnv *env, jclass type, jlong rtPtr) {
     auto runtime = reinterpret_cast<jsi::Runtime *>(rtPtr);
-    return reactnativematrixsdk::cleanupRustCrate(*runtime);
+    return unomedreactnativematrixsdk::cleanupRustCrate(*runtime);
 }
