@@ -1,7 +1,7 @@
 {
   "name": "@unomed/react-native-matrix-sdk",
   "version": "0.1.0",
-  "description": "Matrix client SDK for React Native",
+  "description": "⚡️ FFI bindings for matrix-rust-sdk in a React Native Turbo Module ⚡️",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
   "types": "lib/typescript/src/index.d.ts",
