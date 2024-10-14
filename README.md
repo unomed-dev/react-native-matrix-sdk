@@ -9,9 +9,17 @@ Powered by [uniffi-bindgen-react-native].
 
 ## Installation
 
-Since this is a fairly young project we're not making releases yet. To use the module,
-clone the repository into a sibling folder of your app and then install it using a relative
-path.
+This package is available in the [npm registry].
+
+```sh
+npm i @unomed/react-native-matrix-sdk
+yarn add @unomed/react-native-matrix-sdk
+```
+
+### Installation from local checkout
+
+Clone the repository into a sibling folder of your app and then install the package using
+a relative path.
 
 ```sh
 npm add ../react-native-matrix-sdk
@@ -42,10 +50,6 @@ yarn generate
 
 In future, you will be able to install the module from npm.
 
-```sh
-npm install @unomed/react-native-matrix-sdk
-```
-
 
 ## Usage
 
@@ -72,5 +76,6 @@ Made with [create-react-native-library]
 [create-react-native-library]: https://github.com/callstack/react-native-builder-bob
 [example/src/App.tsx]: example/src/App.tsx
 [matrix-rust-sdk]: https://github.com/matrix-org/matrix-rust-sdk
+[npm registry]: https://www.npmjs.com/package/@unomed/react-native-matrix-sdk
 [src/index.ts]: src/index.ts
 [uniffi-bindgen-react-native]: https://github.com/jhugman/uniffi-bindgen-react-native
