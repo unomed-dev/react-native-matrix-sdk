@@ -1,11 +1,10 @@
 # react-native-matrix-sdk
 
-⚡️ FFI bindings for matrix-rust-sdk in a React Native Turbo Module ⚡️
+⚡️ FFI bindings for [matrix-rust-sdk] in a React Native Turbo Module ⚡️
 
 [![CI](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ci.yml)
 
-This SDK wraps the FFI bindings of [matrix-rust-sdk] for use in React Native via
-[uniffi-bindgen-react-native].
+Powered by [uniffi-bindgen-react-native].
 
 
 ## Installation
