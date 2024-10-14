@@ -16,6 +16,23 @@ npm i @unomed/react-native-matrix-sdk
 yarn add @unomed/react-native-matrix-sdk
 ```
 
+You also have to install [uniffi-bindgen-react-native]. This will only be necessary until its
+Pod has been released. Make sure that the SHA matches the release of react-native-matrix-sdk.
+
+```sh
+npm add https://github.com/jhugman/uniffi-bindgen-react-native#$sha
+yarn add uniffi-bindgen-react-native@https://github.com/jhugman/uniffi-bindgen-react-native#$sha
+```
+
+Afterwards add the Pod and run `pod install`.
+
+```
+target 'MyAwesomeApp' do
+  pod 'uniffi-bindgen-react-native', :path => '../node_modules/uniffi-bindgen-react-native'
+  ...
+end
+```
+
 ### Installation from local checkout
 
 Clone the repository into a sibling folder of your app and then install the package using
