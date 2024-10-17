@@ -1790,7 +1790,7 @@ SPEC CHECKSUMS:
   ReactCommon: 6a952e50c2a4b694731d7682aaa6c79bc156e4ad
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   uniffi-bindgen-react-native: 76fc5182a53392e34888330a32fb3441f1748b08
-  unomed-react-native-matrix-sdk: 7420d6aaaf7c210126c8be62293937b0ebd5b96a
+  unomed-react-native-matrix-sdk: 3b6604a2b746de36abfbddbef042e737fa67492d
   Yoga: 055f92ad73f8c8600a93f0e25ac0b2344c3b07e6
 
 PODFILE CHECKSUM: 58dfb4f7cd995aebb4437383db306790b529a404

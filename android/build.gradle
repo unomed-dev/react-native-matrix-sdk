@@ -22,11 +22,11 @@ if (isNewArchitectureEnabled()) {
 }
 
 def getExtOrDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["UnomedReactNativeMatrixSdk_" + name]
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["ReactNativeMatrixSdk_" + name]
 }
 
 def getExtOrIntegerDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["UnomedReactNativeMatrixSdk_" + name]).toInteger()
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["ReactNativeMatrixSdk_" + name]).toInteger()
 }
 
 def supportsNamespace() {
@@ -40,7 +40,7 @@ def supportsNamespace() {
 
 android {
   if (supportsNamespace()) {
-    namespace "com.unomedmatrixsdk"
+    namespace "com.unomed.reactnativematrixsdk"
 
     sourceSets {
       main {
@@ -122,7 +122,7 @@ dependencies {
 if (isNewArchitectureEnabled()) {
   react {
     jsRootDir = file("../src/")
-    libraryName = "UnomedReactNativeMatrixSdk"
-    codegenJavaPackageName = "com.unomedmatrixsdk"
+    libraryName = "ReactNativeMatrixSdk"
+    codegenJavaPackageName = "com.unomed.reactnativematrixsdk"
   }
 }

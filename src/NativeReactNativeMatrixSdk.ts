@@ -7,4 +7,4 @@ export interface Spec extends TurboModule {
   cleanupRustCrate(): boolean;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>('UnomedReactNativeMatrixSdk');
+export default TurboModuleRegistry.getEnforcing<Spec>('ReactNativeMatrixSdk');

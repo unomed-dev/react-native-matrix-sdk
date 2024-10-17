@@ -30,15 +30,14 @@
     "ubrn:android": "yarn ubrn:android:build --and-generate",
     "ubrn:android:build": "ubrn build android --config ubrn.yaml",
     "ubrn:android:build:release": "yarn ubrn:android:build --release",
-    "ubrn:ios": "yarn ubrn:ios:build --and-generate && yarn ubrn:ios:fix-podspec && (cd example/ios && pod install)",
+    "ubrn:ios": "yarn ubrn:ios:build --and-generate && (cd example/ios && pod install)",
     "ubrn:ios:build": "ubrn build ios --config ubrn.yaml",
     "ubrn:ios:build:release": "yarn ubrn:ios:build --release",
-    "ubrn:ios:fix-podspec": "sed 's|@unomed/react-native-matrix-sdk|unomed-react-native-matrix-sdk|' @unomed/react-native-matrix-sdk.podspec | sed 's|\\.\\./||g' > unomed-react-native-matrix-sdk.podspec && rm -r @unomed",
     "ubrn:checkout": "ubrn checkout --config ubrn.yaml",
     "ubrn:clean": "rm -Rf cpp/ android/src/main/java ios/ src/Native* src/generated/ src/index.ts*",
     "ubrn:generate": "ubrn generate all --config ubrn.yaml build/RnMatrixRustSdk.xcframework/ios-arm64/libmatrix_sdk_ffi.a",
     "generate": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android && yarn ubrn:ios",
-    "generate:release": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build:release && yarn ubrn:ios:build:release && yarn ubrn:generate && yarn ubrn:ios:fix-podspec && (cd example/ios && pod install)",
+    "generate:release": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build:release && yarn ubrn:ios:build:release && yarn ubrn:generate && (cd example/ios && pod install)",
     "format": "prettier -w '**/*.{ts,tsx}'",
     "example": "yarn workspace @unomed/react-native-matrix-sdk-example",
     "typecheck": "tsc --noEmit",
@@ -86,7 +85,7 @@
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2",
-    "uniffi-bindgen-react-native": "https://github.com/jhugman/uniffi-bindgen-react-native#7afb49b50990e79efd21a14575f9e9147c254c46"
+    "uniffi-bindgen-react-native": "https://github.com/jhugman/uniffi-bindgen-react-native#67bb07bb63e734acc519e5a92c60ad495b2ecb15"
   },
   "resolutions": {
     "@types/react": "^18.2.44"

@@ -6,11 +6,11 @@
 #ifdef RCT_NEW_ARCH_ENABLED
 #import "NativeReactNativeMatrixSdkSpec.h"
 
-@interface UnomedReactNativeMatrixSdk : NSObject <NativeUnomedReactNativeMatrixSdkSpec>
+@interface ReactNativeMatrixSdk : NSObject <NativeReactNativeMatrixSdkSpec>
 #else
 #import <React/RCTBridgeModule.h>
 
-@interface UnomedReactNativeMatrixSdk : NSObject <RCTBridgeModule>
+@interface ReactNativeMatrixSdk : NSObject <RCTBridgeModule>
 #endif
 
 @end

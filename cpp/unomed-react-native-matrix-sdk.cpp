@@ -7,7 +7,7 @@
 #include "generated/matrix_sdk_ffi.hpp"
 #include "generated/matrix_sdk_ui.hpp"
 
-namespace unomedreactnativematrixsdk {
+namespace unomed_reactnativematrixsdk {
 	using namespace facebook;
 
 	uint8_t installRustCrate(jsi::Runtime &runtime, std::shared_ptr<react::CallInvoker> callInvoker) {
