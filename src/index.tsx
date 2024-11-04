@@ -12,17 +12,31 @@ export * from './generated/matrix_sdk_crypto';
 export * from './generated/matrix_sdk_ffi';
 export * from './generated/matrix_sdk_ui';
 
-// Initialize the generated bindings: mostly checksums, but also callbacks.
-import matrix_sdk_ from './generated/matrix_sdk';
-import matrix_sdk_base_ from './generated/matrix_sdk_base';
-import matrix_sdk_common_ from './generated/matrix_sdk_common';
-import matrix_sdk_crypto_ from './generated/matrix_sdk_crypto';
-import matrix_sdk_ffi_ from './generated/matrix_sdk_ffi';
-import matrix_sdk_ui_ from './generated/matrix_sdk_ui';
+// Now import the bindings so we can:
+// - intialize them
+// - export them as namespaced objects as the default export.
+import * as matrix_sdk from './generated/matrix_sdk';
+import * as matrix_sdk_base from './generated/matrix_sdk_base';
+import * as matrix_sdk_common from './generated/matrix_sdk_common';
+import * as matrix_sdk_crypto from './generated/matrix_sdk_crypto';
+import * as matrix_sdk_ffi from './generated/matrix_sdk_ffi';
+import * as matrix_sdk_ui from './generated/matrix_sdk_ui';
 
-matrix_sdk_.initialize();
-matrix_sdk_base_.initialize();
-matrix_sdk_common_.initialize();
-matrix_sdk_crypto_.initialize();
-matrix_sdk_ffi_.initialize();
-matrix_sdk_ui_.initialize();
+// Initialize the generated bindings: mostly checksums, but also callbacks.
+matrix_sdk.default.initialize();
+matrix_sdk_base.default.initialize();
+matrix_sdk_common.default.initialize();
+matrix_sdk_crypto.default.initialize();
+matrix_sdk_ffi.default.initialize();
+matrix_sdk_ui.default.initialize();
+
+// Export the crates as individually namespaced objects.
+export default {
+  matrix_sdk,
+  matrix_sdk_base,
+  matrix_sdk_common,
+  matrix_sdk_crypto,
+  matrix_sdk_ffi,
+  matrix_sdk_ui,
+};
+
