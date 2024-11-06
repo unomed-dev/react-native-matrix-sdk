@@ -34,7 +34,7 @@
     "ubrn:ios:build": "ubrn build ios --config ubrn.yaml",
     "ubrn:ios:build:release": "yarn ubrn:ios:build --release",
     "ubrn:checkout": "ubrn checkout --config ubrn.yaml",
-    "ubrn:clean": "rm -Rf cpp/ android/src/main/java ios/ src/Native* src/generated/ src/index.ts*",
+    "ubrn:clean": "rm -Rf cpp/ android/src/main/java ios/ \"src/Native*\" src/generated/ \"src/index.ts*\"",
     "ubrn:generate": "ubrn generate all --config ubrn.yaml build/RnMatrixRustSdk.xcframework/ios-arm64/libmatrix_sdk_ffi.a",
     "generate": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android && yarn ubrn:ios",
     "generate:release": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build:release && yarn ubrn:ios:build:release && yarn ubrn:generate && (cd example/ios && pod install)",
@@ -68,7 +68,7 @@
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",
     "@evilmartians/lefthook": "^1.5.0",
-    "@react-native/eslint-config": "^0.73.1",
+    "@react-native/eslint-config": "0.76.0",
     "@release-it/conventional-changelog": "^5.0.0",
     "@types/jest": "^29.5.5",
     "@types/react": "^18.2.44",
@@ -80,12 +80,12 @@
     "jest": "^29.7.0",
     "prettier": "^3.0.3",
     "react": "18.3.1",
-    "react-native": "0.75.4",
+    "react-native": "0.76.0",
     "react-native-builder-bob": "^0.30.2",
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2",
-    "uniffi-bindgen-react-native": "https://github.com/jhugman/uniffi-bindgen-react-native#f9b2aa203aa1edb18e8b92e7f25bf49a7efdf344"
+    "uniffi-bindgen-react-native": "https://github.com/jhugman/uniffi-bindgen-react-native#c6f21855628db57719cb31fb0a4c5316a6d0c9b7"
   },
   "resolutions": {
     "@types/react": "^18.2.44"
