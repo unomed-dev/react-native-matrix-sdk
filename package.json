@@ -2,11 +2,21 @@
   "name": "@unomed/react-native-matrix-sdk",
   "version": "0.1.0",
   "description": "⚡️ FFI bindings for matrix-rust-sdk in a React Native Turbo Module ⚡️",
-  "main": "lib/commonjs/index",
-  "module": "lib/module/index",
-  "types": "lib/typescript/src/index.d.ts",
-  "react-native": "src/index",
-  "source": "src/index",
+  "source": "./src/index.tsx",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/typescript/module/src/index.d.ts",
+        "default": "./lib/module/index.js"
+      },
+      "require": {
+        "types": "./lib/typescript/commonjs/src/index.d.ts",
+        "default": "./lib/commonjs/index.js"
+      }
+    }
+  },
   "files": [
     "src",
     "lib",
@@ -34,13 +44,13 @@
     "ubrn:ios:build": "ubrn build ios --config ubrn.yaml",
     "ubrn:ios:build:release": "yarn ubrn:ios:build --release",
     "ubrn:checkout": "ubrn checkout --config ubrn.yaml",
-    "ubrn:clean": "rm -Rf cpp/ android/src/main/java ios/ \"src/Native*\" src/generated/ \"src/index.ts*\"",
+    "ubrn:clean": "rm -Rf cpp/ android/src/main/java ios/ src/Native* src/generated/ src/index.ts*",
     "ubrn:generate": "ubrn generate all --config ubrn.yaml build/RnMatrixRustSdk.xcframework/ios-arm64/libmatrix_sdk_ffi.a",
     "generate": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android && yarn ubrn:ios",
     "generate:release": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build:release && yarn ubrn:ios:build:release && yarn ubrn:generate && (cd example/ios && pod install)",
     "format": "prettier -w '**/*.{ts,tsx}'",
     "example": "yarn workspace @unomed/react-native-matrix-sdk-example",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
@@ -68,7 +78,8 @@
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",
     "@evilmartians/lefthook": "^1.5.0",
-    "@react-native/eslint-config": "0.76.1",
+    "@react-native-community/cli": "15.0.0",
+    "@react-native/eslint-config": "^0.73.1",
     "@release-it/conventional-changelog": "^5.0.0",
     "@types/jest": "^29.5.5",
     "@types/react": "^18.2.44",
@@ -81,7 +92,7 @@
     "prettier": "^3.0.3",
     "react": "18.3.1",
     "react-native": "0.76.1",
-    "react-native-builder-bob": "^0.30.2",
+    "react-native-builder-bob": "^0.31.0",
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2",
@@ -134,6 +145,7 @@
       "prettier"
     ],
     "rules": {
+      "react/react-in-jsx-scope": "off",
       "prettier/prettier": [
         "error",
         {
@@ -161,19 +173,44 @@
     "source": "src",
     "output": "lib",
     "targets": [
-      "commonjs",
-      "module",
+      "codegen",
+      [
+        "commonjs",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
       [
         "typescript",
         {
-          "project": "tsconfig.build.json"
+          "project": "tsconfig.build.json",
+          "esm": true
         }
       ]
     ]
   },
   "codegenConfig": {
-    "name": "NativeReactNativeMatrixSdkSpec",
-    "type": "modules",
-    "jsSrcsDir": "src"
+    "name": "RNReactNativeMatrixSdkSpec",
+    "type": "all",
+    "jsSrcsDir": "src",
+    "outputDir": {
+      "ios": "ios/generated",
+      "android": "android/generated"
+    },
+    "android": {
+      "javaPackageName": "com.unomed.reactnativematrixsdk"
+    },
+    "includesGeneratedCode": true
+  },
+  "create-react-native-library": {
+    "type": "module-new",
+    "languages": "cpp",
+    "version": "0.41.2"
   }
 }

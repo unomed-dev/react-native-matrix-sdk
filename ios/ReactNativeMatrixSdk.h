@@ -4,7 +4,7 @@
 #endif
 
 #ifdef RCT_NEW_ARCH_ENABLED
-#import "NativeReactNativeMatrixSdkSpec.h"
+#import "RNReactNativeMatrixSdkSpec.h"
 
 @interface ReactNativeMatrixSdk : NSObject <NativeReactNativeMatrixSdkSpec>
 #else

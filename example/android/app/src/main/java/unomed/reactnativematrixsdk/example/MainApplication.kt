@@ -1,4 +1,4 @@
-package com.reactnativematrixsdkexample
+package unomed.reactnativematrixsdk.example
 
 import android.app.Application
 import com.facebook.react.PackageList

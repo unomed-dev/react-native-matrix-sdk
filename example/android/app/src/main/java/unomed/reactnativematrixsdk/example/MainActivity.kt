@@ -1,4 +1,4 @@
-package com.reactnativematrixsdkexample
+package unomed.reactnativematrixsdk.example
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

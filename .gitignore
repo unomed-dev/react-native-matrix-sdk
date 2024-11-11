@@ -79,3 +79,7 @@ lib/
 # uniffi-bindgen-react-native
 rust_modules/
 *.a
+
+# React Native Codegen
+ios/generated
+android/generated
