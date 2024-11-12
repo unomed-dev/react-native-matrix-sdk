@@ -2,7 +2,10 @@
 
 ⚡️ FFI bindings for [matrix-rust-sdk] in a React Native Turbo Module ⚡️
 
-[![CI](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ci.yml)
+[![lint](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/lint.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/lint.yml)
+[![build-library](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-library.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-library.yml)
+[![build-android](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-android.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-android.yml)
+[![build-ios](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-ios.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-ios.yml)
 
 Powered by [uniffi-bindgen-react-native].
 
