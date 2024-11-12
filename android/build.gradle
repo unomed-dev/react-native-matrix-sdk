@@ -100,7 +100,8 @@ android {
       if (isNewArchitectureEnabled()) {
           java.srcDirs += [
             // This is needed to build Kotlin project with NewArch enabled
-            "${project.buildDir}/generated/source/codegen/java"
+            // TODO: Stop hand-patching this once https://github.com/jhugman/uniffi-bindgen-react-native/issues/161 is fixed
+            "${project.buildDir}/../generated/java"
           ]
       }
     }
