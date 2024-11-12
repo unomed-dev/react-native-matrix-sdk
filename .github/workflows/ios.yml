@@ -31,7 +31,12 @@ jobs:
           cat example/ios/.xcode.env.local
 
       - name: Generate
-        run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:ios
+        run: |
+          yarn ubrn:clean
+          yarn ubrn:checkout
+          yarn ubrn:ios
+          # Free up space for subsequent steps
+          rm -rf rust_modules
 
       # - name: Cache turborepo for iOS
       #   uses: actions/cache@v4

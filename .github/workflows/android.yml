@@ -28,7 +28,12 @@ jobs:
         run: cargo install cargo-ndk
 
       - name: Generate
-        run: yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android
+        run: |
+          yarn ubrn:clean
+          yarn ubrn:checkout
+          yarn ubrn:android
+          # Free up space for subsequent steps
+          rm -rf rust_modules
 
       - name: Cache turborepo for Android
         uses: actions/cache@v4
@@ -68,11 +73,6 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('example/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-
-      - name: Free up disk space
-        run: |
-          # https://github.com/orgs/community/discussions/25678#discussioncomment-5242449
-          rm -rvf /opt/hostedtoolcache
 
       - name: Build example for Android
         env:
