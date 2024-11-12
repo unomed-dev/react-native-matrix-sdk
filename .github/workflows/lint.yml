@@ -8,13 +8,14 @@ on:
       - main
 
 jobs:
-  run:
+  all:
+    name: all 🔍
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup
+      - name: Setup JS
         uses: ./.github/actions/setup
 
       - name: Lint files
