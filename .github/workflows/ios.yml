@@ -9,7 +9,6 @@ on:
 
 jobs:
   build:
-    name: build 🛠️
     runs-on: macos-14
     env:
       TURBO_CACHE_DIR: .turbo/ios
