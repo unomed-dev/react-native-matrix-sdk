@@ -69,6 +69,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Free up disk space
+        run: |
+          # https://github.com/orgs/community/discussions/25678#discussioncomment-5242449
+          rm -rvf /opt/hostedtoolcache
+
       - name: Build example for Android
         env:
           JAVA_OPTS: "-XX:MaxHeapSize=6g"
