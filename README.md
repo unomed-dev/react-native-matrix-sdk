@@ -7,7 +7,7 @@
 [![android](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/android.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/android.yml)
 [![ios](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ios.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ios.yml)
 
-Powered by [uniffi-bindgen-react-native].
+Powered by [uniffi-bindgen-react-native] and [create-react-native-library].
 
 
 ## Installation
@@ -85,11 +85,6 @@ See the [contributing guide] to learn about the development and contribution wor
 ## License
 
 Apache-2.0
-
-
----
-
-Made with [create-react-native-library]
 
 
 [contributing guide]: CONTRIBUTING.md
