@@ -37,8 +37,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "ubrn:android": "yarn ubrn:android:build --and-generate && yarn ubrn:android:fix-build-gradle",
-    "ubrn:android:fix-build-gradle": "sed 's|generated/source/codegen/java|../generated/java|' android/build.gradle > android/build.gradle.new && mv android/build.gradle.new android/build.gradle",
+    "ubrn:android": "yarn ubrn:android:build --and-generate",
     "ubrn:android:build": "ubrn build android --config ubrn.yaml",
     "ubrn:android:build:release": "yarn ubrn:android:build --release",
     "ubrn:ios": "yarn ubrn:ios:build --and-generate && (cd example/ios && pod install)",
