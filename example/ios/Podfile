@@ -25,9 +25,6 @@ target 'ReactNativeMatrixSdkExample' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  # TODO: Remove once the pod has been published
-  pod 'uniffi-bindgen-react-native', :path => '../../node_modules/uniffi-bindgen-react-native'
-
   target 'ReactNativeMatrixSdkExampleTests' do
     inherit! :complete
     # Pods for testing
