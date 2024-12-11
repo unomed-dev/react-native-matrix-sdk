@@ -1510,8 +1510,8 @@ PODS:
     - React-perflogger (= 0.76.1)
     - React-utils (= 0.76.1)
   - SocketRocket (0.7.1)
-  - uniffi-bindgen-react-native (0.28.2-0):
-    - React
+  - uniffi-bindgen-react-native (0.28.3-1):
+    - React-Core
   - unomed-react-native-matrix-sdk (0.2.0):
     - DoubleConversion
     - glog
@@ -1532,6 +1532,7 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
+    - uniffi-bindgen-react-native (= 0.28.3-1)
     - Yoga
   - Yoga (0.0.0)
 
@@ -1600,13 +1601,13 @@ DEPENDENCIES:
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
-  - uniffi-bindgen-react-native (from `../../node_modules/uniffi-bindgen-react-native`)
   - unomed-react-native-matrix-sdk (from `../..`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   trunk:
     - SocketRocket
+    - uniffi-bindgen-react-native
 
 EXTERNAL SOURCES:
   boost:
@@ -1734,8 +1735,6 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
-  uniffi-bindgen-react-native:
-    :path: "../../node_modules/uniffi-bindgen-react-native"
   unomed-react-native-matrix-sdk:
     :path: "../.."
   Yoga:
@@ -1805,10 +1804,10 @@ SPEC CHECKSUMS:
   ReactCodegen: 865bafc5c17ec2181620ced1a32c39c38ab2951d
   ReactCommon: 422e364463f33e336fc4db196aeb50fd801d90d6
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  uniffi-bindgen-react-native: caa3b0ec0a5c904fbc334fc63144146079ce3934
-  unomed-react-native-matrix-sdk: 2fa5156929998a85e7437549cd0ed5f2d3df8eb7
+  uniffi-bindgen-react-native: 29959d30509f56394fca1cbce568000ab0de8642
+  unomed-react-native-matrix-sdk: aa21710f20ddb6126c435e9632727b27282a98d4
   Yoga: db69236006b8b1c6d55ab453390c882306cbf219
 
-PODFILE CHECKSUM: 49b187f74553462550d36ec0be911b8ed042c199
+PODFILE CHECKSUM: f31d96f710b5116b3170327449261b387e616e6d
 
 COCOAPODS: 1.16.2
