@@ -62,7 +62,7 @@ protected:
                                                       const jsi::Value &thisVal,
                                                       const jsi::Value *args,
                                                       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_abort_oidc_login(
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_abort_oidc_auth(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_account_data(
@@ -88,6 +88,9 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_create_room(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_create_room_alias(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_custom_login_with_jwt(
@@ -162,11 +165,17 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_ignored_users(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_is_room_alias_available(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_join_room_by_id(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_client_join_room_by_id_or_alias(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_knock(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_login(
@@ -196,6 +205,9 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_restore_session(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_room_alias_exists(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_room_directory_search(
@@ -255,7 +267,7 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_upload_media(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_url_for_oidc_login(
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_url_for_oidc(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_user_id(
@@ -297,6 +309,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_cross_process_store_locks_holder_name(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_automatic_token_refresh(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -309,7 +325,7 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_enable_cross_process_refresh_lock(
+  cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_enable_oidc_refresh_lock(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_homeserver_url(
@@ -388,9 +404,6 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_enable_recovery(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_get_user_identity(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_is_last_device(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -413,6 +426,9 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_reset_recovery_key(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_user_identity(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_verification_state(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -428,28 +444,6 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_fn_method_encryption_wait_for_e2ee_initialization_tasks(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_eventshieldsprovider(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_free_eventshieldsprovider(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_method_eventshieldsprovider_get_shields(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_clone_eventtimelineitemdebuginfoprovider(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_free_eventtimelineitemdebuginfoprovider(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_method_eventtimelineitemdebuginfoprovider_get(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_homeserverlogindetails(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -458,6 +452,10 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_sliding_sync_version(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_supported_oidc_prompts(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -496,6 +494,24 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_inreplytodetails_event_id(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_lazytimelineitemprovider(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_free_lazytimelineitemprovider(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_debug_info(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_get_send_handle(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_get_shields(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_mediafilehandle(
@@ -849,9 +865,6 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_topic(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_try_resend(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_typing_notice(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -986,6 +999,9 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_membership(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_preview_room(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_room_info(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1023,6 +1039,21 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roommembersiterator_next_chunk(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_roompreview(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_free_roompreview(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roompreview_info(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roompreview_inviter(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roompreview_leave(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_sendattachmentjoinhandle(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1045,10 +1076,21 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_sendhandle_abort(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_sendhandle_try_resend(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_sessionverificationcontroller(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_free_sessionverificationcontroller(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_accept_verification_request(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_acknowledge_verification_request(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -1061,10 +1103,6 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_decline_verification(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_is_verified(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -1210,10 +1248,6 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_timeline_get_event_timeline_item_by_event_id(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_method_timeline_get_event_timeline_item_by_transaction_id(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_timeline_load_reply_details(
@@ -1381,6 +1415,9 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_free_useridentity(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_useridentity_is_verified(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_useridentity_master_key(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1420,6 +1457,9 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_func_get_element_call_required_permissions(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_is_room_alias_format_valid(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_log_event(
@@ -1462,6 +1502,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_parse_matrix_entity_from(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_func_room_alias_name_from_room_display_name(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_sdk_git_sha(
@@ -1646,6 +1690,9 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_checksum_func_get_element_call_required_permissions(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_is_room_alias_format_valid(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_log_event(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1691,6 +1738,10 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_parse_matrix_entity_from(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_func_room_alias_name_from_room_display_name(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_sdk_git_sha(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1715,7 +1766,7 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_abort_oidc_login(
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_abort_oidc_auth(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_account_data(
@@ -1743,6 +1794,9 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_create_room(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_create_room_alias(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -1821,11 +1875,18 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_ignored_users(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_client_is_room_alias_available(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id_or_alias(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_knock(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_login(
@@ -1857,6 +1918,9 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_restore_session(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_room_alias_exists(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -1918,8 +1982,7 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_upload_media(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oidc_login(
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oidc(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_user_id(
@@ -1953,6 +2016,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_cross_process_store_locks_holder_name(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_automatic_token_refresh(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1965,7 +2032,7 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_cross_process_refresh_lock(
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_oidc_refresh_lock(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2047,10 +2114,6 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_encryption_get_user_identity(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_encryption_is_last_device(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2077,6 +2140,9 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_recovery_key(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_encryption_user_identity(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
@@ -2094,15 +2160,11 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_eventshieldsprovider_get_shields(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_eventtimelineitemdebuginfoprovider_get(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_sliding_sync_version(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supported_oidc_prompts(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2134,6 +2196,18 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event_id(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_debug_info(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_send_handle(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_shields(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_path(
@@ -2466,9 +2540,6 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_topic(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_try_resend(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_typing_notice(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2579,6 +2650,10 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_membership(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_preview_room(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_room_info(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2607,6 +2682,15 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_next_chunk(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_roompreview_info(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_roompreview_inviter(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_roompreview_leave(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_cancel(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
@@ -2616,6 +2700,17 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_sendhandle_abort(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_sendhandle_try_resend(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_accept_verification_request(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_acknowledge_verification_request(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2628,10 +2723,6 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_decline_verification(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_is_verified(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2729,10 +2820,6 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_timeline_get_event_timeline_item_by_event_id(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_timeline_get_event_timeline_item_by_transaction_id(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2862,6 +2949,9 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_notification_count(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_useridentity_is_verified(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2983,6 +3073,10 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_sendqueueroomerrorlistener_on_error(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_request(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -3153,14 +3247,6 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
-  cpp_uniffi_internal_fn_method_eventshieldsprovider_ffi__bless_pointer(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_internal_fn_method_eventtimelineitemdebuginfoprovider_ffi__bless_pointer(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
   cpp_uniffi_internal_fn_method_homeserverlogindetails_ffi__bless_pointer(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -3169,6 +3255,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_internal_fn_method_inreplytodetails_ffi__bless_pointer(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_internal_fn_method_lazytimelineitemprovider_ffi__bless_pointer(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_internal_fn_method_mediafilehandle_ffi__bless_pointer(
@@ -3211,6 +3301,9 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_internal_fn_method_roommembersiterator_ffi__bless_pointer(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_internal_fn_method_roompreview_ffi__bless_pointer(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value

@@ -63,7 +63,7 @@ interface NativeModuleInterface {
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): void;
-  uniffi_matrix_sdk_ffi_fn_method_client_abort_oidc_login(
+  uniffi_matrix_sdk_ffi_fn_method_client_abort_oidc_auth(
     ptr: bigint,
     authorizationData: bigint
   ): bigint;
@@ -94,6 +94,11 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_client_create_room(
     ptr: bigint,
     request: ArrayBuffer
+  ): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_client_create_room_alias(
+    ptr: bigint,
+    roomAlias: ArrayBuffer,
+    roomId: ArrayBuffer
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_client_custom_login_with_jwt(
     ptr: bigint,
@@ -135,7 +140,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_client_get_media_file(
     ptr: bigint,
     mediaSource: bigint,
-    body: ArrayBuffer,
+    filename: ArrayBuffer,
     mimeType: ArrayBuffer,
     useCache: number,
     tempDir: ArrayBuffer
@@ -185,6 +190,10 @@ interface NativeModuleInterface {
     userId: ArrayBuffer
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_client_ignored_users(ptr: bigint): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_client_is_room_alias_available(
+    ptr: bigint,
+    alias: ArrayBuffer
+  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_client_join_room_by_id(
     ptr: bigint,
     roomId: ArrayBuffer
@@ -192,6 +201,12 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_client_join_room_by_id_or_alias(
     ptr: bigint,
     roomIdOrAlias: ArrayBuffer,
+    serverNames: ArrayBuffer
+  ): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_client_knock(
+    ptr: bigint,
+    roomIdOrAlias: ArrayBuffer,
+    reason: ArrayBuffer,
     serverNames: ArrayBuffer
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_client_login(
@@ -229,6 +244,10 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_client_restore_session(
     ptr: bigint,
     session: ArrayBuffer
+  ): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_client_room_alias_exists(
+    ptr: bigint,
+    roomAlias: ArrayBuffer
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_client_room_directory_search(
     ptr: bigint,
@@ -316,9 +335,10 @@ interface NativeModuleInterface {
     data: ArrayBuffer,
     progressWatcher: ArrayBuffer
   ): bigint;
-  uniffi_matrix_sdk_ffi_fn_method_client_url_for_oidc_login(
+  uniffi_matrix_sdk_ffi_fn_method_client_url_for_oidc(
     ptr: bigint,
-    oidcConfiguration: ArrayBuffer
+    oidcConfiguration: ArrayBuffer,
+    prompt: ArrayBuffer
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_client_user_id(
     ptr: bigint,
@@ -366,6 +386,11 @@ interface NativeModuleInterface {
     oidcConfiguration: ArrayBuffer,
     progressListener: bigint
   ): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_clientbuilder_cross_process_store_locks_holder_name(
+    ptr: bigint,
+    holderName: ArrayBuffer,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_automatic_token_refresh(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -378,10 +403,8 @@ interface NativeModuleInterface {
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
-  uniffi_matrix_sdk_ffi_fn_method_clientbuilder_enable_cross_process_refresh_lock(
+  uniffi_matrix_sdk_ffi_fn_method_clientbuilder_enable_oidc_refresh_lock(
     ptr: bigint,
-    processId: ArrayBuffer,
-    sessionDelegate: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_clientbuilder_homeserver_url(
@@ -486,10 +509,6 @@ interface NativeModuleInterface {
     passphrase: ArrayBuffer,
     progressListener: bigint
   ): bigint;
-  uniffi_matrix_sdk_ffi_fn_method_encryption_get_user_identity(
-    ptr: bigint,
-    userId: ArrayBuffer
-  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_encryption_is_last_device(
     ptr: bigint
   ): bigint;
@@ -516,6 +535,10 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_encryption_reset_recovery_key(
     ptr: bigint
   ): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_encryption_user_identity(
+    ptr: bigint,
+    userId: ArrayBuffer
+  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_encryption_verification_state(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -532,31 +555,6 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_encryption_wait_for_e2ee_initialization_tasks(
     ptr: bigint
   ): bigint;
-  uniffi_matrix_sdk_ffi_fn_clone_eventshieldsprovider(
-    ptr: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): bigint;
-  uniffi_matrix_sdk_ffi_fn_free_eventshieldsprovider(
-    ptr: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): void;
-  uniffi_matrix_sdk_ffi_fn_method_eventshieldsprovider_get_shields(
-    ptr: bigint,
-    strict: number,
-    uniffi_out_err: UniffiRustCallStatus
-  ): ArrayBuffer;
-  uniffi_matrix_sdk_ffi_fn_clone_eventtimelineitemdebuginfoprovider(
-    ptr: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): bigint;
-  uniffi_matrix_sdk_ffi_fn_free_eventtimelineitemdebuginfoprovider(
-    ptr: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): void;
-  uniffi_matrix_sdk_ffi_fn_method_eventtimelineitemdebuginfoprovider_get(
-    ptr: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): ArrayBuffer;
   uniffi_matrix_sdk_ffi_fn_clone_homeserverlogindetails(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -566,6 +564,10 @@ interface NativeModuleInterface {
     uniffi_out_err: UniffiRustCallStatus
   ): void;
   uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_sliding_sync_version(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_supported_oidc_prompts(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): ArrayBuffer;
@@ -614,6 +616,27 @@ interface NativeModuleInterface {
   ): ArrayBuffer;
   uniffi_matrix_sdk_ffi_fn_method_inreplytodetails_event_id(
     ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_clone_lazytimelineitemprovider(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
+  uniffi_matrix_sdk_ffi_fn_free_lazytimelineitemprovider(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): void;
+  uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_debug_info(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_get_send_handle(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_get_shields(
+    ptr: bigint,
+    strict: number,
     uniffi_out_err: UniffiRustCallStatus
   ): ArrayBuffer;
   uniffi_matrix_sdk_ffi_fn_clone_mediafilehandle(
@@ -857,7 +880,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_room_ignore_device_trust_and_resend(
     ptr: bigint,
     devices: ArrayBuffer,
-    transactionId: ArrayBuffer
+    sendHandle: bigint
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_room_ignore_user(
     ptr: bigint,
@@ -1029,10 +1052,6 @@ interface NativeModuleInterface {
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): ArrayBuffer;
-  uniffi_matrix_sdk_ffi_fn_method_room_try_resend(
-    ptr: bigint,
-    transactionId: ArrayBuffer
-  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_room_typing_notice(
     ptr: bigint,
     isTyping: number
@@ -1055,7 +1074,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_room_withdraw_verification_and_resend(
     ptr: bigint,
     userIds: ArrayBuffer,
-    transactionId: ArrayBuffer
+    sendHandle: bigint
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_clone_roomdirectorysearch(
     ptr: bigint,
@@ -1081,7 +1100,8 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_search(
     ptr: bigint,
     filter: ArrayBuffer,
-    batchSize: number
+    batchSize: number,
+    viaServerName: ArrayBuffer
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_clone_roomlist(
     ptr: bigint,
@@ -1199,6 +1219,10 @@ interface NativeModuleInterface {
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_method_roomlistitem_preview_room(
+    ptr: bigint,
+    via: ArrayBuffer
+  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_roomlistitem_room_info(ptr: bigint): bigint;
   uniffi_matrix_sdk_ffi_fn_clone_roomlistservice(
     ptr: bigint,
@@ -1224,7 +1248,6 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_fn_method_roomlistservice_subscribe_to_rooms(
     ptr: bigint,
     roomIds: ArrayBuffer,
-    settings: ArrayBuffer,
     uniffi_out_err: UniffiRustCallStatus
   ): void;
   uniffi_matrix_sdk_ffi_fn_method_roomlistservice_sync_indicator(
@@ -1251,6 +1274,20 @@ interface NativeModuleInterface {
     chunkSize: number,
     uniffi_out_err: UniffiRustCallStatus
   ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_clone_roompreview(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
+  uniffi_matrix_sdk_ffi_fn_free_roompreview(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): void;
+  uniffi_matrix_sdk_ffi_fn_method_roompreview_info(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_method_roompreview_inviter(ptr: bigint): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_roompreview_leave(ptr: bigint): bigint;
   uniffi_matrix_sdk_ffi_fn_clone_sendattachmentjoinhandle(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -1275,6 +1312,7 @@ interface NativeModuleInterface {
     uniffi_out_err: UniffiRustCallStatus
   ): void;
   uniffi_matrix_sdk_ffi_fn_method_sendhandle_abort(ptr: bigint): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_sendhandle_try_resend(ptr: bigint): bigint;
   uniffi_matrix_sdk_ffi_fn_clone_sessionverificationcontroller(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -1283,6 +1321,14 @@ interface NativeModuleInterface {
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): void;
+  uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_accept_verification_request(
+    ptr: bigint
+  ): bigint;
+  uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_acknowledge_verification_request(
+    ptr: bigint,
+    senderId: ArrayBuffer,
+    flowId: ArrayBuffer
+  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_approve_verification(
     ptr: bigint
   ): bigint;
@@ -1290,9 +1336,6 @@ interface NativeModuleInterface {
     ptr: bigint
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_decline_verification(
-    ptr: bigint
-  ): bigint;
-  uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_is_verified(
     ptr: bigint
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_request_verification(
@@ -1401,7 +1444,6 @@ interface NativeModuleInterface {
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(
     ptr: bigint,
-    appIdentifier: ArrayBuffer,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_utd_hook(
@@ -1472,10 +1514,6 @@ interface NativeModuleInterface {
     ptr: bigint,
     eventId: ArrayBuffer
   ): bigint;
-  uniffi_matrix_sdk_ffi_fn_method_timeline_get_event_timeline_item_by_transaction_id(
-    ptr: bigint,
-    transactionId: ArrayBuffer
-  ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_timeline_load_reply_details(
     ptr: bigint,
     eventIdStr: ArrayBuffer
@@ -1513,13 +1551,17 @@ interface NativeModuleInterface {
     caption: ArrayBuffer,
     formattedCaption: ArrayBuffer,
     progressWatcher: ArrayBuffer,
+    useSendQueue: number,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_timeline_send_file(
     ptr: bigint,
     url: ArrayBuffer,
     fileInfo: ArrayBuffer,
+    caption: ArrayBuffer,
+    formattedCaption: ArrayBuffer,
     progressWatcher: ArrayBuffer,
+    useSendQueue: number,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_timeline_send_image(
@@ -1530,6 +1572,7 @@ interface NativeModuleInterface {
     caption: ArrayBuffer,
     formattedCaption: ArrayBuffer,
     progressWatcher: ArrayBuffer,
+    useSendQueue: number,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_timeline_send_location(
@@ -1563,6 +1606,7 @@ interface NativeModuleInterface {
     caption: ArrayBuffer,
     formattedCaption: ArrayBuffer,
     progressWatcher: ArrayBuffer,
+    useSendQueue: number,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_timeline_send_voice_message(
@@ -1573,6 +1617,7 @@ interface NativeModuleInterface {
     caption: ArrayBuffer,
     formattedCaption: ArrayBuffer,
     progressWatcher: ArrayBuffer,
+    useSendQueue: number,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_timeline_subscribe_to_back_pagination_status(
@@ -1581,7 +1626,7 @@ interface NativeModuleInterface {
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_timeline_toggle_reaction(
     ptr: bigint,
-    uniqueId: ArrayBuffer,
+    itemId: ArrayBuffer,
     key: ArrayBuffer
   ): bigint;
   uniffi_matrix_sdk_ffi_fn_method_timeline_unpin_event(
@@ -1724,6 +1769,10 @@ interface NativeModuleInterface {
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): void;
+  uniffi_matrix_sdk_ffi_fn_method_useridentity_is_verified(
+    ptr: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): number;
   uniffi_matrix_sdk_ffi_fn_method_useridentity_master_key(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -1772,6 +1821,10 @@ interface NativeModuleInterface {
     ownDeviceId: ArrayBuffer,
     uniffi_out_err: UniffiRustCallStatus
   ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_func_is_room_alias_format_valid(
+    alias: ArrayBuffer,
+    uniffi_out_err: UniffiRustCallStatus
+  ): number;
   uniffi_matrix_sdk_ffi_fn_func_log_event(
     file: ArrayBuffer,
     line: ArrayBuffer,
@@ -1828,6 +1881,10 @@ interface NativeModuleInterface {
   ): ArrayBuffer;
   uniffi_matrix_sdk_ffi_fn_func_parse_matrix_entity_from(
     uri: ArrayBuffer,
+    uniffi_out_err: UniffiRustCallStatus
+  ): ArrayBuffer;
+  uniffi_matrix_sdk_ffi_fn_func_room_alias_name_from_room_display_name(
+    roomName: ArrayBuffer,
     uniffi_out_err: UniffiRustCallStatus
   ): ArrayBuffer;
   uniffi_matrix_sdk_ffi_fn_func_sdk_git_sha(
@@ -1992,6 +2049,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_func_gen_transaction_id(): number;
   uniffi_matrix_sdk_ffi_checksum_func_generate_webview_url(): number;
   uniffi_matrix_sdk_ffi_checksum_func_get_element_call_required_permissions(): number;
+  uniffi_matrix_sdk_ffi_checksum_func_is_room_alias_format_valid(): number;
   uniffi_matrix_sdk_ffi_checksum_func_log_event(): number;
   uniffi_matrix_sdk_ffi_checksum_func_make_element_well_known(): number;
   uniffi_matrix_sdk_ffi_checksum_func_make_widget_driver(): number;
@@ -2005,6 +2063,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_func_message_event_content_new(): number;
   uniffi_matrix_sdk_ffi_checksum_func_new_virtual_element_call_widget(): number;
   uniffi_matrix_sdk_ffi_checksum_func_parse_matrix_entity_from(): number;
+  uniffi_matrix_sdk_ffi_checksum_func_room_alias_name_from_room_display_name(): number;
   uniffi_matrix_sdk_ffi_checksum_func_sdk_git_sha(): number;
   uniffi_matrix_sdk_ffi_checksum_func_setup_tracing(): number;
   uniffi_matrix_sdk_ffi_checksum_func_suggested_power_level_for_role(): number;
@@ -2012,7 +2071,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json(): number;
   uniffi_matrix_sdk_ffi_checksum_method_mediasource_url(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_client_abort_oidc_login(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_client_abort_oidc_auth(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_account_data(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_account_url(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_available_sliding_sync_versions(): number;
@@ -2021,6 +2080,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_client_cached_avatar_url(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_can_deactivate_account(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_create_room(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_client_create_room_alias(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_custom_login_with_jwt(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_deactivate_account(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_delete_pusher(): number;
@@ -2043,8 +2103,10 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_client_homeserver_login_details(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_ignore_user(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_ignored_users(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_client_is_room_alias_available(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id_or_alias(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_client_knock(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_login(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_login_with_email(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_login_with_oidc_callback(): number;
@@ -2054,6 +2116,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_client_reset_server_capabilities(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_resolve_room_alias(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_restore_session(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_client_room_alias_exists(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_room_directory_search(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_rooms(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_search_users(): number;
@@ -2072,7 +2135,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_client_unignore_user(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_upload_avatar(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_upload_media(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oidc_login(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oidc(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_user_id(): number;
   uniffi_matrix_sdk_ffi_checksum_method_client_user_id_server_name(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_add_root_certificates(): number;
@@ -2081,10 +2144,11 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_backup_download_strategy(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build_with_qr_code(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_cross_process_store_locks_holder_name(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_automatic_token_refresh(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_built_in_root_certificates(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_ssl_verification(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_cross_process_refresh_lock(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_oidc_refresh_lock(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_homeserver_url(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_passphrase(): number;
   uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_proxy(): number;
@@ -2106,7 +2170,6 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_encryption_ed25519_key(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_backups(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_recovery(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_encryption_get_user_identity(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_is_last_device(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_recover(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_recover_and_reset(): number;
@@ -2114,13 +2177,13 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_encryption_recovery_state_listener(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_identity(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_recovery_key(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_encryption_user_identity(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state_listener(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_wait_for_backup_upload_steady_state(): number;
   uniffi_matrix_sdk_ffi_checksum_method_encryption_wait_for_e2ee_initialization_tasks(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_eventshieldsprovider_get_shields(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_eventtimelineitemdebuginfoprovider_get(): number;
   uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_sliding_sync_version(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supported_oidc_prompts(): number;
   uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_oidc_login(): number;
   uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_password_login(): number;
   uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_url(): number;
@@ -2129,6 +2192,9 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_reset(): number;
   uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event(): number;
   uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event_id(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_debug_info(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_send_handle(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_shields(): number;
   uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_path(): number;
   uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_persist(): number;
   uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notification(): number;
@@ -2225,7 +2291,6 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_room_timeline(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_timeline_focused_on_event(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_topic(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_room_try_resend(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_typing_notice(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_unban_user(): number;
   uniffi_matrix_sdk_ffi_checksum_method_room_update_power_levels_for_users(): number;
@@ -2256,6 +2321,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_timeline_initialized(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_latest_event(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_membership(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_preview_room(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_room_info(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_all_rooms(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_room(): number;
@@ -2264,13 +2330,18 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_sync_indicator(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_len(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_next_chunk(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_roompreview_info(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_roompreview_inviter(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_roompreview_leave(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_cancel(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_join(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sendhandle_abort(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_sendhandle_try_resend(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_accept_verification_request(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_acknowledge_verification_request(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_approve_verification(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_cancel_verification(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_decline_verification(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_is_verified(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_verification(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_set_delegate(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_start_sas_verification(): number;
@@ -2299,7 +2370,6 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_timeline_fetch_members(): number;
   uniffi_matrix_sdk_ffi_checksum_method_timeline_focused_paginate_forwards(): number;
   uniffi_matrix_sdk_ffi_checksum_method_timeline_get_event_timeline_item_by_event_id(): number;
-  uniffi_matrix_sdk_ffi_checksum_method_timeline_get_event_timeline_item_by_transaction_id(): number;
   uniffi_matrix_sdk_ffi_checksum_method_timeline_load_reply_details(): number;
   uniffi_matrix_sdk_ffi_checksum_method_timeline_mark_as_read(): number;
   uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_backwards(): number;
@@ -2339,6 +2409,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_has_notifications(): number;
   uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_highlight_count(): number;
   uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_notification_count(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_useridentity_is_verified(): number;
   uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key(): number;
   uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin(): number;
   uniffi_matrix_sdk_ffi_checksum_method_widgetdriver_run(): number;
@@ -2372,6 +2443,7 @@ interface NativeModuleInterface {
   uniffi_matrix_sdk_ffi_checksum_method_roomlistservicestatelistener_on_update(): number;
   uniffi_matrix_sdk_ffi_checksum_method_roomlistservicesyncindicatorlistener_on_update(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sendqueueroomerrorlistener_on_error(): number;
+  uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_request(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_accept_verification_request(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_start_sas_verification(): number;
   uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_data(): number;
@@ -2483,14 +2555,6 @@ interface NativeModuleInterface {
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): UniffiRustArcPtr;
-  uniffi_internal_fn_method_eventshieldsprovider_ffi__bless_pointer(
-    pointer: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): UniffiRustArcPtr;
-  uniffi_internal_fn_method_eventtimelineitemdebuginfoprovider_ffi__bless_pointer(
-    pointer: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): UniffiRustArcPtr;
   uniffi_internal_fn_method_homeserverlogindetails_ffi__bless_pointer(
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -2500,6 +2564,10 @@ interface NativeModuleInterface {
     uniffi_out_err: UniffiRustCallStatus
   ): UniffiRustArcPtr;
   uniffi_internal_fn_method_inreplytodetails_ffi__bless_pointer(
+    pointer: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): UniffiRustArcPtr;
+  uniffi_internal_fn_method_lazytimelineitemprovider_ffi__bless_pointer(
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): UniffiRustArcPtr;
@@ -2548,6 +2616,10 @@ interface NativeModuleInterface {
     uniffi_out_err: UniffiRustCallStatus
   ): UniffiRustArcPtr;
   uniffi_internal_fn_method_roommembersiterator_ffi__bless_pointer(
+    pointer: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): UniffiRustArcPtr;
+  uniffi_internal_fn_method_roompreview_ffi__bless_pointer(
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): UniffiRustArcPtr;
@@ -2875,6 +2947,7 @@ type UniffiCallbackInterfaceSendQueueRoomErrorListenerMethod0 = (
 ) => void;
 type UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod0 = (
   uniffiHandle: bigint,
+  details: ArrayBuffer,
   uniffiOutReturn: /*pointer*/ bigint,
   callStatus: UniffiRustCallStatus
 ) => void;
@@ -2885,12 +2958,12 @@ type UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod1 = (
 ) => void;
 type UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod2 = (
   uniffiHandle: bigint,
-  data: ArrayBuffer,
   uniffiOutReturn: /*pointer*/ bigint,
   callStatus: UniffiRustCallStatus
 ) => void;
 type UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod3 = (
   uniffiHandle: bigint,
+  data: ArrayBuffer,
   uniffiOutReturn: /*pointer*/ bigint,
   callStatus: UniffiRustCallStatus
 ) => void;
@@ -2900,6 +2973,11 @@ type UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod4 = (
   callStatus: UniffiRustCallStatus
 ) => void;
 type UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod5 = (
+  uniffiHandle: bigint,
+  uniffiOutReturn: /*pointer*/ bigint,
+  callStatus: UniffiRustCallStatus
+) => void;
+type UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod6 = (
   uniffiHandle: bigint,
   uniffiOutReturn: /*pointer*/ bigint,
   callStatus: UniffiRustCallStatus
@@ -3021,12 +3099,13 @@ export type UniffiVTableCallbackInterfaceSendQueueRoomErrorListener = {
 };
 export type UniffiVTableCallbackInterfaceSessionVerificationControllerDelegate =
   {
-    didAcceptVerificationRequest: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod0;
-    didStartSasVerification: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod1;
-    didReceiveVerificationData: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod2;
-    didFail: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod3;
-    didCancel: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod4;
-    didFinish: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod5;
+    didReceiveVerificationRequest: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod0;
+    didAcceptVerificationRequest: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod1;
+    didStartSasVerification: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod2;
+    didReceiveVerificationData: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod3;
+    didFail: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod4;
+    didCancel: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod5;
+    didFinish: UniffiCallbackInterfaceSessionVerificationControllerDelegateMethod6;
     uniffiFree: UniffiCallbackInterfaceFree;
   };
 export type UniffiVTableCallbackInterfaceSyncServiceStateObserver = {
