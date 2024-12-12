@@ -932,6 +932,32 @@ export enum UtdCause {
    * obtained from a legacy (asymmetric) backup, unsafe key forward, etc.)
    */
   UnknownDevice,
+  /**
+   * We are missing the keys for this event, but it is a "device-historical"
+   * message and no backup is accessible or usable.
+   *
+   * Device-historical means that the message was sent before the current
+   * device existed (but the current user was probably a member of the room
+   * at the time the message was sent). Not to
+   * be confused with pre-join or pre-invite messages (see
+   * [`UtdCause::SentBeforeWeJoined`] for that).
+   */
+  HistoricalMessage,
+  /**
+   * The keys for this event are intentionally withheld.
+   *
+   * The sender has refused to share the key because our device does not meet
+   * the sender's security requirements.
+   */
+  WithheldForUnverifiedOrInsecureDevice,
+  /**
+   * The keys for this event are missing, likely because the sender was
+   * unable to share them (e.g., failure to establish an Olm 1:1
+   * channel). Alternatively, the sender may have deliberately excluded
+   * this device by cherry-picking and blocking it, in which case, no action
+   * can be taken on our side.
+   */
+  WithheldBySender,
 }
 
 const FfiConverterTypeUtdCause = (() => {
@@ -950,6 +976,12 @@ const FfiConverterTypeUtdCause = (() => {
           return UtdCause.UnsignedDevice;
         case 5:
           return UtdCause.UnknownDevice;
+        case 6:
+          return UtdCause.HistoricalMessage;
+        case 7:
+          return UtdCause.WithheldForUnverifiedOrInsecureDevice;
+        case 8:
+          return UtdCause.WithheldBySender;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -966,6 +998,12 @@ const FfiConverterTypeUtdCause = (() => {
           return ordinalConverter.write(4, into);
         case UtdCause.UnknownDevice:
           return ordinalConverter.write(5, into);
+        case UtdCause.HistoricalMessage:
+          return ordinalConverter.write(6, into);
+        case UtdCause.WithheldForUnverifiedOrInsecureDevice:
+          return ordinalConverter.write(7, into);
+        case UtdCause.WithheldBySender:
+          return ordinalConverter.write(8, into);
       }
     }
     allocationSize(value: TypeName): number {

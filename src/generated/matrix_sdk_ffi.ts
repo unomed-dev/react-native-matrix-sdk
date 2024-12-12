@@ -174,6 +174,29 @@ export function contentWithoutRelationFromMessage(
     )
   );
 }
+/**
+ * Create a caption edit.
+ *
+ * If no `formatted_caption` is provided, then it's assumed the `caption`
+ * represents valid Markdown that can be used as the formatted caption.
+ */
+export function createCaptionEdit(
+  caption: string | undefined,
+  formattedCaption: FormattedBody | undefined
+): EditedContent {
+  return FfiConverterTypeEditedContent.lift(
+    rustCall(
+      /*caller:*/ (callStatus) => {
+        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_create_caption_edit(
+          FfiConverterOptionalString.lower(caption),
+          FfiConverterOptionalTypeFormattedBody.lower(formattedCaption),
+          callStatus
+        );
+      },
+      /*liftString:*/ FfiConverterString.lift
+    )
+  );
+}
 export function genTransactionId(): string {
   return FfiConverterString.lift(
     rustCall(
@@ -392,19 +415,6 @@ export function matrixToUserPermalink(userId: string): string /*throws*/ {
       /*caller:*/ (callStatus) => {
         return nativeModule().uniffi_matrix_sdk_ffi_fn_func_matrix_to_user_permalink(
           FfiConverterString.lower(userId),
-          callStatus
-        );
-      },
-      /*liftString:*/ FfiConverterString.lift
-    )
-  );
-}
-export function mediaSourceFromUrl(url: string): MediaSourceInterface {
-  return FfiConverterTypeMediaSource.lift(
-    rustCall(
-      /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_media_source_from_url(
-          FfiConverterString.lower(url),
           callStatus
         );
       },
@@ -5100,9 +5110,13 @@ export type RoomInfo = {
    */
   numUnreadMentions: /*u64*/ bigint;
   /**
-   * The currently pinned event ids
+   * The currently pinned event ids.
    */
   pinnedEventIds: Array<string>;
+  /**
+   * The join rule for this room, if known.
+   */
+  joinRule: JoinRule | undefined;
 };
 
 /**
@@ -5169,6 +5183,7 @@ const FfiConverterTypeRoomInfo = (() => {
         numUnreadNotifications: FfiConverterUInt64.read(from),
         numUnreadMentions: FfiConverterUInt64.read(from),
         pinnedEventIds: FfiConverterArrayString.read(from),
+        joinRule: FfiConverterOptionalTypeJoinRule.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
@@ -5205,6 +5220,7 @@ const FfiConverterTypeRoomInfo = (() => {
       FfiConverterUInt64.write(value.numUnreadNotifications, into);
       FfiConverterUInt64.write(value.numUnreadMentions, into);
       FfiConverterArrayString.write(value.pinnedEventIds, into);
+      FfiConverterOptionalTypeJoinRule.write(value.joinRule, into);
     }
     allocationSize(value: TypeName): number {
       return (
@@ -5241,7 +5257,8 @@ const FfiConverterTypeRoomInfo = (() => {
         FfiConverterUInt64.allocationSize(value.numUnreadMessages) +
         FfiConverterUInt64.allocationSize(value.numUnreadNotifications) +
         FfiConverterUInt64.allocationSize(value.numUnreadMentions) +
-        FfiConverterArrayString.allocationSize(value.pinnedEventIds)
+        FfiConverterArrayString.allocationSize(value.pinnedEventIds) +
+        FfiConverterOptionalTypeJoinRule.allocationSize(value.joinRule)
       );
     }
   }
@@ -5627,7 +5644,7 @@ export type RoomPreviewInfo = {
   /**
    * Is the history world-readable for this room?
    */
-  isHistoryWorldReadable: boolean;
+  isHistoryWorldReadable: boolean | undefined;
   /**
    * The membership state for the current user, if known.
    */
@@ -5640,6 +5657,10 @@ export type RoomPreviewInfo = {
    * Whether the room is direct or not, if known.
    */
   isDirect: boolean | undefined;
+  /**
+   * Room heroes.
+   */
+  heroes: Array<RoomHero> | undefined;
 };
 
 /**
@@ -5685,10 +5706,11 @@ const FfiConverterTypeRoomPreviewInfo = (() => {
         numJoinedMembers: FfiConverterUInt64.read(from),
         numActiveMembers: FfiConverterOptionalUInt64.read(from),
         roomType: FfiConverterTypeRoomType.read(from),
-        isHistoryWorldReadable: FfiConverterBool.read(from),
+        isHistoryWorldReadable: FfiConverterOptionalBool.read(from),
         membership: FfiConverterOptionalTypeMembership.read(from),
         joinRule: FfiConverterTypeJoinRule.read(from),
         isDirect: FfiConverterOptionalBool.read(from),
+        heroes: FfiConverterOptionalArrayTypeRoomHero.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
@@ -5700,10 +5722,11 @@ const FfiConverterTypeRoomPreviewInfo = (() => {
       FfiConverterUInt64.write(value.numJoinedMembers, into);
       FfiConverterOptionalUInt64.write(value.numActiveMembers, into);
       FfiConverterTypeRoomType.write(value.roomType, into);
-      FfiConverterBool.write(value.isHistoryWorldReadable, into);
+      FfiConverterOptionalBool.write(value.isHistoryWorldReadable, into);
       FfiConverterOptionalTypeMembership.write(value.membership, into);
       FfiConverterTypeJoinRule.write(value.joinRule, into);
       FfiConverterOptionalBool.write(value.isDirect, into);
+      FfiConverterOptionalArrayTypeRoomHero.write(value.heroes, into);
     }
     allocationSize(value: TypeName): number {
       return (
@@ -5715,10 +5738,11 @@ const FfiConverterTypeRoomPreviewInfo = (() => {
         FfiConverterUInt64.allocationSize(value.numJoinedMembers) +
         FfiConverterOptionalUInt64.allocationSize(value.numActiveMembers) +
         FfiConverterTypeRoomType.allocationSize(value.roomType) +
-        FfiConverterBool.allocationSize(value.isHistoryWorldReadable) +
+        FfiConverterOptionalBool.allocationSize(value.isHistoryWorldReadable) +
         FfiConverterOptionalTypeMembership.allocationSize(value.membership) +
         FfiConverterTypeJoinRule.allocationSize(value.joinRule) +
-        FfiConverterOptionalBool.allocationSize(value.isDirect)
+        FfiConverterOptionalBool.allocationSize(value.isDirect) +
+        FfiConverterOptionalArrayTypeRoomHero.allocationSize(value.heroes)
       );
     }
   }
@@ -7631,6 +7655,7 @@ const FfiConverterTypeAccountManagementAction = (() => {
 // Enum: AllowRule
 export enum AllowRule_Tags {
   RoomMembership = 'RoomMembership',
+  Custom = 'Custom',
 }
 /**
  * An allow rule which defines a condition that allows joining a room.
@@ -7670,6 +7695,37 @@ export const AllowRule = (() => {
     }
   }
 
+  type Custom__interface = {
+    tag: AllowRule_Tags.Custom;
+    inner: Readonly<{ json: string }>;
+  };
+
+  /**
+   * A custom allow rule implementation, containing its JSON representation
+   * as a `String`.
+   */
+  class Custom_ extends UniffiEnum implements Custom__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AllowRule';
+    readonly tag = AllowRule_Tags.Custom;
+    readonly inner: Readonly<{ json: string }>;
+    constructor(inner: { json: string }) {
+      super('AllowRule', 'Custom');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { json: string }): Custom_ {
+      return new Custom_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Custom_ {
+      return obj.tag === AllowRule_Tags.Custom;
+    }
+  }
+
   function instanceOf(obj: any): obj is AllowRule {
     return obj[uniffiTypeNameSymbol] === 'AllowRule';
   }
@@ -7677,6 +7733,7 @@ export const AllowRule = (() => {
   return Object.freeze({
     instanceOf,
     RoomMembership: RoomMembership_,
+    Custom: Custom_,
   });
 })();
 
@@ -7699,6 +7756,8 @@ const FfiConverterTypeAllowRule = (() => {
           return new AllowRule.RoomMembership({
             roomId: FfiConverterString.read(from),
           });
+        case 2:
+          return new AllowRule.Custom({ json: FfiConverterString.read(from) });
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -7709,6 +7768,12 @@ const FfiConverterTypeAllowRule = (() => {
           ordinalConverter.write(1, into);
           const inner = value.inner;
           FfiConverterString.write(inner.roomId, into);
+          return;
+        }
+        case AllowRule_Tags.Custom: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.json, into);
           return;
         }
         default:
@@ -7722,6 +7787,12 @@ const FfiConverterTypeAllowRule = (() => {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(1);
           size += FfiConverterString.allocationSize(inner.roomId);
+          return size;
+        }
+        case AllowRule_Tags.Custom: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterString.allocationSize(inner.json);
           return size;
         }
         default:
@@ -8841,6 +8912,7 @@ const FfiConverterTypeCrossSigningResetAuthType = (() => {
 // Enum: EditedContent
 export enum EditedContent_Tags {
   RoomMessage = 'RoomMessage',
+  MediaCaption = 'MediaCaption',
   PollStart = 'PollStart',
 }
 export const EditedContent = (() => {
@@ -8879,6 +8951,45 @@ export const EditedContent = (() => {
     }
   }
 
+  type MediaCaption__interface = {
+    tag: EditedContent_Tags.MediaCaption;
+    inner: Readonly<{
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }>;
+  };
+
+  class MediaCaption_ extends UniffiEnum implements MediaCaption__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'EditedContent';
+    readonly tag = EditedContent_Tags.MediaCaption;
+    readonly inner: Readonly<{
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }>;
+    constructor(inner: {
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }) {
+      super('EditedContent', 'MediaCaption');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }): MediaCaption_ {
+      return new MediaCaption_(inner);
+    }
+
+    static instanceOf(obj: any): obj is MediaCaption_ {
+      return obj.tag === EditedContent_Tags.MediaCaption;
+    }
+  }
+
   type PollStart__interface = {
     tag: EditedContent_Tags.PollStart;
     inner: Readonly<{ pollData: PollData }>;
@@ -8913,6 +9024,7 @@ export const EditedContent = (() => {
   return Object.freeze({
     instanceOf,
     RoomMessage: RoomMessage_,
+    MediaCaption: MediaCaption_,
     PollStart: PollStart_,
   });
 })();
@@ -8934,6 +9046,11 @@ const FfiConverterTypeEditedContent = (() => {
               FfiConverterTypeRoomMessageEventContentWithoutRelation.read(from),
           });
         case 2:
+          return new EditedContent.MediaCaption({
+            caption: FfiConverterOptionalString.read(from),
+            formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
+          });
+        case 3:
           return new EditedContent.PollStart({
             pollData: FfiConverterTypePollData.read(from),
           });
@@ -8952,8 +9069,18 @@ const FfiConverterTypeEditedContent = (() => {
           );
           return;
         }
-        case EditedContent_Tags.PollStart: {
+        case EditedContent_Tags.MediaCaption: {
           ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterOptionalString.write(inner.caption, into);
+          FfiConverterOptionalTypeFormattedBody.write(
+            inner.formattedCaption,
+            into
+          );
+          return;
+        }
+        case EditedContent_Tags.PollStart: {
+          ordinalConverter.write(3, into);
           const inner = value.inner;
           FfiConverterTypePollData.write(inner.pollData, into);
           return;
@@ -8974,9 +9101,18 @@ const FfiConverterTypeEditedContent = (() => {
             );
           return size;
         }
-        case EditedContent_Tags.PollStart: {
+        case EditedContent_Tags.MediaCaption: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterOptionalString.allocationSize(inner.caption);
+          size += FfiConverterOptionalTypeFormattedBody.allocationSize(
+            inner.formattedCaption
+          );
+          return size;
+        }
+        case EditedContent_Tags.PollStart: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
           size += FfiConverterTypePollData.allocationSize(inner.pollData);
           return size;
         }
@@ -20403,6 +20539,85 @@ const FfiConverterTypeRoomListServiceSyncIndicator = (() => {
   return new FFIConverter();
 })();
 
+export enum RoomMessageEventMessageType {
+  Audio,
+  Emote,
+  File,
+  Image,
+  Location,
+  Notice,
+  ServerNotice,
+  Text,
+  Video,
+  VerificationRequest,
+  Other,
+}
+
+const FfiConverterTypeRoomMessageEventMessageType = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = RoomMessageEventMessageType;
+  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return RoomMessageEventMessageType.Audio;
+        case 2:
+          return RoomMessageEventMessageType.Emote;
+        case 3:
+          return RoomMessageEventMessageType.File;
+        case 4:
+          return RoomMessageEventMessageType.Image;
+        case 5:
+          return RoomMessageEventMessageType.Location;
+        case 6:
+          return RoomMessageEventMessageType.Notice;
+        case 7:
+          return RoomMessageEventMessageType.ServerNotice;
+        case 8:
+          return RoomMessageEventMessageType.Text;
+        case 9:
+          return RoomMessageEventMessageType.Video;
+        case 10:
+          return RoomMessageEventMessageType.VerificationRequest;
+        case 11:
+          return RoomMessageEventMessageType.Other;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case RoomMessageEventMessageType.Audio:
+          return ordinalConverter.write(1, into);
+        case RoomMessageEventMessageType.Emote:
+          return ordinalConverter.write(2, into);
+        case RoomMessageEventMessageType.File:
+          return ordinalConverter.write(3, into);
+        case RoomMessageEventMessageType.Image:
+          return ordinalConverter.write(4, into);
+        case RoomMessageEventMessageType.Location:
+          return ordinalConverter.write(5, into);
+        case RoomMessageEventMessageType.Notice:
+          return ordinalConverter.write(6, into);
+        case RoomMessageEventMessageType.ServerNotice:
+          return ordinalConverter.write(7, into);
+        case RoomMessageEventMessageType.Text:
+          return ordinalConverter.write(8, into);
+        case RoomMessageEventMessageType.Video:
+          return ordinalConverter.write(9, into);
+        case RoomMessageEventMessageType.VerificationRequest:
+          return ordinalConverter.write(10, into);
+        case RoomMessageEventMessageType.Other:
+          return ordinalConverter.write(11, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
 /**
  * Enum representing the push notification modes for a room.
  */
@@ -29347,6 +29562,23 @@ export class MediaSource
     );
   }
 
+  public static fromUrl(url: string): MediaSourceInterface /*throws*/ {
+    return FfiConverterTypeMediaSource.lift(
+      rustCallWithError(
+        /*liftError:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        ),
+        /*caller:*/ (callStatus) => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_mediasource_from_url(
+            FfiConverterString.lower(url),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
   public toJson(): string {
     return FfiConverterString.lift(
       rustCall(
@@ -30972,6 +31204,27 @@ export interface RoomInterface {
     signal: AbortSignal;
   }) /*throws*/ : Promise<RoomMembersIteratorInterface>;
   membership(): Membership;
+  /**
+   * A timeline instance that can be configured to only include RoomMessage
+   * type events and filter those further based on their message type.
+   *
+   * Virtual timeline items will still be provided and the
+   * `default_event_filter` will be applied before everything else.
+   *
+   * # Arguments
+   *
+   * * `internal_id_prefix` - An optional String that will be prepended to
+   * all the timeline item's internal IDs, making it possible to
+   * distinguish different timeline instances from each other.
+   *
+   * * `allowed_message_types` - A list of `RoomMessageEventMessageType` that
+   * will be allowed to appear in the timeline
+   */
+  messageFilteredTimeline(
+    internalIdPrefix: string | undefined,
+    allowedMessageTypes: Array<RoomMessageEventMessageType>,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<TimelineInterface>;
   ownUserId(): string;
   pinnedEventsTimeline(
     internalIdPrefix: string | undefined,
@@ -32616,6 +32869,64 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
         /*liftString:*/ FfiConverterString.lift
       )
     );
+  }
+
+  /**
+   * A timeline instance that can be configured to only include RoomMessage
+   * type events and filter those further based on their message type.
+   *
+   * Virtual timeline items will still be provided and the
+   * `default_event_filter` will be applied before everything else.
+   *
+   * # Arguments
+   *
+   * * `internal_id_prefix` - An optional String that will be prepended to
+   * all the timeline item's internal IDs, making it possible to
+   * distinguish different timeline instances from each other.
+   *
+   * * `allowed_message_types` - A list of `RoomMessageEventMessageType` that
+   * will be allowed to appear in the timeline
+   */
+  public async messageFilteredTimeline(
+    internalIdPrefix: string | undefined,
+    allowedMessageTypes: Array<RoomMessageEventMessageType>,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<TimelineInterface> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_message_filtered_timeline(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterOptionalString.lower(internalIdPrefix),
+            FfiConverterArrayTypeRoomMessageEventMessageType.lower(
+              allowedMessageTypes
+            )
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+        /*cancelFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+        /*completeFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+        /*freeFunc:*/ nativeModule()
+          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+        /*liftFunc:*/ FfiConverterTypeTimeline.lift.bind(
+          FfiConverterTypeTimeline
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   public ownUserId(): string {
@@ -40615,6 +40926,11 @@ const FfiConverterOptionalTypeUserIdentity = new FfiConverterOptional(
   FfiConverterTypeUserIdentity
 );
 
+// FfiConverter for Array<RoomHero> | undefined
+const FfiConverterOptionalArrayTypeRoomHero = new FfiConverterOptional(
+  FfiConverterArrayTypeRoomHero
+);
+
 // FfiConverter for Array<RoomMember> | undefined
 const FfiConverterOptionalArrayTypeRoomMember = new FfiConverterOptional(
   FfiConverterArrayTypeRoomMember
@@ -40656,6 +40972,11 @@ const FfiConverterArrayTypeRoomListEntriesDynamicFilterKind =
 // FfiConverter for Array<RoomListEntriesUpdate>
 const FfiConverterArrayTypeRoomListEntriesUpdate = new FfiConverterArray(
   FfiConverterTypeRoomListEntriesUpdate
+);
+
+// FfiConverter for Array<RoomMessageEventMessageType>
+const FfiConverterArrayTypeRoomMessageEventMessageType = new FfiConverterArray(
+  FfiConverterTypeRoomMessageEventMessageType
 );
 
 // FfiConverter for Array<SlidingSyncVersion>
@@ -40727,6 +41048,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_create_caption_edit() !==
+    49747
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_func_create_caption_edit'
+    );
+  }
+  if (
     nativeModule().uniffi_matrix_sdk_ffi_checksum_func_gen_transaction_id() !==
     15808
   ) {
@@ -40795,14 +41124,6 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_func_matrix_to_user_permalink'
-    );
-  }
-  if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_media_source_from_url() !==
-    12165
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_func_media_source_from_url'
     );
   }
   if (
@@ -40897,22 +41218,6 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_func_suggested_role_for_power_level'
-    );
-  }
-  if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json() !==
-    2998
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json'
-    );
-  }
-  if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_url() !==
-    34026
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_url'
     );
   }
   if (
@@ -41932,6 +42237,22 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json() !==
+    23306
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json'
+    );
+  }
+  if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_url() !==
+    62692
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_url'
+    );
+  }
+  if (
     nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notification() !==
     2524
   ) {
@@ -42491,6 +42812,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_membership'
+    );
+  }
+  if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_message_filtered_timeline() !==
+    47862
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_message_filtered_timeline'
     );
   }
   if (
@@ -43665,19 +43994,27 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new() !==
+    27991
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new'
+    );
+  }
+  if (
     nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_json() !==
-    29216
+    10564
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_json'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new() !==
-    27991
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_url() !==
+    11983
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new'
+      'uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_url'
     );
   }
   if (
@@ -44137,6 +44474,7 @@ export default Object.freeze({
     FfiConverterTypeRoomMember,
     FfiConverterTypeRoomMembersIterator,
     FfiConverterTypeRoomMessageEventContentWithoutRelation,
+    FfiConverterTypeRoomMessageEventMessageType,
     FfiConverterTypeRoomNotificationMode,
     FfiConverterTypeRoomNotificationSettings,
     FfiConverterTypeRoomPowerLevels,
