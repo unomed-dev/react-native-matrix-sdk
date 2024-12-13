@@ -10,6 +10,7 @@ android:
   targets:
     - arm64-v8a
     - armeabi-v7a
+    - x86
 ios:
   cargoExtras: []
   directory: ios
