@@ -33,6 +33,7 @@ jobs:
 
       - name: Generate
         run: |
+          export CARGO_FEATURE_NO_NEON=1
           yarn ubrn:clean
           yarn ubrn:checkout
           yarn ubrn:ios
