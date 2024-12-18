@@ -1,17 +1,17 @@
 ---
 crate:
   repo: https://github.com/matrix-org/matrix-rust-sdk
-  rev: ee93c278dff6f343b322bbf2a8be4115cfb30b40 # matrix-sdk-ffi/20241204
+  rev: 19b9a73ecc3e31d502dbf0c5850bfdfaddf02afe # matrix-sdk-ffi/20241008
   manifestPath: bindings/matrix-sdk-ffi/Cargo.toml
 android:
-  cargoExtras: []
+  cargoExtras: [--profile, reldbg]
   directory: android
   jniLibs: src/main/jniLibs
   targets:
     - arm64-v8a
     - armeabi-v7a
 ios:
-  cargoExtras: []
+  cargoExtras: [--profile, reldbg]
   directory: ios
   targets:
     - aarch64-apple-ios

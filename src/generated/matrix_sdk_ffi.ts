@@ -29528,6 +29528,8 @@ const FfiConverterTypeMediaFileHandle = new FfiConverterObject(
 export interface MediaSourceInterface {
   toJson(): string;
   url(): string;
+  toJson(): string;
+  url(): string;
 }
 
 export class MediaSource
@@ -29562,6 +29564,23 @@ export class MediaSource
     );
   }
 
+  public static fromJson(json: string): MediaSourceInterface /*throws*/ {
+    return FfiConverterTypeMediaSource.lift(
+      rustCallWithError(
+        /*liftError:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        ),
+        /*caller:*/ (callStatus) => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_mediasource_from_json(
+            FfiConverterString.lower(json),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
   public static fromUrl(url: string): MediaSourceInterface /*throws*/ {
     return FfiConverterTypeMediaSource.lift(
       rustCallWithError(
@@ -29571,6 +29590,34 @@ export class MediaSource
         /*caller:*/ (callStatus) => {
           return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_mediasource_from_url(
             FfiConverterString.lower(url),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  public toJson(): string {
+    return FfiConverterString.lift(
+      rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_mediasource_to_json(
+            uniffiTypeMediaSourceObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  public url(): string {
+    return FfiConverterString.lift(
+      rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_mediasource_url(
+            uniffiTypeMediaSourceObjectFactory.clonePointer(this),
             callStatus
           );
         },
@@ -41221,6 +41268,38 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json() !==
+    2998
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json'
+    );
+  }
+  if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_url() !==
+    34026
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_url'
+    );
+  }
+  if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json() !==
+    23306
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json'
+    );
+  }
+  if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_url() !==
+    62692
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_url'
+    );
+  }
+  if (
     nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions() !==
     8867
   ) {
@@ -42234,22 +42313,6 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_persist'
-    );
-  }
-  if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json() !==
-    23306
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json'
-    );
-  }
-  if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_url() !==
-    62692
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_mediasource_url'
     );
   }
   if (
@@ -43994,11 +44057,11 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new() !==
-    27991
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_json() !==
+    29216
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new'
+      'uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_json'
     );
   }
   if (
@@ -44015,6 +44078,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_url'
+    );
+  }
+  if (
+    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new() !==
+    27991
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new'
     );
   }
   if (
