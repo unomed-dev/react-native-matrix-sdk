@@ -45,7 +45,7 @@
     "ubrn:ios:build": "ubrn build ios --config ubrn.yaml",
     "ubrn:ios:build:release": "yarn ubrn:ios:build --release",
     "ubrn:checkout": "ubrn checkout --config ubrn.yaml",
-    "ubrn:clean": "del-ci cpp android/src/main/java ios \"src/Native*\" src/generated \"src/index.ts*\"",
+    "ubrn:clean": "del-cli cpp android/src/main/java ios \"src/Native*\" src/generated \"src/index.ts*\"",
     "ubrn:generate": "ubrn generate all --config ubrn.yaml build/RnMatrixRustSdk.xcframework/ios-arm64/libmatrix_sdk_ffi.a",
     "generate": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android && yarn ubrn:ios",
     "generate:release": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build:release && yarn ubrn:ios:build:release && yarn ubrn:generate && (cd example/ios && pod install)",
