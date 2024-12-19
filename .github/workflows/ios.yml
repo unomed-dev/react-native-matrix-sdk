@@ -33,6 +33,9 @@ jobs:
 
       - name: Generate
         run: |
+          # Disabling NEON fixes linker error, see
+          # https://github.com/unomed-dev/react-native-matrix-sdk/issues/12
+          export CARGO_FEATURE_NO_NEON=1
           yarn ubrn:clean
           yarn ubrn:checkout
           yarn ubrn:ios
