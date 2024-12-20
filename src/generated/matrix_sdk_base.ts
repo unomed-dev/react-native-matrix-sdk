@@ -42,7 +42,12 @@ import {
 
 // Get converters from the other files, if any.
 
-const uniffiIsDebug = process.env.uniffiIsDebug !== 'production' || false;
+const uniffiIsDebug =
+  // @ts-ignore -- The process global might not be defined
+  typeof process !== 'object' ||
+  // @ts-ignore -- The process global might not be defined
+  process?.env?.NODE_ENV !== 'production' ||
+  false;
 // Public interface members begin here.
 
 const stringToArrayBuffer = (s: string): ArrayBuffer =>
