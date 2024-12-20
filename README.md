@@ -21,9 +21,6 @@ npm i @unomed/react-native-matrix-sdk
 yarn add @unomed/react-native-matrix-sdk
 ```
 
-npm add uniffi-bindgen-react-native
-yarn add npm i uniffi-bindgen-react-native
-```
 
 ### Installation from local checkout
 
