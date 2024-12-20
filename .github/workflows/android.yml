@@ -30,9 +30,7 @@ jobs:
 
       - name: Generate
         run: |
-          yarn ubrn:clean
-          yarn ubrn:checkout
-          yarn ubrn:android
+          yarn generate:android
           # Free up space for subsequent steps
           rm -rf rust_modules
 

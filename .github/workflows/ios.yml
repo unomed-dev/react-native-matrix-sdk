@@ -23,7 +23,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
 
       - name: Write .xcode.env.local
         run: |
@@ -35,10 +35,9 @@ jobs:
         run: |
           # Disabling NEON fixes linker error, see
           # https://github.com/unomed-dev/react-native-matrix-sdk/issues/12
+          # TODO: Replace this with setting the reldbg profile once ubrn supports it
           export CARGO_FEATURE_NO_NEON=1
-          yarn ubrn:clean
-          yarn ubrn:checkout
-          yarn ubrn:ios
+          yarn generate:ios
           # Free up space for subsequent steps
           rm -rf rust_modules
 
