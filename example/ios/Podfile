@@ -43,12 +43,5 @@ target 'ReactNativeMatrixSdkExample' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
-
-    # TODO: Remove (together with EXCLUDED_ARCHS build setting in workspace) once we've figured out how to build for x86
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'x86_64'
-      end
-    end
   end
 end
