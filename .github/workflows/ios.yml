@@ -35,10 +35,9 @@ jobs:
         run: |
           # Disabling NEON fixes linker error, see
           # https://github.com/unomed-dev/react-native-matrix-sdk/issues/12
+          # TODO: Replace this with setting the reldbg profile once ubrn supports it
           export CARGO_FEATURE_NO_NEON=1
-          yarn ubrn:clean
-          yarn ubrn:checkout
-          yarn ubrn:ios || find rust_modules -name "*.a" -exec echo -e '\n{}' \; -exec file "{}" \; -exec lipo -info "{}" \;
+          yarn generate:ios
           # Free up space for subsequent steps
           rm -rf rust_modules
 
