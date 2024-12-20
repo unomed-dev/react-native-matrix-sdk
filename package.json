@@ -40,7 +40,7 @@
   "scripts": {
     "ubrn:android:build": "CARGO_TARGET_X86_64_LINUX_ANDROID_RUSTFLAGS=\"-L$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/17/lib/linux\" ubrn build android --config ubrn.yaml",
     "ubrn:android:build:release": "yarn ubrn:android:build --release",
-    "ubrn:ios:build": "ubrn build ios --config ubrn.yaml",
+    "ubrn:ios:build": "CARGO_FEATURE_NO_NEON=1 ubrn build ios --config ubrn.yaml",
     "ubrn:ios:build:release": "yarn ubrn:ios:build --release",
     "ubrn:ios:generate": "ubrn generate all --config ubrn.yaml build/RnMatrixRustSdk.xcframework/ios-arm64/libmatrix_sdk_ffi.a && (cd example/ios && pod install)",
     "ubrn:checkout": "ubrn checkout --config ubrn.yaml",
