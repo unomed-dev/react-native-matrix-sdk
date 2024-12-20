@@ -21,9 +21,6 @@ npm i @unomed/react-native-matrix-sdk
 yarn add @unomed/react-native-matrix-sdk
 ```
 
-You also have to install [uniffi-bindgen-react-native]. 
-
-```sh
 npm add uniffi-bindgen-react-native
 yarn add npm i uniffi-bindgen-react-native
 ```
