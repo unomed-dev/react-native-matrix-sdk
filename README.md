@@ -54,8 +54,6 @@ to rebuild the Rust code and regenerate the module with
 yarn generate
 ```
 
-In future, you will be able to install the module from npm.
-
 
 ## Usage
 
