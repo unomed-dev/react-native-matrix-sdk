@@ -1,0 +1,69 @@
+diff --git a/xtask/src/swift.rs b/xtask/src/swift.rs
+index 31a3828..db19931 100644
+--- a/xtask/src/swift.rs
++++ b/xtask/src/swift.rs
+@@ -49,6 +49,21 @@ enum SwiftCommand {
+         #[clap(long)]
+         sequentially: bool,
+     },
++
++    /// Generates the Swift bindings and header files from a library file
++    GenerateBindings {
++        /// Path to the library for which to generate bindings
++        #[clap(long)]
++        library_path: Utf8PathBuf,
++
++        /// Path into which to write the headers
++        #[clap(long)]
++        header_directory: Utf8PathBuf,
++
++        /// Path into which to write the Swift files
++        #[clap(long)]
++        swift_directory: Utf8PathBuf,
++    },
+ }
+ 
+ impl SwiftArgs {
+@@ -70,6 +85,13 @@ impl SwiftArgs {
+                 let profile =
+                     profile.as_deref().unwrap_or(if release { "release" } else { "reldbg" });
+                 build_xcframework(profile, targets, components_path, sequentially)
++            },
++            SwiftCommand::GenerateBindings {
++                library_path,
++                header_directory,
++                swift_directory
++            } => {
++                generate_headers_and_swift(library_path, header_directory, swift_directory)
+             }
+         }
+     }
+@@ -167,6 +189,28 @@ fn build_library() -> Result<()> {
+     Ok(())
+ }
+ 
++fn generate_headers_and_swift(library_path: Utf8PathBuf, header_directory: Utf8PathBuf, swift_directory: Utf8PathBuf) -> Result<()> {
++    remove_dir_all(&header_directory)?;
++    create_dir_all(&header_directory)?;
++
++    remove_dir_all(&swift_directory)?;
++    create_dir_all(&swift_directory)?;
++
++    generate_uniffi(&library_path, &swift_directory)?;
++
++    let module_map_file = swift_directory.join("module.modulemap");
++    if module_map_file.exists() {
++        remove_file(module_map_file.as_path())?;
++    }
++
++    consolidate_modulemap_files(&swift_directory, &swift_directory)?;
++
++    move_files("h", &swift_directory, &header_directory)?;
++    move_files("modulemap", &swift_directory, &header_directory)?;
++
++    Ok(())
++}
++
+ fn generate_uniffi(library_path: &Utf8Path, ffi_directory: &Utf8Path) -> Result<()> {
+     generate_bindings(library_path, None, &SwiftBindingGenerator, None, ffi_directory, false)?;
+     Ok(())
