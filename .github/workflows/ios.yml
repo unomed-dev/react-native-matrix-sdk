@@ -32,7 +32,6 @@ jobs:
           cat example/ios/.xcode.env.local
 
       - name: Generate
-        shell: bash
         run: |
           # Disabling NEON fixes linker error, see
           # https://github.com/unomed-dev/react-native-matrix-sdk/issues/12
