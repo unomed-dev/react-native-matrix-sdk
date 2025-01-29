@@ -23,7 +23,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: libs
-          path: android/**.a
+          path: android/**/*.a
           if-no-files-found: error
 
   generate-ios:
@@ -63,5 +63,20 @@ jobs:
           name: xcframework
           path: .
 
+      - name: Install gh
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+
+      - name: Upload attachments
+        run: |
+          # TODO: Consume from input
+          tag=0.4.0
+
+          # TODO: compress & upload
+          # gh release upload "$tag" "$FILE"
+
       - name: TODO
         run: tree
+
+        

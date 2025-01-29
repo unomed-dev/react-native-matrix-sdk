@@ -1,5 +1,5 @@
 name: Setup JS
-description: Setup Node.js and install dependencies
+description: Set up Node.js and install dependencies
 
 runs:
   using: composite
