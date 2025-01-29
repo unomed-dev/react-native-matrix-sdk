@@ -20,7 +20,7 @@ jobs:
       - name: Generate
         uses: ./.github/actions/generate
         with:
-            platform: android
+          platform: android
 
       - name: Cache turborepo for Android
         uses: actions/cache@v4
