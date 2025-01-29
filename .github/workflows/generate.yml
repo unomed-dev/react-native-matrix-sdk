@@ -1,0 +1,20 @@
+name: Generate iOS
+on:
+  # TODO: remove
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate
+        uses: ./.github/actions/generate
+        with:
+            platform: android

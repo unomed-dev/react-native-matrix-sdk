@@ -17,22 +17,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JS
-        uses: ./.github/actions/setup
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
-
-      - name: Install cargo-ndk
-        run: cargo install cargo-ndk
-
       - name: Generate
-        run: |
-          yarn generate:android
-          # Free up space for subsequent steps
-          rm -rf rust_modules
+        uses: ./.github/actions/generate
+        with:
+            platform: android
 
       - name: Cache turborepo for Android
         uses: actions/cache@v4

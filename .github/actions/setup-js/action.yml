@@ -1,4 +1,4 @@
-name: Setup
+name: Setup JS
 description: Setup Node.js and install dependencies
 
 runs:
