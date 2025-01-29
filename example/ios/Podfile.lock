@@ -1512,7 +1512,7 @@ PODS:
   - SocketRocket (0.7.1)
   - uniffi-bindgen-react-native (0.28.3-1):
     - React-Core
-  - unomed-react-native-matrix-sdk (0.3.0):
+  - unomed-react-native-matrix-sdk (0.4.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1805,7 +1805,7 @@ SPEC CHECKSUMS:
   ReactCommon: 422e364463f33e336fc4db196aeb50fd801d90d6
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   uniffi-bindgen-react-native: 29959d30509f56394fca1cbce568000ab0de8642
-  unomed-react-native-matrix-sdk: bb06ecb9acb6a29b2d7887acf50e7db6d92f3eb9
+  unomed-react-native-matrix-sdk: 03e8fbbd4c6166d99a5f3fd006130fd290a2f713
   Yoga: db69236006b8b1c6d55ab453390c882306cbf219
 
 PODFILE CHECKSUM: 26c75fa7a8774e3435310ec3d6056a0c49f27cc8

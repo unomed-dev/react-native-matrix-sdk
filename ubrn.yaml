@@ -18,7 +18,8 @@ ios:
   targets:
     - aarch64-apple-ios
     - aarch64-apple-ios-sim
-    - x86_64-apple-ios
+    # x86 is dying out and excluding this helps us stay below npmjs size limits
+    # - x86_64-apple-ios
   xcodebuildExtras: []
   frameworkName: build/RnMatrixRustSdk
 noOverwrite: []
