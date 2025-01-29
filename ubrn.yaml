@@ -10,7 +10,8 @@ android:
   targets:
     - arm64-v8a
     - armeabi-v7a
-    - x86
+    # x86 should only be needed for ancient devices and excluding this helps us stay below npmjs size limits
+    # - x86
     - x86_64
 ios:
   cargoExtras: []
