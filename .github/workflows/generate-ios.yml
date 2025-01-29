@@ -1,0 +1,46 @@
+name: Generate iOS
+on:
+  # TODO: remove
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JS
+        uses: ./.github/actions/setup
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
+      - name: Write .xcode.env.local
+        run: |
+          # Work around for https://github.com/facebook/react-native/issues/35657
+          echo "export NODE_BINARY=$(which node)" >> example/ios/.xcode.env.local
+          cat example/ios/.xcode.env.local
+
+      - name: Generate
+        run: |
+          yarn generate:ios
+
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "❌ Found unexpected changes in repository after generating:"
+            git status --short
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+            name: xcframework
+            path: build/**.xcframework
+            if-no-files-found: error
