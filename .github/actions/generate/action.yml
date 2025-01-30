@@ -52,13 +52,11 @@ runs:
         shell: bash
         run: rm -rf rust_modules
 
-      # TODO: Figure out why this fails
-      # - name: Check if repository is dirty
-      #   shell: bash
-      #   run: |
-      #     if [[ -n "$(git status --porcelain)" ]]; then
-      #       >&2 echo "Found unexpected changes in repository after generating"
-      #       git status --short
-      #       exit 1
-      #     fi
-
+      - name: Check if repository is dirty
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            >&2 echo "Found unexpected changes in repository after generating"
+            git status --short
+            exit 1
+          fi

@@ -1,4 +1,4 @@
-name: Android
+name: Android (Build)
 on:
   push:
     branches:
@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TURBO_CACHE_DIR: .turbo/android
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
