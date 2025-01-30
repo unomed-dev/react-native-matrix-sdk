@@ -43,8 +43,8 @@ runs:
       - name: Generate
         shell: bash
         env:
-          PLATFORM: ${{ inputs.platform == "android" && "android" || "ios" }}
-          SUFFIX: ${{ inputs.release == "true" && ":release" || "" }}
+          PLATFORM: ${{ inputs.platform == 'android' && 'android' || 'ios' }}
+          SUFFIX: ${{ inputs.release == 'true' && ':release' || '' }}
         run:
           yarn "generate:$PLATFORM$SUFFIX"
 
