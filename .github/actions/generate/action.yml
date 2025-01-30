@@ -43,10 +43,10 @@ runs:
       - name: Generate
         shell: bash
         env:
-          PLATFORM: ${{ inputs.platform == 'android' && 'android' || 'ios' }}
-          SUFFIX: ${{ inputs.release == 'true' && ':release' || '' }}
+          INFIX: ${{ inputs.release == 'true' && ':release' || '' }}
+          SUFFIX: ${{ inputs.platform == 'android' && ':android' || ':ios' }}
         run:
-          yarn generate:$PLATFORM$SUFFIX
+          yarn generate$INFIX$SUFFIX
 
       - name: Free space
         shell: bash
