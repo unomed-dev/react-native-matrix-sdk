@@ -18,6 +18,8 @@ jobs:
         uses: ./.github/actions/generate
         with:
           platform: android
+          # TODO: uncomment
+          # release: true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -37,6 +39,8 @@ jobs:
         uses: ./.github/actions/generate
         with:
           platform: ios
+          # TODO: uncomment
+          # release: true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -56,12 +60,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: libs
-          path: .
+          path: android
 
       - uses: actions/download-artifact@v4
         with:
           name: xcframework
-          path: .
+          path: build
 
       - name: Install gh
         run: |

@@ -21,6 +21,7 @@ jobs:
         uses: ./.github/actions/generate
         with:
           platform: ios
+          release: false
 
       - name: Cache turborepo for iOS
         uses: actions/cache@v4
