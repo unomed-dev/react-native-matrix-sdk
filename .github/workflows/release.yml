@@ -24,7 +24,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: libs
+          name: android-libs
           path: android/**/*.a
           if-no-files-found: error
 
@@ -59,7 +59,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: libs
+          name: android-libs
           path: android
 
       - uses: actions/download-artifact@v4
@@ -77,10 +77,8 @@ jobs:
           # TODO: Consume from input
           tag=0.4.0
 
-          # TODO: compress & upload
-          # gh release upload "$tag" "$FILE"
+          zip -vr xcframework.zip build/*.xcframework
+          zip -v android-libs.zip ndroid/**/*.a
 
-      - name: TODO
-        run: tree
-
-        
+          gh release upload "$tag" xcframework.zip --clobber
+          gh release upload "$tag" xcframework.zip --clobber

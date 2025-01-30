@@ -46,7 +46,7 @@ runs:
           PLATFORM: ${{ inputs.platform == 'android' && 'android' || 'ios' }}
           SUFFIX: ${{ inputs.release == 'true' && ':release' || '' }}
         run:
-          yarn "generate:$PLATFORM$SUFFIX"
+          yarn generate:$PLATFORM$SUFFIX
 
       - name: Free space
         shell: bash
