@@ -1,4 +1,4 @@
-name: Android (Generate)
+name: Build (Release)
 on:
   # TODO: remove
   pull_request:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  android:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,8 +18,7 @@ jobs:
         uses: ./.github/actions/generate
         with:
           platform: android
-          # TODO: uncomment
-          # release: true
+          release: true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -27,3 +26,24 @@ jobs:
           name: android-libs
           path: android/**/*.a
           if-no-files-found: error
+
+  ios:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate
+        uses: ./.github/actions/generate
+        with:
+          platform: ios
+          release: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcframework
+          path: build/*.xcframework
+          if-no-files-found: error
+        
