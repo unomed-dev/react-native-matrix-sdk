@@ -1,6 +1,14 @@
 name: Setup
 description: Setup Node.js and install dependencies
 
+inputs:
+  platform:
+    description: One of android, ios
+    required: true
+  release:
+    description: Whether to build in release mode, one of true, false
+    default: "false"
+
 runs:
   using: composite
   steps:
@@ -32,15 +40,13 @@ runs:
           echo "export NODE_BINARY=$(which node)" >> example/ios/.xcode.env.local
           cat example/ios/.xcode.env.local
 
-      - name: Generate (Android)
-        if: ${{ inputs.platform == 'android' }}
+      - name: Generate
         shell: bash
-        run: yarn generate:android
-
-      - name: Generate (iOS)
-        if: ${{ inputs.platform == 'ios' }}
-        shell: bash
-        run: yarn generate:ios
+        env:
+          PLATFORM: ${{ inputs.platform == "android" && "android" || "ios" }}
+          SUFFIX: ${{ inputs.release == "true" && ":release" || "" }}
+        run:
+          yarn "generate:$PLATFORM$SUFFIX"
 
       - name: Free space
         shell: bash
