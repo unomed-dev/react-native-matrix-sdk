@@ -4,8 +4,9 @@
 
 [![lint](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/lint.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/lint.yml)
 [![library](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/library.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/library.yml)
-[![android](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/android.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/android.yml)
-[![ios](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ios.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/ios.yml)
+[![android](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-android.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-android.yml)
+[![ios](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-ios.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-ios.yml)
+[![android](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-release.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-release.yml)
 
 Powered by [uniffi-bindgen-react-native] and [create-react-native-library].
 

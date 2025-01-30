@@ -1,4 +1,4 @@
-name: iOS
+name: Build (iOS)
 on:
   push:
     branches:
@@ -13,33 +13,16 @@ jobs:
     runs-on: macos-14
     env:
       TURBO_CACHE_DIR: .turbo/ios
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JS
-        uses: ./.github/actions/setup
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
-
-      - name: Write .xcode.env.local
-        run: |
-          # Work around for https://github.com/facebook/react-native/issues/35657
-          echo "export NODE_BINARY=$(which node)" >> example/ios/.xcode.env.local
-          cat example/ios/.xcode.env.local
-
       - name: Generate
-        run: |
-          # Disabling NEON fixes linker error, see
-          # https://github.com/unomed-dev/react-native-matrix-sdk/issues/12
-          # TODO: Replace this with setting the reldbg profile once ubrn supports it
-          export CARGO_FEATURE_NO_NEON=1
-          yarn generate:ios
-          # Free up space for subsequent steps
-          rm -rf rust_modules
+        uses: ./.github/actions/generate
+        with:
+          platform: ios
+          release: false
 
       - name: Cache turborepo for iOS
         uses: actions/cache@v4

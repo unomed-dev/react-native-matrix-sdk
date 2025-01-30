@@ -1,0 +1,70 @@
+name: Generate
+description: Set up dependencies and regenerate the bindings
+
+inputs:
+  platform:
+    description: One of android, ios
+    required: true
+  release:
+    description: Whether to build in release mode, one of true, false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+      - name: Setup JS
+        uses: ./.github/actions/setup-js
+
+      - name: Setup Rust (Android)
+        if: ${{ inputs.platform == 'android' }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Setup Rust (iOS)
+        if: ${{ inputs.platform == 'ios' }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
+      - name: Install cargo-ndk
+        if: ${{ inputs.platform == 'android' }}
+        shell: bash
+        run: cargo install cargo-ndk
+
+      - name: Install clang-format
+        if: ${{ inputs.platform == 'ios' }}
+        shell: bash
+        run: brew install clang-format
+
+      - name: Write .xcode.env.local
+        if: ${{ inputs.platform == 'ios' }}
+        shell: bash
+        run: |
+          # Work around for https://github.com/facebook/react-native/issues/35657
+          echo "export NODE_BINARY=$(which node)" >> example/ios/.xcode.env.local
+          cat example/ios/.xcode.env.local
+
+      - name: Generate
+        shell: bash
+        env:
+          INFIX: ${{ inputs.release == 'true' && ':release' || '' }}
+          SUFFIX: ${{ inputs.platform == 'android' && ':android' || ':ios' }}
+        run:
+          yarn generate$INFIX$SUFFIX
+
+      - name: Free space
+        shell: bash
+        run: rm -rf rust_modules
+
+      - name: Check if repository is dirty
+        shell: bash
+        env:
+          EXCLUDE: ${{ inputs.platform == 'android' && 'ios' || 'android' }}
+        run: |
+          if [[ -n "$(git status --porcelain | grep -v ". $EXCLUDE")" ]]; then
+            >&2 echo "Found unexpected changes in repository after generating"
+            git status --short
+            git diff
+            exit 1
+          fi

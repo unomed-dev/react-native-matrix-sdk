@@ -50,6 +50,8 @@
     "generate:android": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build --and-generate",
     "generate:ios": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:ios:build && yarn ubrn:ios:generate",
     "generate:release": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build:release && yarn ubrn:ios:build:release && yarn ubrn:ios:generate",
+    "generate:release:android": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build:release --and-generate",
+    "generate:release:ios": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:ios:build:release && yarn ubrn:ios:generate",
     "format": "prettier -w '**/*.{ts,tsx}'",
     "example": "yarn workspace @unomed/react-native-matrix-sdk-example",
     "typecheck": "tsc",
