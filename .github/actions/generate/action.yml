@@ -33,10 +33,9 @@ runs:
         run: cargo install cargo-ndk
 
       - name: Install clang-format
+        if: ${{ inputs.platform == 'ios' }}
         shell: bash
-        run: |
-          sudo apt update
-          sudo apt install clang-format
+        run: brew install clang-format
 
       - name: Write .xcode.env.local
         if: ${{ inputs.platform == 'ios' }}
