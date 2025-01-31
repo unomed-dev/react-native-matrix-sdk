@@ -98,11 +98,9 @@ RUN_ID=$(gh run list --workflow build-release.yml --branch main --limit 1 --json
 Download the build artifacts.
 
 ```sh
-gh run download $RUN_ID --name android-libs --dir ?
-gh run download $RUN_ID --name xcframework --dir ?
+rm -rf android/src/main/jniLibs && gh run download $RUN_ID --name android-libs --dir android
+rm -rf build/*.xcframework && gh run download $RUN_ID --name xcframework --dir build
 ```
-
-TODO: extract?
 
 Test the downloaded binaries locally by building and running the example app on
 both platforms.
@@ -112,7 +110,7 @@ yarn example start
 ```
 
 Build the npm package in a dry run and verify the contained files. Most importantly the
-large binary files should be present.
+large binary files should *not* be present.
 
 ```sh
 npm pack --dry-run
@@ -131,12 +129,17 @@ Create the release from the new tag.
 gh release create $TAG --notes "Changelog: https://github.com/unomed-dev/react-native-matrix-sdk/compare/$PREVIOUS_TAG...$TAG"
 ```
 
-TODO: compress?
+Compress the binaries into archives.
+
+```sh
+zip android-libs.zip android/**/*.a
+zip -r xcframework.zip build/*.xcframework
+```
 
 Upload the binaries to the release.
 
 ```sh
-gh release upload $RELEASE ... --clobber
+gh release upload $RELEASE android-libs.zip xcframework.zip --clobber
 ```
 
 Publish the release on npmjs.com.
