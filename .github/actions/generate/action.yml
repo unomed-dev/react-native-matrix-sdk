@@ -62,7 +62,7 @@ runs:
         env:
           EXCLUDE: ${{ inputs.platform == 'android' && 'ios' || 'android' }}
         run: |
-          if [[ -n "$(git status --porcelain | grep -v ". $EXCLUDE")" ]]; then
+          if [[ -n "$(git status --porcelain | grep -v ". $EXCLUDE" | grep -v example/ios/Podfile.lock)" ]]; then
             >&2 echo "Found unexpected changes in repository after generating"
             git status --short
             git diff
