@@ -67,6 +67,85 @@ in [example/src/App.tsx].
 See the [contributing guide] to learn about the development and contribution workflow.
 
 
+## Making a release
+
+Ensure you have `gh`, the [GitHub CLI](https://cli.github.com/) client, installed and
+authenticate it.
+
+```sh
+gh auth login
+```
+
+Start a release build.
+
+```sh
+gh workflow run build-release.yml
+```
+
+Grab a _huuuuge_ cup of coffee and check the run status.
+
+```sh
+gh run list --workflow=build-release.yml --branch main
+```
+
+If the run succeeded, copy its ID. If it is the latest run, you can also get the ID
+programmatically.
+
+```sh
+RUN_ID=$(gh run list --workflow build-release.yml --branch main --limit 1 --json databaseId --jq ".[0].databaseId")
+```
+
+Download the build artifacts.
+
+```sh
+gh run download $RUN_ID --name android-libs --dir ?
+gh run download $RUN_ID --name xcframework --dir ?
+```
+
+TODO: extract?
+
+Test the downloaded binaries locally by building and running the example app on
+both platforms.
+
+```sh
+yarn example start
+```
+
+Build the npm package in a dry run and verify the contained files. Most importantly the
+large binary files should be present.
+
+```sh
+npm pack --dry-run
+```
+
+Create and push a tag for the release.
+
+```sh
+git tag $TAG
+git push --tags
+```
+
+Create the release from the new tag.
+
+```sh
+gh release create $TAG --notes "Changelog: https://github.com/unomed-dev/react-native-matrix-sdk/compare/$PREVIOUS_TAG...$TAG"
+```
+
+TODO: compress?
+
+Upload the binaries to the release.
+
+```sh
+gh release upload $RELEASE ... --clobber
+```
+
+Publish the release on npmjs.com.
+
+```sh
+npm publish --access public
+```
+
+
 ## License
 
 Apache-2.0
@@ -75,6 +154,7 @@ Apache-2.0
 [contributing guide]: CONTRIBUTING.md
 [create-react-native-library]: https://github.com/callstack/react-native-builder-bob
 [example/src/App.tsx]: example/src/App.tsx
+[GitHub CLI]: https://cli.github.com/
 [matrix-rust-sdk]: https://github.com/matrix-org/matrix-rust-sdk
 [npm registry]: https://www.npmjs.com/package/@unomed/react-native-matrix-sdk
 [src/index.ts]: src/index.ts
