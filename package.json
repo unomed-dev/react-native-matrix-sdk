@@ -44,8 +44,8 @@
     "ubrn:ios:build": "CARGO_FEATURE_NO_NEON=1 ubrn build ios --config ubrn.yaml",
     "ubrn:ios:build:release": "yarn ubrn:ios:build --release",
     "ubrn:ios:generate": "ubrn generate all --config ubrn.yaml build/RnMatrixRustSdk.xcframework/ios-arm64/libmatrix_sdk_ffi.a && del-cli build/RnMatrixRustSdk.xcframework/ios-arm64/Headers build/RnMatrixRustSdk.xcframework/ios-arm64_x86_64-simulator/Headers swift && mkdir build/RnMatrixRustSdk.xcframework/ios-arm64/Headers build/RnMatrixRustSdk.xcframework/ios-arm64_x86_64-simulator/Headers swift && ( cd rust_modules/matrix-rust-sdk && cargo xtask swift generate-bindings --library-path ../../build/RnMatrixRustSdk.xcframework/ios-arm64/libmatrix_sdk_ffi.a --header-directory ../../build/RnMatrixRustSdk.xcframework/ios-arm64/Headers --swift-directory ../../swift ) && cp -r build/RnMatrixRustSdk.xcframework/ios-arm64/Headers build/RnMatrixRustSdk.xcframework/ios-arm64_x86_64-simulator && (cd example/ios && pod install)",
-    "ubrn:checkout": "( test -d rust_modules/matrix-rust-sdk && git -C rust_modules/matrix-rust-sdk reset --hard HEAD ); ubrn checkout --config ubrn.yaml && ( cd rust_modules/matrix-rust-sdk && git apply ../../swift.rs.patch )",
-    "ubrn:clean": "del-cli cpp android/src/main/java ios \"src/Native*\" src/generated \"src/index.ts*\"",
+    "ubrn:checkout": "( test -d rust_modules/matrix-rust-sdk && git -C rust_modules/matrix-rust-sdk reset --hard HEAD ); ubrn checkout --config ubrn.yaml && ( cd rust_modules/matrix-rust-sdk && git apply ../../matrix-rust-sdk.patch )",
+    "ubrn:clean": "del-cli -v cpp android/src/main/java ios \"src/Native*\" src/generated \"src/index.ts*\"",
     "generate": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build && yarn ubrn:ios:build && yarn ubrn:ios:generate",
     "generate:android": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build --and-generate",
     "generate:ios": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:ios:build && yarn ubrn:ios:generate",
@@ -56,7 +56,7 @@
     "example": "yarn workspace @unomed/react-native-matrix-sdk-example",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
+    "clean": "del-cli -v android/build example/android/build example/android/app/build example/ios/build lib **/.cxx",
     "prepare": "bob build",
     "release": "release-it"
   },
@@ -82,8 +82,8 @@
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",
     "@evilmartians/lefthook": "^1.5.0",
-    "@react-native-community/cli": "15.0.0",
-    "@react-native/eslint-config": "^0.73.1",
+    "@react-native-community/cli": "15.0.1",
+    "@react-native/eslint-config": "0.76.9",
     "@release-it/conventional-changelog": "^5.0.0",
     "@types/jest": "^29.5.5",
     "@types/react": "^18.2.44",
@@ -95,12 +95,12 @@
     "jest": "^29.7.0",
     "prettier": "^3.0.3",
     "react": "18.3.1",
-    "react-native": "0.76.1",
+    "react-native": "0.76.9",
     "react-native-builder-bob": "^0.31.0",
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2",
-    "uniffi-bindgen-react-native": "0.28.3-1"
+    "uniffi-bindgen-react-native": "0.29.0-0"
   },
   "resolutions": {
     "@types/react": "^18.2.44"

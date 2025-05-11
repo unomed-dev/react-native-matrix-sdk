@@ -2,8 +2,6 @@
 // Trust me, you don't want to mess with it!
 import nativeModule, {
   type UniffiRustFutureContinuationCallback,
-  type UniffiForeignFutureFree,
-  type UniffiCallbackInterfaceFree,
   type UniffiForeignFuture,
   type UniffiForeignFutureStructU8,
   type UniffiForeignFutureCompleteU8,
@@ -33,15 +31,17 @@ import nativeModule, {
   type UniffiForeignFutureCompleteVoid,
 } from './matrix_sdk_common-ffi';
 import {
-  type FfiConverter,
-  AbstractFfiConverterArrayBuffer,
+  type UniffiByteArray,
+  AbstractFfiConverterByteArray,
   FfiConverterInt32,
   RustBuffer,
   UniffiInternalError,
-  rustCall,
+  UniffiRustCaller,
+  uniffiCreateFfiConverterString,
 } from 'uniffi-bindgen-react-native';
 
 // Get converters from the other files, if any.
+const uniffiCaller = new UniffiRustCaller();
 
 const uniffiIsDebug =
   // @ts-ignore -- The process global might not be defined
@@ -51,52 +51,30 @@ const uniffiIsDebug =
   false;
 // Public interface members begin here.
 
-const stringToArrayBuffer = (s: string): ArrayBuffer =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__string_to_arraybuffer(s, status)
-  );
-
-const arrayBufferToString = (ab: ArrayBuffer): string =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__arraybuffer_to_string(
-      ab,
-      status
-    )
-  );
-
-const stringByteLength = (s: string): number =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__string_to_byte_length(s, status)
-  );
-
-const FfiConverterString = (() => {
-  const lengthConverter = FfiConverterInt32;
-  type TypeName = string;
-  class FFIConverter implements FfiConverter<ArrayBuffer, TypeName> {
-    lift(value: ArrayBuffer): TypeName {
-      return arrayBufferToString(value);
-    }
-    lower(value: TypeName): ArrayBuffer {
-      return stringToArrayBuffer(value);
-    }
-    read(from: RustBuffer): TypeName {
-      const length = lengthConverter.read(from);
-      const bytes = from.readBytes(length);
-      return arrayBufferToString(bytes);
-    }
-    write(value: TypeName, into: RustBuffer): void {
-      const buffer = stringToArrayBuffer(value);
-      const numBytes = buffer.byteLength;
-      lengthConverter.write(numBytes, into);
-      into.writeBytes(buffer);
-    }
-    allocationSize(value: TypeName): number {
-      return lengthConverter.allocationSize(0) + stringByteLength(value);
-    }
-  }
-
-  return new FFIConverter();
-})();
+const stringConverter = {
+  stringToBytes: (s: string) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__string_to_arraybuffer(
+        s,
+        status
+      )
+    ),
+  bytesToString: (ab: UniffiByteArray) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__arraybuffer_to_string(
+        ab,
+        status
+      )
+    ),
+  stringByteLength: (s: string) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__string_to_byte_length(
+        s,
+        status
+      )
+    ),
+};
+const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
 
 /**
  * A machine-readable representation of the authenticity for a `ShieldState`.
@@ -131,7 +109,7 @@ export enum ShieldStateCode {
 const FfiConverterTypeShieldStateCode = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = ShieldStateCode;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -185,10 +163,10 @@ const FfiConverterTypeShieldStateCode = (() => {
  */
 function uniffiEnsureInitialized() {
   // Get the bindings contract version from our ComponentInterface
-  const bindingsContractVersion = 26;
+  const bindingsContractVersion = 29;
   // Get the scaffolding contract version by calling the into the dylib
   const scaffoldingContractVersion =
-    nativeModule().ffi_matrix_sdk_common_uniffi_contract_version();
+    nativeModule().ubrn_ffi_matrix_sdk_common_uniffi_contract_version();
   if (bindingsContractVersion !== scaffoldingContractVersion) {
     throw new UniffiInternalError.ContractVersionMismatch(
       scaffoldingContractVersion,

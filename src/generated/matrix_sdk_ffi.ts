@@ -2,8 +2,6 @@
 // Trust me, you don't want to mess with it!
 import nativeModule, {
   type UniffiRustFutureContinuationCallback,
-  type UniffiForeignFutureFree,
-  type UniffiCallbackInterfaceFree,
   type UniffiForeignFuture,
   type UniffiForeignFutureStructU8,
   type UniffiForeignFutureCompleteU8,
@@ -79,6 +77,7 @@ import {
 } from './matrix_sdk_ui';
 import {
   type FfiConverter,
+  type UniffiByteArray,
   type UniffiDuration,
   type UniffiHandle,
   type UniffiObjectFactory,
@@ -86,7 +85,7 @@ import {
   type UniffiRustArcPtr,
   type UniffiRustCallStatus,
   type UnsafeMutableRawPointer,
-  AbstractFfiConverterArrayBuffer,
+  AbstractFfiConverterByteArray,
   FfiConverterArray,
   FfiConverterArrayBuffer,
   FfiConverterBool,
@@ -107,11 +106,11 @@ import {
   UniffiEnum,
   UniffiError,
   UniffiInternalError,
+  UniffiResult,
+  UniffiRustCaller,
   destructorGuardSymbol,
   pointerLiteralSymbol,
-  rustCall,
-  rustCallWithError,
-  uniffiCreateCallStatus,
+  uniffiCreateFfiConverterString,
   uniffiCreateRecord,
   uniffiRustCallAsync,
   uniffiTraitInterfaceCall,
@@ -144,6 +143,7 @@ const {
   FfiConverterTypeLiveBackPaginationStatus,
   FfiConverterTypeRoomPinnedEventsChange,
 } = uniffiMatrixSdkUiModule.converters;
+const uniffiCaller = new UniffiRustCaller();
 
 const uniffiIsDebug =
   // @ts-ignore -- The process global might not be defined
@@ -161,12 +161,12 @@ export function contentWithoutRelationFromMessage(
   message: MessageContent
 ): RoomMessageEventContentWithoutRelationInterface /*throws*/ {
   return FfiConverterTypeRoomMessageEventContentWithoutRelation.lift(
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeClientError.lift.bind(
         FfiConverterTypeClientError
       ),
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_content_without_relation_from_message(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_content_without_relation_from_message(
           FfiConverterTypeMessageContent.lower(message),
           callStatus
         );
@@ -186,9 +186,9 @@ export function createCaptionEdit(
   formattedCaption: FormattedBody | undefined
 ): EditedContent {
   return FfiConverterTypeEditedContent.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_create_caption_edit(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_create_caption_edit(
           FfiConverterOptionalString.lower(caption),
           FfiConverterOptionalTypeFormattedBody.lower(formattedCaption),
           callStatus
@@ -200,9 +200,9 @@ export function createCaptionEdit(
 }
 export function genTransactionId(): string {
   return FfiConverterString.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_gen_transaction_id(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_gen_transaction_id(
           callStatus
         );
       },
@@ -229,21 +229,22 @@ export async function generateWebviewUrl(
   const __stack = uniffiIsDebug ? new Error().stack : undefined;
   try {
     return await uniffiRustCallAsync(
+      /*rustCaller:*/ uniffiCaller,
       /*rustFutureFunc:*/ () => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_generate_webview_url(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_generate_webview_url(
           FfiConverterTypeWidgetSettings.lower(widgetSettings),
           FfiConverterTypeRoom.lower(room),
           FfiConverterTypeClientProperties.lower(props)
         );
       },
       /*pollFunc:*/ nativeModule()
-        .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
       /*cancelFunc:*/ nativeModule()
-        .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
       /*completeFunc:*/ nativeModule()
-        .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
       /*freeFunc:*/ nativeModule()
-        .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
       /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
       /*liftString:*/ FfiConverterString.lift,
       /*asyncOpts:*/ asyncOpts_,
@@ -277,9 +278,9 @@ export function getElementCallRequiredPermissions(
   ownDeviceId: string
 ): WidgetCapabilities {
   return FfiConverterTypeWidgetCapabilities.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_get_element_call_required_permissions(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_get_element_call_required_permissions(
           FfiConverterString.lower(ownUserId),
           FfiConverterString.lower(ownDeviceId),
           callStatus
@@ -298,9 +299,9 @@ export function getElementCallRequiredPermissions(
  */
 export function isRoomAliasFormatValid(alias: string): boolean {
   return FfiConverterBool.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_is_room_alias_format_valid(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_is_room_alias_format_valid(
           FfiConverterString.lower(alias),
           callStatus
         );
@@ -330,9 +331,9 @@ export function logEvent(
   target: string,
   message: string
 ): void {
-  rustCall(
+  uniffiCaller.rustCall(
     /*caller:*/ (callStatus) => {
-      nativeModule().uniffi_matrix_sdk_ffi_fn_func_log_event(
+      nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_log_event(
         FfiConverterString.lower(file),
         FfiConverterOptionalUInt32.lower(line),
         FfiConverterTypeLogLevel.lower(level),
@@ -351,12 +352,12 @@ export function makeElementWellKnown(
   string: string
 ): ElementWellKnown /*throws*/ {
   return FfiConverterTypeElementWellKnown.lift(
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeClientError.lift.bind(
         FfiConverterTypeClientError
       ),
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_make_element_well_known(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_make_element_well_known(
           FfiConverterString.lower(string),
           callStatus
         );
@@ -369,12 +370,12 @@ export function makeWidgetDriver(
   settings: WidgetSettings
 ): WidgetDriverAndHandle /*throws*/ {
   return FfiConverterTypeWidgetDriverAndHandle.lift(
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeParseError.lift.bind(
         FfiConverterTypeParseError
       ),
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_make_widget_driver(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_make_widget_driver(
           FfiConverterTypeWidgetSettings.lower(settings),
           callStatus
         );
@@ -390,12 +391,12 @@ export function matrixToRoomAliasPermalink(
   roomAlias: string
 ): string /*throws*/ {
   return FfiConverterString.lift(
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeClientError.lift.bind(
         FfiConverterTypeClientError
       ),
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_matrix_to_room_alias_permalink(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_matrix_to_room_alias_permalink(
           FfiConverterString.lower(roomAlias),
           callStatus
         );
@@ -409,12 +410,12 @@ export function matrixToRoomAliasPermalink(
  */
 export function matrixToUserPermalink(userId: string): string /*throws*/ {
   return FfiConverterString.lift(
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeClientError.lift.bind(
         FfiConverterTypeClientError
       ),
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_matrix_to_user_permalink(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_matrix_to_user_permalink(
           FfiConverterString.lower(userId),
           callStatus
         );
@@ -428,9 +429,9 @@ export function messageEventContentFromHtml(
   htmlBody: string
 ): RoomMessageEventContentWithoutRelationInterface {
   return FfiConverterTypeRoomMessageEventContentWithoutRelation.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_message_event_content_from_html(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_message_event_content_from_html(
           FfiConverterString.lower(body),
           FfiConverterString.lower(htmlBody),
           callStatus
@@ -445,9 +446,9 @@ export function messageEventContentFromHtmlAsEmote(
   htmlBody: string
 ): RoomMessageEventContentWithoutRelationInterface {
   return FfiConverterTypeRoomMessageEventContentWithoutRelation.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_message_event_content_from_html_as_emote(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_message_event_content_from_html_as_emote(
           FfiConverterString.lower(body),
           FfiConverterString.lower(htmlBody),
           callStatus
@@ -461,9 +462,9 @@ export function messageEventContentFromMarkdown(
   md: string
 ): RoomMessageEventContentWithoutRelationInterface {
   return FfiConverterTypeRoomMessageEventContentWithoutRelation.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_message_event_content_from_markdown(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_message_event_content_from_markdown(
           FfiConverterString.lower(md),
           callStatus
         );
@@ -476,9 +477,9 @@ export function messageEventContentFromMarkdownAsEmote(
   md: string
 ): RoomMessageEventContentWithoutRelationInterface {
   return FfiConverterTypeRoomMessageEventContentWithoutRelation.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_message_event_content_from_markdown_as_emote(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_message_event_content_from_markdown_as_emote(
           FfiConverterString.lower(md),
           callStatus
         );
@@ -491,12 +492,12 @@ export function messageEventContentNew(
   msgtype: MessageType
 ): RoomMessageEventContentWithoutRelationInterface /*throws*/ {
   return FfiConverterTypeRoomMessageEventContentWithoutRelation.lift(
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeClientError.lift.bind(
         FfiConverterTypeClientError
       ),
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_message_event_content_new(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_message_event_content_new(
           FfiConverterTypeMessageType.lower(msgtype),
           callStatus
         );
@@ -524,12 +525,12 @@ export function newVirtualElementCallWidget(
   props: VirtualElementCallWidgetOptions
 ): WidgetSettings /*throws*/ {
   return FfiConverterTypeWidgetSettings.lift(
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeParseError.lift.bind(
         FfiConverterTypeParseError
       ),
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_new_virtual_element_call_widget(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_new_virtual_element_call_widget(
           FfiConverterTypeVirtualElementCallWidgetOptions.lower(props),
           callStatus
         );
@@ -544,9 +545,9 @@ export function newVirtualElementCallWidget(
  */
 export function parseMatrixEntityFrom(uri: string): MatrixEntity | undefined {
   return FfiConverterOptionalTypeMatrixEntity.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_parse_matrix_entity_from(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_parse_matrix_entity_from(
           FfiConverterString.lower(uri),
           callStatus
         );
@@ -560,9 +561,9 @@ export function parseMatrixEntityFrom(uri: string): MatrixEntity | undefined {
  */
 export function roomAliasNameFromRoomDisplayName(roomName: string): string {
   return FfiConverterString.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_room_alias_name_from_room_display_name(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_room_alias_name_from_room_display_name(
           FfiConverterString.lower(roomName),
           callStatus
         );
@@ -573,9 +574,9 @@ export function roomAliasNameFromRoomDisplayName(roomName: string): string {
 }
 export function sdkGitSha(): string {
   return FfiConverterString.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_sdk_git_sha(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_sdk_git_sha(
           callStatus
         );
       },
@@ -584,9 +585,9 @@ export function sdkGitSha(): string {
   );
 }
 export function setupTracing(config: TracingConfiguration): void {
-  rustCall(
+  uniffiCaller.rustCall(
     /*caller:*/ (callStatus) => {
-      nativeModule().uniffi_matrix_sdk_ffi_fn_func_setup_tracing(
+      nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_setup_tracing(
         FfiConverterTypeTracingConfiguration.lower(config),
         callStatus
       );
@@ -598,9 +599,9 @@ export function suggestedPowerLevelForRole(
   role: RoomMemberRole
 ): /*i64*/ bigint {
   return FfiConverterInt64.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_suggested_power_level_for_role(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_suggested_power_level_for_role(
           FfiConverterTypeRoomMemberRole.lower(role),
           callStatus
         );
@@ -613,9 +614,9 @@ export function suggestedRoleForPowerLevel(
   powerLevel: /*i64*/ bigint
 ): RoomMemberRole {
   return FfiConverterTypeRoomMemberRole.lift(
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_func_suggested_role_for_power_level(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_suggested_role_for_power_level(
           FfiConverterInt64.lower(powerLevel),
           callStatus
         );
@@ -637,25 +638,24 @@ const uniffiCallbackInterfaceBackupStateListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      status: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, status: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeBackupStateListener.lift(uniffiHandle);
         return jsCallback.onUpdate(FfiConverterTypeBackupState.lift(status));
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // BackupStateListener: this will throw a stale handle error if the handle isn't found.
@@ -663,7 +663,7 @@ const uniffiCallbackInterfaceBackupStateListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(
       uniffiCallbackInterfaceBackupStateListener.vtable
     );
   },
@@ -685,12 +685,7 @@ const uniffiCallbackInterfaceBackupSteadyStateListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      status: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, status: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeBackupSteadyStateListener.lift(uniffiHandle);
@@ -698,14 +693,18 @@ const uniffiCallbackInterfaceBackupSteadyStateListener: {
           FfiConverterTypeBackupUploadState.lift(status)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // BackupSteadyStateListener: this will throw a stale handle error if the handle isn't found.
@@ -713,7 +712,7 @@ const uniffiCallbackInterfaceBackupSteadyStateListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(
       uniffiCallbackInterfaceBackupSteadyStateListener.vtable
     );
   },
@@ -736,44 +735,43 @@ const uniffiCallbackInterfaceClientDelegate: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    didReceiveAuthError: (
-      uniffiHandle: bigint,
-      isSoftLogout: number,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    didReceiveAuthError: (uniffiHandle: bigint, isSoftLogout: number) => {
       const uniffiMakeCall = (): void => {
         const jsCallback = FfiConverterTypeClientDelegate.lift(uniffiHandle);
         return jsCallback.didReceiveAuthError(
           FfiConverterBool.lift(isSoftLogout)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
-    didRefreshTokens: (
-      uniffiHandle: bigint,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    didRefreshTokens: (uniffiHandle: bigint) => {
       const uniffiMakeCall = (): void => {
         const jsCallback = FfiConverterTypeClientDelegate.lift(uniffiHandle);
         return jsCallback.didRefreshTokens();
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // ClientDelegate: this will throw a stale handle error if the handle isn't found.
@@ -781,7 +779,7 @@ const uniffiCallbackInterfaceClientDelegate: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(
       uniffiCallbackInterfaceClientDelegate.vtable
     );
   },
@@ -804,12 +802,7 @@ const uniffiCallbackInterfaceClientSessionDelegate: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    retrieveSessionFromKeychain: (
-      uniffiHandle: bigint,
-      userId: ArrayBuffer,
-      uniffiOutReturn: UniffiReferenceHolder<ArrayBuffer>,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    retrieveSessionFromKeychain: (uniffiHandle: bigint, userId: Uint8Array) => {
       const uniffiMakeCall = (): Session => {
         const jsCallback =
           FfiConverterTypeClientSessionDelegate.lift(uniffiHandle);
@@ -817,27 +810,29 @@ const uniffiCallbackInterfaceClientSessionDelegate: {
           FfiConverterString.lift(userId)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {
-        uniffiOutReturn.pointee = FfiConverterTypeSession.lower(obj);
+      const uniffiResult = UniffiResult.ready<Uint8Array>();
+      const uniffiHandleSuccess = (obj: any) => {
+        UniffiResult.writeSuccess(
+          uniffiResult,
+          FfiConverterTypeSession.lower(obj)
+        );
+      };
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
       };
       uniffiTraitInterfaceCallWithError(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*isErrorType:*/ ClientError.instanceOf,
         /*lowerError:*/ FfiConverterTypeClientError.lower.bind(
           FfiConverterTypeClientError
         ),
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
-    saveSessionInKeychain: (
-      uniffiHandle: bigint,
-      session: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    saveSessionInKeychain: (uniffiHandle: bigint, session: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeClientSessionDelegate.lift(uniffiHandle);
@@ -845,14 +840,18 @@ const uniffiCallbackInterfaceClientSessionDelegate: {
           FfiConverterTypeSession.lift(session)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // ClientSessionDelegate: this will throw a stale handle error if the handle isn't found.
@@ -860,7 +859,7 @@ const uniffiCallbackInterfaceClientSessionDelegate: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(
       uniffiCallbackInterfaceClientSessionDelegate.vtable
     );
   },
@@ -882,12 +881,7 @@ const uniffiCallbackInterfaceEnableRecoveryProgressListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      status: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, status: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeEnableRecoveryProgressListener.lift(uniffiHandle);
@@ -895,14 +889,18 @@ const uniffiCallbackInterfaceEnableRecoveryProgressListener: {
           FfiConverterTypeEnableRecoveryProgress.lift(status)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // EnableRecoveryProgressListener: this will throw a stale handle error if the handle isn't found.
@@ -910,7 +908,7 @@ const uniffiCallbackInterfaceEnableRecoveryProgressListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(
       uniffiCallbackInterfaceEnableRecoveryProgressListener.vtable
     );
   },
@@ -932,12 +930,7 @@ const uniffiCallbackInterfaceIdentityStatusChangeListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    call: (
-      uniffiHandle: bigint,
-      identityStatusChange: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    call: (uniffiHandle: bigint, identityStatusChange: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeIdentityStatusChangeListener.lift(uniffiHandle);
@@ -945,14 +938,18 @@ const uniffiCallbackInterfaceIdentityStatusChangeListener: {
           FfiConverterArrayTypeIdentityStatusChange.lift(identityStatusChange)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // IdentityStatusChangeListener: this will throw a stale handle error if the handle isn't found.
@@ -960,7 +957,7 @@ const uniffiCallbackInterfaceIdentityStatusChangeListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
       uniffiCallbackInterfaceIdentityStatusChangeListener.vtable
     );
   },
@@ -982,25 +979,24 @@ const uniffiCallbackInterfaceIgnoredUsersListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    call: (
-      uniffiHandle: bigint,
-      ignoredUserIds: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    call: (uniffiHandle: bigint, ignoredUserIds: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeIgnoredUsersListener.lift(uniffiHandle);
         return jsCallback.call(FfiConverterArrayString.lift(ignoredUserIds));
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // IgnoredUsersListener: this will throw a stale handle error if the handle isn't found.
@@ -1008,7 +1004,7 @@ const uniffiCallbackInterfaceIgnoredUsersListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(
       uniffiCallbackInterfaceIgnoredUsersListener.vtable
     );
   },
@@ -1033,12 +1029,7 @@ const uniffiCallbackInterfaceKnockRequestsListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    call: (
-      uniffiHandle: bigint,
-      joinRequests: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    call: (uniffiHandle: bigint, joinRequests: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeKnockRequestsListener.lift(uniffiHandle);
@@ -1046,14 +1037,18 @@ const uniffiCallbackInterfaceKnockRequestsListener: {
           FfiConverterArrayTypeKnockRequest.lift(joinRequests)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // KnockRequestsListener: this will throw a stale handle error if the handle isn't found.
@@ -1061,7 +1056,7 @@ const uniffiCallbackInterfaceKnockRequestsListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(
       uniffiCallbackInterfaceKnockRequestsListener.vtable
     );
   },
@@ -1086,24 +1081,24 @@ const uniffiCallbackInterfaceNotificationSettingsDelegate: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    settingsDidChange: (
-      uniffiHandle: bigint,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    settingsDidChange: (uniffiHandle: bigint) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeNotificationSettingsDelegate.lift(uniffiHandle);
         return jsCallback.settingsDidChange();
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // NotificationSettingsDelegate: this will throw a stale handle error if the handle isn't found.
@@ -1111,7 +1106,7 @@ const uniffiCallbackInterfaceNotificationSettingsDelegate: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(
       uniffiCallbackInterfaceNotificationSettingsDelegate.vtable
     );
   },
@@ -1133,12 +1128,7 @@ const uniffiCallbackInterfacePaginationStatusListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      status: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, status: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypePaginationStatusListener.lift(uniffiHandle);
@@ -1146,14 +1136,18 @@ const uniffiCallbackInterfacePaginationStatusListener: {
           FfiConverterTypeLiveBackPaginationStatus.lift(status)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // PaginationStatusListener: this will throw a stale handle error if the handle isn't found.
@@ -1161,7 +1155,7 @@ const uniffiCallbackInterfacePaginationStatusListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(
       uniffiCallbackInterfacePaginationStatusListener.vtable
     );
   },
@@ -1183,26 +1177,25 @@ const uniffiCallbackInterfaceProgressWatcher: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    transmissionProgress: (
-      uniffiHandle: bigint,
-      progress: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    transmissionProgress: (uniffiHandle: bigint, progress: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback = FfiConverterTypeProgressWatcher.lift(uniffiHandle);
         return jsCallback.transmissionProgress(
           FfiConverterTypeTransmissionProgress.lift(progress)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // ProgressWatcher: this will throw a stale handle error if the handle isn't found.
@@ -1210,7 +1203,7 @@ const uniffiCallbackInterfaceProgressWatcher: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(
       uniffiCallbackInterfaceProgressWatcher.vtable
     );
   },
@@ -1232,25 +1225,24 @@ const uniffiCallbackInterfaceQrLoginProgressListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      state: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, state: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeQrLoginProgressListener.lift(uniffiHandle);
         return jsCallback.onUpdate(FfiConverterTypeQrLoginProgress.lift(state));
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // QrLoginProgressListener: this will throw a stale handle error if the handle isn't found.
@@ -1258,7 +1250,7 @@ const uniffiCallbackInterfaceQrLoginProgressListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(
       uniffiCallbackInterfaceQrLoginProgressListener.vtable
     );
   },
@@ -1280,25 +1272,24 @@ const uniffiCallbackInterfaceRecoveryStateListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      status: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, status: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeRecoveryStateListener.lift(uniffiHandle);
         return jsCallback.onUpdate(FfiConverterTypeRecoveryState.lift(status));
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // RecoveryStateListener: this will throw a stale handle error if the handle isn't found.
@@ -1306,7 +1297,7 @@ const uniffiCallbackInterfaceRecoveryStateListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(
       uniffiCallbackInterfaceRecoveryStateListener.vtable
     );
   },
@@ -1328,12 +1319,7 @@ const uniffiCallbackInterfaceRoomDirectorySearchEntriesListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      roomEntriesUpdate: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, roomEntriesUpdate: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeRoomDirectorySearchEntriesListener.lift(uniffiHandle);
@@ -1343,14 +1329,18 @@ const uniffiCallbackInterfaceRoomDirectorySearchEntriesListener: {
           )
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // RoomDirectorySearchEntriesListener: this will throw a stale handle error if the handle isn't found.
@@ -1358,7 +1348,7 @@ const uniffiCallbackInterfaceRoomDirectorySearchEntriesListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(
       uniffiCallbackInterfaceRoomDirectorySearchEntriesListener.vtable
     );
   },
@@ -1380,24 +1370,23 @@ const uniffiCallbackInterfaceRoomInfoListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    call: (
-      uniffiHandle: bigint,
-      roomInfo: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    call: (uniffiHandle: bigint, roomInfo: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback = FfiConverterTypeRoomInfoListener.lift(uniffiHandle);
         return jsCallback.call(FfiConverterTypeRoomInfo.lift(roomInfo));
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // RoomInfoListener: this will throw a stale handle error if the handle isn't found.
@@ -1405,7 +1394,7 @@ const uniffiCallbackInterfaceRoomInfoListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(
       uniffiCallbackInterfaceRoomInfoListener.vtable
     );
   },
@@ -1427,12 +1416,7 @@ const uniffiCallbackInterfaceRoomListEntriesListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      roomEntriesUpdate: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, roomEntriesUpdate: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeRoomListEntriesListener.lift(uniffiHandle);
@@ -1440,14 +1424,18 @@ const uniffiCallbackInterfaceRoomListEntriesListener: {
           FfiConverterArrayTypeRoomListEntriesUpdate.lift(roomEntriesUpdate)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // RoomListEntriesListener: this will throw a stale handle error if the handle isn't found.
@@ -1455,7 +1443,7 @@ const uniffiCallbackInterfaceRoomListEntriesListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(
       uniffiCallbackInterfaceRoomListEntriesListener.vtable
     );
   },
@@ -1477,12 +1465,7 @@ const uniffiCallbackInterfaceRoomListLoadingStateListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      state: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, state: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeRoomListLoadingStateListener.lift(uniffiHandle);
@@ -1490,14 +1473,18 @@ const uniffiCallbackInterfaceRoomListLoadingStateListener: {
           FfiConverterTypeRoomListLoadingState.lift(state)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // RoomListLoadingStateListener: this will throw a stale handle error if the handle isn't found.
@@ -1505,7 +1492,7 @@ const uniffiCallbackInterfaceRoomListLoadingStateListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(
       uniffiCallbackInterfaceRoomListLoadingStateListener.vtable
     );
   },
@@ -1527,12 +1514,7 @@ const uniffiCallbackInterfaceRoomListServiceStateListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      state: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, state: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeRoomListServiceStateListener.lift(uniffiHandle);
@@ -1540,14 +1522,18 @@ const uniffiCallbackInterfaceRoomListServiceStateListener: {
           FfiConverterTypeRoomListServiceState.lift(state)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // RoomListServiceStateListener: this will throw a stale handle error if the handle isn't found.
@@ -1555,7 +1541,7 @@ const uniffiCallbackInterfaceRoomListServiceStateListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(
       uniffiCallbackInterfaceRoomListServiceStateListener.vtable
     );
   },
@@ -1577,12 +1563,7 @@ const uniffiCallbackInterfaceRoomListServiceSyncIndicatorListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      syncIndicator: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, syncIndicator: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeRoomListServiceSyncIndicatorListener.lift(
@@ -1592,14 +1573,18 @@ const uniffiCallbackInterfaceRoomListServiceSyncIndicatorListener: {
           FfiConverterTypeRoomListServiceSyncIndicator.lift(syncIndicator)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // RoomListServiceSyncIndicatorListener: this will throw a stale handle error if the handle isn't found.
@@ -1607,7 +1592,7 @@ const uniffiCallbackInterfaceRoomListServiceSyncIndicatorListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(
       uniffiCallbackInterfaceRoomListServiceSyncIndicatorListener.vtable
     );
   },
@@ -1636,13 +1621,7 @@ const uniffiCallbackInterfaceSendQueueRoomErrorListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onError: (
-      uniffiHandle: bigint,
-      roomId: ArrayBuffer,
-      error: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onError: (uniffiHandle: bigint, roomId: Uint8Array, error: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeSendQueueRoomErrorListener.lift(uniffiHandle);
@@ -1651,14 +1630,18 @@ const uniffiCallbackInterfaceSendQueueRoomErrorListener: {
           FfiConverterTypeClientError.lift(error)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // SendQueueRoomErrorListener: this will throw a stale handle error if the handle isn't found.
@@ -1666,7 +1649,7 @@ const uniffiCallbackInterfaceSendQueueRoomErrorListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(
       uniffiCallbackInterfaceSendQueueRoomErrorListener.vtable
     );
   },
@@ -1698,9 +1681,7 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
   vtable: {
     didReceiveVerificationRequest: (
       uniffiHandle: bigint,
-      details: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
+      details: Uint8Array
     ) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
@@ -1711,20 +1692,20 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
           FfiConverterTypeSessionVerificationRequestDetails.lift(details)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
-    didAcceptVerificationRequest: (
-      uniffiHandle: bigint,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    didAcceptVerificationRequest: (uniffiHandle: bigint) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeSessionVerificationControllerDelegate.lift(
@@ -1732,20 +1713,20 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
           );
         return jsCallback.didAcceptVerificationRequest();
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
-    didStartSasVerification: (
-      uniffiHandle: bigint,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    didStartSasVerification: (uniffiHandle: bigint) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeSessionVerificationControllerDelegate.lift(
@@ -1753,21 +1734,20 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
           );
         return jsCallback.didStartSasVerification();
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
-    didReceiveVerificationData: (
-      uniffiHandle: bigint,
-      data: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    didReceiveVerificationData: (uniffiHandle: bigint, data: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeSessionVerificationControllerDelegate.lift(
@@ -1777,20 +1757,20 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
           FfiConverterTypeSessionVerificationData.lift(data)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
-    didFail: (
-      uniffiHandle: bigint,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    didFail: (uniffiHandle: bigint) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeSessionVerificationControllerDelegate.lift(
@@ -1798,20 +1778,20 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
           );
         return jsCallback.didFail();
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
-    didCancel: (
-      uniffiHandle: bigint,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    didCancel: (uniffiHandle: bigint) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeSessionVerificationControllerDelegate.lift(
@@ -1819,20 +1799,20 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
           );
         return jsCallback.didCancel();
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
-    didFinish: (
-      uniffiHandle: bigint,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    didFinish: (uniffiHandle: bigint) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeSessionVerificationControllerDelegate.lift(
@@ -1840,14 +1820,18 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
           );
         return jsCallback.didFinish();
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // SessionVerificationControllerDelegate: this will throw a stale handle error if the handle isn't found.
@@ -1855,7 +1839,7 @@ const uniffiCallbackInterfaceSessionVerificationControllerDelegate: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(
       uniffiCallbackInterfaceSessionVerificationControllerDelegate.vtable
     );
   },
@@ -1877,12 +1861,7 @@ const uniffiCallbackInterfaceSyncServiceStateObserver: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      state: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, state: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeSyncServiceStateObserver.lift(uniffiHandle);
@@ -1890,14 +1869,18 @@ const uniffiCallbackInterfaceSyncServiceStateObserver: {
           FfiConverterTypeSyncServiceState.lift(state)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // SyncServiceStateObserver: this will throw a stale handle error if the handle isn't found.
@@ -1905,7 +1888,7 @@ const uniffiCallbackInterfaceSyncServiceStateObserver: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(
       uniffiCallbackInterfaceSyncServiceStateObserver.vtable
     );
   },
@@ -1927,26 +1910,25 @@ const uniffiCallbackInterfaceTimelineListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      diff: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, diff: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback = FfiConverterTypeTimelineListener.lift(uniffiHandle);
         return jsCallback.onUpdate(
           FfiConverterArrayTypeTimelineDiff.lift(diff)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // TimelineListener: this will throw a stale handle error if the handle isn't found.
@@ -1954,7 +1936,7 @@ const uniffiCallbackInterfaceTimelineListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(
       uniffiCallbackInterfaceTimelineListener.vtable
     );
   },
@@ -1976,25 +1958,24 @@ const uniffiCallbackInterfaceTypingNotificationsListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    call: (
-      uniffiHandle: bigint,
-      typingUserIds: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    call: (uniffiHandle: bigint, typingUserIds: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeTypingNotificationsListener.lift(uniffiHandle);
         return jsCallback.call(FfiConverterArrayString.lift(typingUserIds));
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // TypingNotificationsListener: this will throw a stale handle error if the handle isn't found.
@@ -2002,7 +1983,7 @@ const uniffiCallbackInterfaceTypingNotificationsListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(
       uniffiCallbackInterfaceTypingNotificationsListener.vtable
     );
   },
@@ -2024,25 +2005,24 @@ const uniffiCallbackInterfaceUnableToDecryptDelegate: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUtd: (
-      uniffiHandle: bigint,
-      info: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUtd: (uniffiHandle: bigint, info: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeUnableToDecryptDelegate.lift(uniffiHandle);
         return jsCallback.onUtd(FfiConverterTypeUnableToDecryptInfo.lift(info));
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // UnableToDecryptDelegate: this will throw a stale handle error if the handle isn't found.
@@ -2050,7 +2030,7 @@ const uniffiCallbackInterfaceUnableToDecryptDelegate: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(
       uniffiCallbackInterfaceUnableToDecryptDelegate.vtable
     );
   },
@@ -2072,12 +2052,7 @@ const uniffiCallbackInterfaceVerificationStateListener: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    onUpdate: (
-      uniffiHandle: bigint,
-      status: ArrayBuffer,
-      uniffiOutReturn: /*pointer*/ bigint,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    onUpdate: (uniffiHandle: bigint, status: Uint8Array) => {
       const uniffiMakeCall = (): void => {
         const jsCallback =
           FfiConverterTypeVerificationStateListener.lift(uniffiHandle);
@@ -2085,14 +2060,18 @@ const uniffiCallbackInterfaceVerificationStateListener: {
           FfiConverterTypeVerificationState.lift(status)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {};
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // VerificationStateListener: this will throw a stale handle error if the handle isn't found.
@@ -2100,7 +2079,7 @@ const uniffiCallbackInterfaceVerificationStateListener: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(
       uniffiCallbackInterfaceVerificationStateListener.vtable
     );
   },
@@ -2122,12 +2101,7 @@ const uniffiCallbackInterfaceWidgetCapabilitiesProvider: {
   // Create the VTable using a series of closures.
   // ts automatically converts these into C callback functions.
   vtable: {
-    acquireCapabilities: (
-      uniffiHandle: bigint,
-      capabilities: ArrayBuffer,
-      uniffiOutReturn: UniffiReferenceHolder<ArrayBuffer>,
-      uniffiCallStatus: UniffiRustCallStatus
-    ) => {
+    acquireCapabilities: (uniffiHandle: bigint, capabilities: Uint8Array) => {
       const uniffiMakeCall = (): WidgetCapabilities => {
         const jsCallback =
           FfiConverterTypeWidgetCapabilitiesProvider.lift(uniffiHandle);
@@ -2135,16 +2109,23 @@ const uniffiCallbackInterfaceWidgetCapabilitiesProvider: {
           FfiConverterTypeWidgetCapabilities.lift(capabilities)
         );
       };
-
-      const uniffiWriteReturn = (obj: any) => {
-        uniffiOutReturn.pointee = FfiConverterTypeWidgetCapabilities.lower(obj);
+      const uniffiResult = UniffiResult.ready<Uint8Array>();
+      const uniffiHandleSuccess = (obj: any) => {
+        UniffiResult.writeSuccess(
+          uniffiResult,
+          FfiConverterTypeWidgetCapabilities.lower(obj)
+        );
+      };
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
       };
       uniffiTraitInterfaceCall(
-        /*callStatus:*/ uniffiCallStatus,
         /*makeCall:*/ uniffiMakeCall,
-        /*writeReturn:*/ uniffiWriteReturn,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
         /*lowerString:*/ FfiConverterString.lower
       );
+      return uniffiResult;
     },
     uniffiFree: (uniffiHandle: UniffiHandle): void => {
       // WidgetCapabilitiesProvider: this will throw a stale handle error if the handle isn't found.
@@ -2152,7 +2133,7 @@ const uniffiCallbackInterfaceWidgetCapabilitiesProvider: {
     },
   },
   register: () => {
-    nativeModule().uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(
       uniffiCallbackInterfaceWidgetCapabilitiesProvider.vtable
     );
   },
@@ -2198,7 +2179,7 @@ export const AudioInfo = (() => {
 
 const FfiConverterTypeAudioInfo = (() => {
   type TypeName = AudioInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         duration: FfiConverterOptionalDuration.read(from),
@@ -2267,7 +2248,7 @@ export const AudioMessageContent = (() => {
 
 const FfiConverterTypeAudioMessageContent = (() => {
   type TypeName = AudioMessageContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         filename: FfiConverterString.read(from),
@@ -2355,7 +2336,7 @@ export const AuthDataPasswordDetails = (() => {
 
 const FfiConverterTypeAuthDataPasswordDetails = (() => {
   type TypeName = AuthDataPasswordDetails;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         identifier: FfiConverterString.read(from),
@@ -2426,7 +2407,7 @@ export const ClientProperties = (() => {
 
 const FfiConverterTypeClientProperties = (() => {
   type TypeName = ClientProperties;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         clientId: FfiConverterString.read(from),
@@ -2501,7 +2482,7 @@ export const ComposerDraft = (() => {
 
 const FfiConverterTypeComposerDraft = (() => {
   type TypeName = ComposerDraft;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         plainText: FfiConverterString.read(from),
@@ -2580,7 +2561,7 @@ export const CreateRoomParameters = (() => {
 
 const FfiConverterTypeCreateRoomParameters = (() => {
   type TypeName = CreateRoomParameters;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         name: FfiConverterOptionalString.read(from),
@@ -2676,7 +2657,7 @@ export const ElementCallWellKnown = (() => {
 
 const FfiConverterTypeElementCallWellKnown = (() => {
   type TypeName = ElementCallWellKnown;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         widgetUrl: FfiConverterString.read(from),
@@ -2732,7 +2713,7 @@ export const ElementWellKnown = (() => {
 
 const FfiConverterTypeElementWellKnown = (() => {
   type TypeName = ElementWellKnown;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         call: FfiConverterOptionalTypeElementCallWellKnown.read(from),
@@ -2792,7 +2773,7 @@ export const EmoteMessageContent = (() => {
 
 const FfiConverterTypeEmoteMessageContent = (() => {
   type TypeName = EmoteMessageContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         body: FfiConverterString.read(from),
@@ -2865,7 +2846,7 @@ export const EventTimelineItem = (() => {
 
 const FfiConverterTypeEventTimelineItem = (() => {
   type TypeName = EventTimelineItem;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         isRemote: FfiConverterBool.read(from),
@@ -2971,7 +2952,7 @@ export const EventTimelineItemDebugInfo = (() => {
 
 const FfiConverterTypeEventTimelineItemDebugInfo = (() => {
   type TypeName = EventTimelineItemDebugInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         model: FfiConverterString.read(from),
@@ -3032,7 +3013,7 @@ export const FileInfo = (() => {
 
 const FfiConverterTypeFileInfo = (() => {
   type TypeName = FileInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         mimetype: FfiConverterOptionalString.read(from),
@@ -3106,7 +3087,7 @@ export const FileMessageContent = (() => {
 
 const FfiConverterTypeFileMessageContent = (() => {
   type TypeName = FileMessageContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         filename: FfiConverterString.read(from),
@@ -3175,7 +3156,7 @@ export const FormattedBody = (() => {
 
 const FfiConverterTypeFormattedBody = (() => {
   type TypeName = FormattedBody;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         format: FfiConverterTypeMessageFormat.read(from),
@@ -3234,7 +3215,7 @@ export const HttpPusherData = (() => {
 
 const FfiConverterTypeHttpPusherData = (() => {
   type TypeName = HttpPusherData;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         url: FfiConverterString.read(from),
@@ -3302,7 +3283,7 @@ export const IdentityStatusChange = (() => {
 
 const FfiConverterTypeIdentityStatusChange = (() => {
   type TypeName = IdentityStatusChange;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         userId: FfiConverterString.read(from),
@@ -3363,7 +3344,7 @@ export const ImageInfo = (() => {
 
 const FfiConverterTypeImageInfo = (() => {
   type TypeName = ImageInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         height: FfiConverterOptionalUInt64.read(from),
@@ -3446,7 +3427,7 @@ export const ImageMessageContent = (() => {
 
 const FfiConverterTypeImageMessageContent = (() => {
   type TypeName = ImageMessageContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         filename: FfiConverterString.read(from),
@@ -3515,7 +3496,7 @@ export const InsertData = (() => {
 
 const FfiConverterTypeInsertData = (() => {
   type TypeName = InsertData;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         index: FfiConverterUInt32.read(from),
@@ -3611,7 +3592,7 @@ export const KnockRequest = (() => {
 
 const FfiConverterTypeKnockRequest = (() => {
   type TypeName = KnockRequest;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         eventId: FfiConverterString.read(from),
@@ -3693,7 +3674,7 @@ export const LocationContent = (() => {
 
 const FfiConverterTypeLocationContent = (() => {
   type TypeName = LocationContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         body: FfiConverterString.read(from),
@@ -3764,7 +3745,7 @@ export const MatrixEntity = (() => {
 
 const FfiConverterTypeMatrixEntity = (() => {
   type TypeName = MatrixEntity;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         id: FfiConverterTypeMatrixId.read(from),
@@ -3820,7 +3801,7 @@ export const Mentions = (() => {
 
 const FfiConverterTypeMentions = (() => {
   type TypeName = Mentions;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         userIds: FfiConverterArrayString.read(from),
@@ -3882,7 +3863,7 @@ export const MessageContent = (() => {
 
 const FfiConverterTypeMessageContent = (() => {
   type TypeName = MessageContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         msgType: FfiConverterTypeMessageType.read(from),
@@ -3955,7 +3936,7 @@ export const NoticeMessageContent = (() => {
 
 const FfiConverterTypeNoticeMessageContent = (() => {
   type TypeName = NoticeMessageContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         body: FfiConverterString.read(from),
@@ -4021,7 +4002,7 @@ export const NotificationItem = (() => {
 
 const FfiConverterTypeNotificationItem = (() => {
   type TypeName = NotificationItem;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         event: FfiConverterTypeNotificationEvent.read(from),
@@ -4091,7 +4072,7 @@ export const NotificationPowerLevels = (() => {
 
 const FfiConverterTypeNotificationPowerLevels = (() => {
   type TypeName = NotificationPowerLevels;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         room: FfiConverterInt32.read(from),
@@ -4149,7 +4130,7 @@ export const NotificationRoomInfo = (() => {
 
 const FfiConverterTypeNotificationRoomInfo = (() => {
   type TypeName = NotificationRoomInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         displayName: FfiConverterString.read(from),
@@ -4222,7 +4203,7 @@ export const NotificationSenderInfo = (() => {
 
 const FfiConverterTypeNotificationSenderInfo = (() => {
   type TypeName = NotificationSenderInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         displayName: FfiConverterOptionalString.read(from),
@@ -4324,7 +4305,7 @@ export const OidcConfiguration = (() => {
 
 const FfiConverterTypeOidcConfiguration = (() => {
   type TypeName = OidcConfiguration;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         clientName: FfiConverterOptionalString.read(from),
@@ -4407,7 +4388,7 @@ export const OidcCrossSigningResetInfo = (() => {
 
 const FfiConverterTypeOidcCrossSigningResetInfo = (() => {
   type TypeName = OidcCrossSigningResetInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         approvalUrl: FfiConverterString.read(from),
@@ -4460,7 +4441,7 @@ export const PollAnswer = (() => {
 
 const FfiConverterTypePollAnswer = (() => {
   type TypeName = PollAnswer;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         id: FfiConverterString.read(from),
@@ -4518,7 +4499,7 @@ export const PollData = (() => {
 
 const FfiConverterTypePollData = (() => {
   type TypeName = PollData;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         question: FfiConverterString.read(from),
@@ -4590,7 +4571,7 @@ export const PowerLevels = (() => {
 
 const FfiConverterTypePowerLevels = (() => {
   type TypeName = PowerLevels;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         usersDefault: FfiConverterOptionalInt32.read(from),
@@ -4678,7 +4659,7 @@ export const PusherIdentifiers = (() => {
 
 const FfiConverterTypePusherIdentifiers = (() => {
   type TypeName = PusherIdentifiers;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         pushkey: FfiConverterString.read(from),
@@ -4734,7 +4715,7 @@ export const Reaction = (() => {
 
 const FfiConverterTypeReaction = (() => {
   type TypeName = Reaction;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         key: FfiConverterString.read(from),
@@ -4792,7 +4773,7 @@ export const ReactionSenderData = (() => {
 
 const FfiConverterTypeReactionSenderData = (() => {
   type TypeName = ReactionSenderData;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         senderId: FfiConverterString.read(from),
@@ -4847,7 +4828,7 @@ export const Receipt = (() => {
 
 const FfiConverterTypeReceipt = (() => {
   type TypeName = Receipt;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         timestamp: FfiConverterOptionalUInt64.read(from),
@@ -4917,7 +4898,7 @@ export const RequestConfig = (() => {
 
 const FfiConverterTypeRequestConfig = (() => {
   type TypeName = RequestConfig;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         retryLimit: FfiConverterOptionalUInt64.read(from),
@@ -4990,7 +4971,7 @@ export const ResolvedRoomAlias = (() => {
 
 const FfiConverterTypeResolvedRoomAlias = (() => {
   type TypeName = ResolvedRoomAlias;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         roomId: FfiConverterString.read(from),
@@ -5054,7 +5035,7 @@ export const RoomDescription = (() => {
 
 const FfiConverterTypeRoomDescription = (() => {
   type TypeName = RoomDescription;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         roomId: FfiConverterString.read(from),
@@ -5133,7 +5114,7 @@ export const RoomDirectorySearchEntriesResult = (() => {
 
 const FfiConverterTypeRoomDirectorySearchEntriesResult = (() => {
   type TypeName = RoomDirectorySearchEntriesResult;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         entriesStream: FfiConverterTypeTaskHandle.read(from),
@@ -5197,7 +5178,7 @@ export const RoomHero = (() => {
 
 const FfiConverterTypeRoomHero = (() => {
   type TypeName = RoomHero;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         userId: FfiConverterString.read(from),
@@ -5320,7 +5301,7 @@ export const RoomInfo = (() => {
 
 const FfiConverterTypeRoomInfo = (() => {
   type TypeName = RoomInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         id: FfiConverterString.read(from),
@@ -5475,7 +5456,7 @@ export const RoomListLoadingStateResult = (() => {
 
 const FfiConverterTypeRoomListLoadingStateResult = (() => {
   type TypeName = RoomListLoadingStateResult;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         state: FfiConverterTypeRoomListLoadingState.read(from),
@@ -5540,7 +5521,7 @@ export const RoomMember = (() => {
 
 const FfiConverterTypeRoomMember = (() => {
   type TypeName = RoomMember;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         userId: FfiConverterString.read(from),
@@ -5635,7 +5616,7 @@ export const RoomNotificationSettings = (() => {
 
 const FfiConverterTypeRoomNotificationSettings = (() => {
   type TypeName = RoomNotificationSettings;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         mode: FfiConverterTypeRoomNotificationMode.read(from),
@@ -5731,7 +5712,7 @@ export const RoomPowerLevels = (() => {
 
 const FfiConverterTypeRoomPowerLevels = (() => {
   type TypeName = RoomPowerLevels;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         ban: FfiConverterInt64.read(from),
@@ -5866,7 +5847,7 @@ export const RoomPreviewInfo = (() => {
 
 const FfiConverterTypeRoomPreviewInfo = (() => {
   type TypeName = RoomPreviewInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         roomId: FfiConverterString.read(from),
@@ -5957,7 +5938,7 @@ export const SearchUsersResults = (() => {
 
 const FfiConverterTypeSearchUsersResults = (() => {
   type TypeName = SearchUsersResults;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         results: FfiConverterArrayTypeUserProfile.read(from),
@@ -6042,7 +6023,7 @@ export const Session = (() => {
 
 const FfiConverterTypeSession = (() => {
   type TypeName = Session;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         accessToken: FfiConverterString.read(from),
@@ -6128,7 +6109,7 @@ export const SessionVerificationRequestDetails = (() => {
 
 const FfiConverterTypeSessionVerificationRequestDetails = (() => {
   type TypeName = SessionVerificationRequestDetails;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         senderId: FfiConverterString.read(from),
@@ -6193,7 +6174,7 @@ export const SetData = (() => {
 
 const FfiConverterTypeSetData = (() => {
   type TypeName = SetData;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         index: FfiConverterUInt32.read(from),
@@ -6251,7 +6232,7 @@ export const TextMessageContent = (() => {
 
 const FfiConverterTypeTextMessageContent = (() => {
   type TypeName = TextMessageContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         body: FfiConverterString.read(from),
@@ -6311,7 +6292,7 @@ export const ThumbnailInfo = (() => {
 
 const FfiConverterTypeThumbnailInfo = (() => {
   type TypeName = ThumbnailInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         height: FfiConverterOptionalUInt64.read(from),
@@ -6374,7 +6355,7 @@ export const TimelineUniqueId = (() => {
 
 const FfiConverterTypeTimelineUniqueId = (() => {
   type TypeName = TimelineUniqueId;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         id: FfiConverterString.read(from),
@@ -6440,7 +6421,7 @@ export const TracingConfiguration = (() => {
 
 const FfiConverterTypeTracingConfiguration = (() => {
   type TypeName = TracingConfiguration;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         filter: FfiConverterString.read(from),
@@ -6529,7 +6510,7 @@ export const TracingFileConfiguration = (() => {
 
 const FfiConverterTypeTracingFileConfiguration = (() => {
   type TypeName = TracingFileConfiguration;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         path: FfiConverterString.read(from),
@@ -6594,7 +6575,7 @@ export const TransmissionProgress = (() => {
 
 const FfiConverterTypeTransmissionProgress = (() => {
   type TypeName = TransmissionProgress;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         current: FfiConverterUInt64.read(from),
@@ -6688,7 +6669,7 @@ export const UnableToDecryptInfo = (() => {
 
 const FfiConverterTypeUnableToDecryptInfo = (() => {
   type TypeName = UnableToDecryptInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         eventId: FfiConverterString.read(from),
@@ -6763,7 +6744,7 @@ export const UnstableAudioDetailsContent = (() => {
 
 const FfiConverterTypeUnstableAudioDetailsContent = (() => {
   type TypeName = UnstableAudioDetailsContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         duration: FfiConverterDuration.read(from),
@@ -6819,7 +6800,7 @@ export const UnstableVoiceContent = (() => {
 
 const FfiConverterTypeUnstableVoiceContent = (() => {
   type TypeName = UnstableVoiceContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {};
     }
@@ -6878,7 +6859,7 @@ export const UserPowerLevelUpdate = (() => {
 
 const FfiConverterTypeUserPowerLevelUpdate = (() => {
   type TypeName = UserPowerLevelUpdate;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         userId: FfiConverterString.read(from),
@@ -6937,7 +6918,7 @@ export const UserProfile = (() => {
 
 const FfiConverterTypeUserProfile = (() => {
   type TypeName = UserProfile;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         userId: FfiConverterString.read(from),
@@ -7002,7 +6983,7 @@ export const VideoInfo = (() => {
 
 const FfiConverterTypeVideoInfo = (() => {
   type TypeName = VideoInfo;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         duration: FfiConverterOptionalDuration.read(from),
@@ -7088,7 +7069,7 @@ export const VideoMessageContent = (() => {
 
 const FfiConverterTypeVideoMessageContent = (() => {
   type TypeName = VideoMessageContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         filename: FfiConverterString.read(from),
@@ -7238,7 +7219,7 @@ export const VirtualElementCallWidgetOptions = (() => {
 
 const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
   type TypeName = VirtualElementCallWidgetOptions;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         elementCallUrl: FfiConverterString.read(from),
@@ -7351,7 +7332,7 @@ export const WidgetCapabilities = (() => {
 
 const FfiConverterTypeWidgetCapabilities = (() => {
   type TypeName = WidgetCapabilities;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         read: FfiConverterArrayTypeWidgetEventFilter.read(from),
@@ -7419,7 +7400,7 @@ export const WidgetDriverAndHandle = (() => {
 
 const FfiConverterTypeWidgetDriverAndHandle = (() => {
   type TypeName = WidgetDriverAndHandle;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         driver: FfiConverterTypeWidgetDriver.read(from),
@@ -7500,7 +7481,7 @@ export const WidgetSettings = (() => {
 
 const FfiConverterTypeWidgetSettings = (() => {
   type TypeName = WidgetSettings;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         widgetId: FfiConverterString.read(from),
@@ -7524,52 +7505,30 @@ const FfiConverterTypeWidgetSettings = (() => {
   return new FFIConverter();
 })();
 
-const stringToArrayBuffer = (s: string): ArrayBuffer =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__string_to_arraybuffer(s, status)
-  );
-
-const arrayBufferToString = (ab: ArrayBuffer): string =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__arraybuffer_to_string(
-      ab,
-      status
-    )
-  );
-
-const stringByteLength = (s: string): number =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__string_to_byte_length(s, status)
-  );
-
-const FfiConverterString = (() => {
-  const lengthConverter = FfiConverterInt32;
-  type TypeName = string;
-  class FFIConverter implements FfiConverter<ArrayBuffer, TypeName> {
-    lift(value: ArrayBuffer): TypeName {
-      return arrayBufferToString(value);
-    }
-    lower(value: TypeName): ArrayBuffer {
-      return stringToArrayBuffer(value);
-    }
-    read(from: RustBuffer): TypeName {
-      const length = lengthConverter.read(from);
-      const bytes = from.readBytes(length);
-      return arrayBufferToString(bytes);
-    }
-    write(value: TypeName, into: RustBuffer): void {
-      const buffer = stringToArrayBuffer(value);
-      const numBytes = buffer.byteLength;
-      lengthConverter.write(numBytes, into);
-      into.writeBytes(buffer);
-    }
-    allocationSize(value: TypeName): number {
-      return lengthConverter.allocationSize(0) + stringByteLength(value);
-    }
-  }
-
-  return new FFIConverter();
-})();
+const stringConverter = {
+  stringToBytes: (s: string) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__string_to_arraybuffer(
+        s,
+        status
+      )
+    ),
+  bytesToString: (ab: UniffiByteArray) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__arraybuffer_to_string(
+        ab,
+        status
+      )
+    ),
+  stringByteLength: (s: string) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__string_to_byte_length(
+        s,
+        status
+      )
+    ),
+};
+const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
 
 // Enum: AccountManagementAction
 export enum AccountManagementAction_Tags {
@@ -7763,7 +7722,7 @@ export type AccountManagementAction = InstanceType<
 const FfiConverterTypeAccountManagementAction = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = AccountManagementAction;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -7952,7 +7911,7 @@ export type AllowRule = InstanceType<
 const FfiConverterTypeAllowRule = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = AllowRule;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -8014,7 +7973,7 @@ export enum AssetType {
 const FfiConverterTypeAssetType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = AssetType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -8093,7 +8052,7 @@ export type AuthData = InstanceType<
 const FfiConverterTypeAuthData = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = AuthData;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -8151,7 +8110,7 @@ export enum BackupState {
 const FfiConverterTypeBackupState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = BackupState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -8337,7 +8296,7 @@ export type BackupUploadState = InstanceType<
 const FfiConverterTypeBackupUploadState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = BackupUploadState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -8646,7 +8605,7 @@ export type ClientBuildError = InstanceType<
 const FfiConverterTypeClientBuildError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = ClientBuildError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -8764,7 +8723,7 @@ export type ClientError = InstanceType<
 const FfiConverterTypeClientError = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = ClientError;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -8941,7 +8900,7 @@ export type ComposerDraftType = InstanceType<
 const FfiConverterTypeComposerDraftType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = ComposerDraftType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -9088,7 +9047,7 @@ export type CrossSigningResetAuthType = InstanceType<
 const FfiConverterTypeCrossSigningResetAuthType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = CrossSigningResetAuthType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -9151,7 +9110,7 @@ export enum DateDividerMode {
 const FfiConverterTypeDateDividerMode = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = DateDividerMode;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -9305,7 +9264,7 @@ export type EditedContent = InstanceType<
 const FfiConverterTypeEditedContent = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = EditedContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -9599,7 +9558,7 @@ export type EnableRecoveryProgress = InstanceType<
 const FfiConverterTypeEnableRecoveryProgress = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = EnableRecoveryProgress;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -9829,7 +9788,7 @@ export type EncryptedMessage = InstanceType<
 const FfiConverterTypeEncryptedMessage = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = EncryptedMessage;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -10032,7 +9991,7 @@ export type EncryptionSystem = InstanceType<
 const FfiConverterTypeEncryptionSystem = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = EncryptionSystem;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -10181,7 +10140,7 @@ export type EventOrTransactionId = InstanceType<
 const FfiConverterTypeEventOrTransactionId = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = EventOrTransactionId;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -10384,7 +10343,7 @@ export type EventSendState = InstanceType<
 const FfiConverterTypeEventSendState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = EventSendState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -10534,7 +10493,7 @@ export type FilterTimelineEventType = InstanceType<
 const FfiConverterTypeFilterTimelineEventType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = FilterTimelineEventType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -10733,7 +10692,7 @@ export type FocusEventError = InstanceType<
 const FfiConverterTypeFocusEventError = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = FocusEventError;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -11116,7 +11075,7 @@ export type HumanQrLoginError = InstanceType<
 const FfiConverterTypeHumanQrLoginError = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = HumanQrLoginError;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -11479,7 +11438,7 @@ export type JoinRule = InstanceType<
 const FfiConverterTypeJoinRule = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = JoinRule;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -11596,7 +11555,7 @@ export enum LogLevel {
 const FfiConverterTypeLogLevel = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = LogLevel;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -11810,7 +11769,7 @@ export type MatrixId = InstanceType<
 const FfiConverterTypeMatrixId = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = MatrixId;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -11987,7 +11946,7 @@ export type MediaInfoError = InstanceType<
 const FfiConverterTypeMediaInfoError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = MediaInfoError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -12023,7 +11982,7 @@ export enum Membership {
 const FfiConverterTypeMembership = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = Membership;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -12084,7 +12043,7 @@ export enum MembershipChange {
 const FfiConverterTypeMembershipChange = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = MembershipChange;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -12368,7 +12327,7 @@ export type MembershipState = InstanceType<
 const FfiConverterTypeMembershipState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = MembershipState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -12529,7 +12488,7 @@ export type MessageFormat = InstanceType<
 const FfiConverterTypeMessageFormat = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = MessageFormat;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -13136,7 +13095,7 @@ export type MessageLikeEventContent = InstanceType<
 const FfiConverterTypeMessageLikeEventContent = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = MessageLikeEventContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -13396,7 +13355,7 @@ export enum MessageLikeEventType {
 const FfiConverterTypeMessageLikeEventType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = MessageLikeEventType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -13788,7 +13747,7 @@ export type MessageType = InstanceType<
 const FfiConverterTypeMessageType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = MessageType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -14052,7 +14011,7 @@ export type NotificationEvent = InstanceType<
 const FfiConverterTypeNotificationEvent = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = NotificationEvent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -14190,7 +14149,7 @@ export type NotificationProcessSetup = InstanceType<
 const FfiConverterTypeNotificationProcessSetup = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = NotificationProcessSetup;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -14569,7 +14528,7 @@ export type NotificationSettingsError = InstanceType<
 const FfiConverterTypeNotificationSettingsError = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = NotificationSettingsError;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -14701,7 +14660,7 @@ export enum NotifyType {
 const FfiConverterTypeNotifyType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = NotifyType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -14894,7 +14853,7 @@ export type OidcError = InstanceType<
 const FfiConverterTypeOidcError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = OidcError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -15144,7 +15103,7 @@ export type OidcPrompt = InstanceType<
 const FfiConverterTypeOidcPrompt = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = OidcPrompt;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -15861,7 +15820,7 @@ export type OtherState = InstanceType<
 const FfiConverterTypeOtherState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = OtherState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -16417,7 +16376,7 @@ export type ParseError = InstanceType<
 const FfiConverterTypeParseError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = ParseError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -16489,7 +16448,7 @@ export enum PollKind {
 const FfiConverterTypePollKind = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = PollKind;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -16662,7 +16621,7 @@ export type ProfileDetails = InstanceType<
 const FfiConverterTypeProfileDetails = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = ProfileDetails;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -16750,7 +16709,7 @@ export enum PublicRoomJoinRule {
 const FfiConverterTypePublicRoomJoinRule = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = PublicRoomJoinRule;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -16783,7 +16742,7 @@ export enum PushFormat {
 const FfiConverterTypePushFormat = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = PushFormat;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -16881,7 +16840,7 @@ export type PusherKind = InstanceType<
 const FfiConverterTypePusherKind = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = PusherKind;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -16984,7 +16943,7 @@ export type QrCodeDecodeError = InstanceType<
 const FfiConverterTypeQrCodeDecodeError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = QrCodeDecodeError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -17186,7 +17145,7 @@ export type QrLoginProgress = InstanceType<
 const FfiConverterTypeQrLoginProgress = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = QrLoginProgress;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -17528,7 +17487,7 @@ export type QueueWedgeError = InstanceType<
 const FfiConverterTypeQueueWedgeError = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = QueueWedgeError;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -17648,7 +17607,7 @@ export enum ReceiptType {
 const FfiConverterTypeReceiptType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = ReceiptType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -17818,7 +17777,7 @@ export type RecoveryError = InstanceType<
 const FfiConverterTypeRecoveryError = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RecoveryError;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -17893,7 +17852,7 @@ export enum RecoveryState {
 const FfiConverterTypeRecoveryState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RecoveryState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -18077,7 +18036,7 @@ export type RepliedToEventDetails = InstanceType<
 const FfiConverterTypeRepliedToEventDetails = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RepliedToEventDetails;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -18498,7 +18457,7 @@ export type RoomDirectorySearchEntryUpdate = InstanceType<
 const FfiConverterTypeRoomDirectorySearchEntryUpdate = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomDirectorySearchEntryUpdate;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -18854,7 +18813,7 @@ export type RoomError = InstanceType<
 const FfiConverterTypeRoomError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = RoomError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -19246,7 +19205,7 @@ export type RoomListEntriesDynamicFilterKind = InstanceType<
 const FfiConverterTypeRoomListEntriesDynamicFilterKind = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomListEntriesDynamicFilterKind;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -19772,7 +19731,7 @@ export type RoomListEntriesUpdate = InstanceType<
 const FfiConverterTypeRoomListEntriesUpdate = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomListEntriesUpdate;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -20374,7 +20333,7 @@ export type RoomListError = InstanceType<
 const FfiConverterTypeRoomListError = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomListError;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -20564,7 +20523,7 @@ export enum RoomListFilterCategory {
 const FfiConverterTypeRoomListFilterCategory = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomListFilterCategory;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -20673,7 +20632,7 @@ export type RoomListLoadingState = InstanceType<
 const FfiConverterTypeRoomListLoadingState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomListLoadingState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -20736,7 +20695,7 @@ export enum RoomListServiceState {
 const FfiConverterTypeRoomListServiceState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomListServiceState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -20786,7 +20745,7 @@ export enum RoomListServiceSyncIndicator {
 const FfiConverterTypeRoomListServiceSyncIndicator = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomListServiceSyncIndicator;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -20829,7 +20788,7 @@ export enum RoomMessageEventMessageType {
 const FfiConverterTypeRoomMessageEventMessageType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomMessageEventMessageType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -20912,7 +20871,7 @@ export enum RoomNotificationMode {
 const FfiConverterTypeRoomNotificationMode = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomNotificationMode;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -20963,7 +20922,7 @@ export enum RoomPreset {
 const FfiConverterTypeRoomPreset = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomPreset;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -21111,7 +21070,7 @@ export type RoomType = InstanceType<
 const FfiConverterTypeRoomType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -21181,7 +21140,7 @@ export enum RoomVisibility {
 const FfiConverterTypeRoomVisibility = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomVisibility;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -21214,7 +21173,7 @@ export enum RtcApplicationType {
 const FfiConverterTypeRtcApplicationType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RtcApplicationType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -21330,7 +21289,7 @@ export type SessionVerificationData = InstanceType<
 const FfiConverterTypeSessionVerificationData = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = SessionVerificationData;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -21519,7 +21478,7 @@ export type ShieldState = InstanceType<
 const FfiConverterTypeShieldState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = ShieldState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -21695,7 +21654,7 @@ export type SlidingSyncVersion = InstanceType<
 const FfiConverterTypeSlidingSyncVersion = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = SlidingSyncVersion;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -21913,7 +21872,7 @@ export type SlidingSyncVersionBuilder = InstanceType<
 const FfiConverterTypeSlidingSyncVersionBuilder = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = SlidingSyncVersionBuilder;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -22084,7 +22043,7 @@ export type SsoError = InstanceType<
 const FfiConverterTypeSsoError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = SsoError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -22723,7 +22682,7 @@ export type StateEventContent = InstanceType<
 const FfiConverterTypeStateEventContent = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = StateEventContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -22976,7 +22935,7 @@ export enum StateEventType {
 const FfiConverterTypeStateEventType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = StateEventType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -23177,7 +23136,7 @@ export type SteadyStateError = InstanceType<
 const FfiConverterTypeSteadyStateError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = SteadyStateError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -23217,7 +23176,7 @@ export enum SyncServiceState {
 const FfiConverterTypeSyncServiceState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = SyncServiceState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -23268,7 +23227,7 @@ export enum TimelineChange {
 const FfiConverterTypeTimelineChange = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = TimelineChange;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -23409,7 +23368,7 @@ export type TimelineEventType = InstanceType<
 const FfiConverterTypeTimelineEventType = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = TimelineEventType;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -23946,7 +23905,7 @@ export type TimelineItemContent = InstanceType<
 const FfiConverterTypeTimelineItemContent = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = TimelineItemContent;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -24212,7 +24171,7 @@ export enum VerificationState {
 const FfiConverterTypeVerificationState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = VerificationState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -24345,7 +24304,7 @@ export type VirtualTimelineItem = InstanceType<
 const FfiConverterTypeVirtualTimelineItem = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = VirtualTimelineItem;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -24562,7 +24521,7 @@ export type WidgetEventFilter = InstanceType<
 const FfiConverterTypeWidgetEventFilter = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = WidgetEventFilter;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -25131,18 +25090,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_abort_oidc_auth(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_abort_oidc_auth(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeOidcAuthorizationData.lower(authorizationData)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -25168,20 +25130,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_account_data(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_account_data(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventType)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -25206,20 +25169,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_account_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_account_url(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterOptionalTypeAccountManagementAction.lower(action)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -25252,19 +25216,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_available_sliding_sync_versions(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_available_sliding_sync_versions(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterArrayTypeSlidingSyncVersion.lift.bind(
           FfiConverterArrayTypeSlidingSyncVersion
         ),
@@ -25289,19 +25254,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_avatar_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_avatar_url(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -25333,20 +25299,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_await_room_remote_echo(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_await_room_remote_echo(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoom.lift.bind(FfiConverterTypeRoom),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -25367,12 +25334,12 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    */
   public cachedAvatarUrl(): string | undefined /*throws*/ {
     return FfiConverterOptionalString.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_cached_avatar_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_cached_avatar_url(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -25388,9 +25355,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    */
   public canDeactivateAccount(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_can_deactivate_account(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_can_deactivate_account(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -25407,20 +25374,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_create_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_create_room(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeCreateRoomParameters.lower(request)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -25447,19 +25415,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_create_room_alias(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_create_room_alias(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomAlias),
             FfiConverterString.lower(roomId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -25489,20 +25460,23 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_custom_login_with_jwt(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_custom_login_with_jwt(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(jwt),
             FfiConverterOptionalString.lower(initialDeviceName),
             FfiConverterOptionalString.lower(deviceId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -25538,19 +25512,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_deactivate_account(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_deactivate_account(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterOptionalTypeAuthData.lower(authData),
             FfiConverterBool.lower(eraseData)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -25576,18 +25553,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_delete_pusher(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_delete_pusher(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypePusherIdentifiers.lower(identifiers)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -25605,12 +25585,12 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public deviceId(): string /*throws*/ {
     return FfiConverterString.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_device_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_device_id(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -25626,19 +25606,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_display_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_display_name(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -25670,18 +25651,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_enable_all_send_queues(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_enable_all_send_queues(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterBool.lower(enable)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -25696,9 +25680,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public encryption(): EncryptionInterface {
     return FfiConverterTypeEncryption.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_encryption(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_encryption(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -25710,12 +25694,12 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public getDmRoom(userId: string): RoomInterface | undefined /*throws*/ {
     return FfiConverterOptionalTypeRoom.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_dm_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_dm_room(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId),
             callStatus
@@ -25733,20 +25717,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_media_content(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_media_content(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeMediaSource.lower(mediaSource)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterArrayBuffer.lift.bind(
           FfiConverterArrayBuffer
         ),
@@ -25775,8 +25760,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_media_file(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_media_file(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeMediaSource.lower(mediaSource),
             FfiConverterOptionalString.lower(filename),
@@ -25786,13 +25772,13 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeMediaFileHandle.lift.bind(
           FfiConverterTypeMediaFileHandle
         ),
@@ -25819,8 +25805,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_media_thumbnail(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_media_thumbnail(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeMediaSource.lower(mediaSource),
             FfiConverterUInt64.lower(width),
@@ -25828,13 +25815,13 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterArrayBuffer.lift.bind(
           FfiConverterArrayBuffer
         ),
@@ -25854,9 +25841,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public getNotificationSettings(): NotificationSettingsInterface {
     return FfiConverterTypeNotificationSettings.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_notification_settings(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_notification_settings(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -25873,20 +25860,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_profile(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_profile(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeUserProfile.lift.bind(
           FfiConverterTypeUserProfile
         ),
@@ -25910,19 +25898,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_recently_visited_rooms(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_recently_visited_rooms(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterArrayString.lift.bind(
           FfiConverterArrayString
         ),
@@ -25950,20 +25939,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_room_preview_from_room_alias(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_room_preview_from_room_alias(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomAlias)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoomPreview.lift.bind(
           FfiConverterTypeRoomPreview
         ),
@@ -25996,21 +25986,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_room_preview_from_room_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_room_preview_from_room_id(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId),
             FfiConverterArrayString.lower(viaServers)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoomPreview.lift.bind(
           FfiConverterTypeRoomPreview
         ),
@@ -26034,19 +26025,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_session_verification_controller(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_session_verification_controller(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeSessionVerificationController.lift.bind(
           FfiConverterTypeSessionVerificationController
         ),
@@ -26075,20 +26067,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_get_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_url(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(url)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26109,9 +26102,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    */
   public homeserver(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_homeserver(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_homeserver(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -26130,19 +26123,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_homeserver_login_details(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_homeserver_login_details(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeHomeserverLoginDetails.lift.bind(
           FfiConverterTypeHomeserverLoginDetails
         ),
@@ -26164,18 +26158,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_ignore_user(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_ignore_user(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26197,19 +26194,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_ignored_users(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_ignored_users(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterArrayString.lift.bind(
           FfiConverterArrayString
         ),
@@ -26243,17 +26241,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_is_room_alias_available(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_is_room_alias_available(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(alias)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26283,20 +26285,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_join_room_by_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_join_room_by_id(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoom.lift.bind(FfiConverterTypeRoom),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26328,21 +26331,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_join_room_by_id_or_alias(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_join_room_by_id_or_alias(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomIdOrAlias),
             FfiConverterArrayString.lower(serverNames)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoom.lift.bind(FfiConverterTypeRoom),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26370,8 +26374,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_knock(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_knock(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomIdOrAlias),
             FfiConverterOptionalString.lower(reason),
@@ -26379,13 +26384,13 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoom.lift.bind(FfiConverterTypeRoom),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26414,8 +26419,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_login(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_login(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(username),
             FfiConverterString.lower(password),
@@ -26423,12 +26429,14 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
             FfiConverterOptionalString.lower(deviceId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26457,8 +26465,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_login_with_email(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_login_with_email(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(email),
             FfiConverterString.lower(password),
@@ -26466,12 +26475,14 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
             FfiConverterOptionalString.lower(deviceId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26498,19 +26509,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_login_with_oidc_callback(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_login_with_oidc_callback(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeOidcAuthorizationData.lower(authorizationData),
             FfiConverterString.lower(callbackUrl)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26537,19 +26551,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_logout(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_logout(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -26574,20 +26589,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_notification_client(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_notification_client(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeNotificationProcessSetup.lower(processSetup)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeNotificationClient.lift.bind(
           FfiConverterTypeNotificationClient
         ),
@@ -26611,17 +26627,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_remove_avatar(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_remove_avatar(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26650,17 +26669,20 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_reset_server_capabilities(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_reset_server_capabilities(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26687,20 +26709,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_resolve_room_alias(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_resolve_room_alias(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomAlias)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeResolvedRoomAlias.lift.bind(
           FfiConverterOptionalTypeResolvedRoomAlias
         ),
@@ -26728,18 +26751,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_restore_session(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_restore_session(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeSession.lower(session)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26765,17 +26791,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_room_alias_exists(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_room_alias_exists(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomAlias)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26793,9 +26823,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public roomDirectorySearch(): RoomDirectorySearchInterface {
     return FfiConverterTypeRoomDirectorySearch.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_room_directory_search(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_room_directory_search(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -26807,9 +26837,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public rooms(): Array<RoomInterface> {
     return FfiConverterArrayTypeRoom.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_rooms(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_rooms(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -26827,21 +26857,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_search_users(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_search_users(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(searchTerm),
             FfiConverterUInt64.lower(limit)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeSearchUsersResults.lift.bind(
           FfiConverterTypeSearchUsersResults
         ),
@@ -26874,9 +26905,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    */
   public server(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_server(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_server(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -26888,12 +26919,12 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public session(): Session /*throws*/ {
     return FfiConverterTypeSession.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_session(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_session(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -26916,19 +26947,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_set_account_data(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_account_data(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventType),
             FfiConverterString.lower(content)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -26948,9 +26982,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     delegate: ClientDelegate | undefined
   ): TaskHandleInterface | undefined {
     return FfiConverterOptionalTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_set_delegate(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_delegate(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterOptionalTypeClientDelegate.lower(delegate),
             callStatus
@@ -26968,18 +27002,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_set_display_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_display_name(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(name)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27010,8 +27047,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_set_pusher(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_pusher(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypePusherIdentifiers.lower(identifiers),
             FfiConverterTypePusherKind.lower(kind),
@@ -27021,12 +27059,14 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
             FfiConverterString.lower(lang)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27047,9 +27087,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    */
   public slidingSyncVersion(): SlidingSyncVersion {
     return FfiConverterTypeSlidingSyncVersion.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_sliding_sync_version(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_sliding_sync_version(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -27070,21 +27110,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_start_sso_login(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_start_sso_login(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(redirectUrl),
             FfiConverterOptionalString.lower(idpId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeSsoHandler.lift.bind(
           FfiConverterTypeSsoHandler
         ),
@@ -27106,9 +27147,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     listener: IgnoredUsersListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_subscribe_to_ignored_users(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_subscribe_to_ignored_users(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeIgnoredUsersListener.lower(listener),
             callStatus
@@ -27130,9 +27171,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     listener: SendQueueRoomErrorListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_subscribe_to_send_queue_status(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_subscribe_to_send_queue_status(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeSendQueueRoomErrorListener.lower(listener),
             callStatus
@@ -27145,9 +27186,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public syncService(): SyncServiceBuilderInterface {
     return FfiConverterTypeSyncServiceBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_sync_service(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_sync_service(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -27164,18 +27205,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_track_recently_visited_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_track_recently_visited_room(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(room)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27198,18 +27242,21 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_unignore_user(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_unignore_user(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27233,19 +27280,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_upload_avatar(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_upload_avatar(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(mimeType),
             FfiConverterArrayBuffer.lower(data)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27270,8 +27320,9 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_upload_media(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_upload_media(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(mimeType),
             FfiConverterArrayBuffer.lower(data),
@@ -27279,13 +27330,13 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27315,21 +27366,22 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_url_for_oidc(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_url_for_oidc(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeOidcConfiguration.lower(oidcConfiguration),
             FfiConverterTypeOidcPrompt.lower(prompt)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeOidcAuthorizationData.lift.bind(
           FfiConverterTypeOidcAuthorizationData
         ),
@@ -27349,12 +27401,12 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   public userId(): string /*throws*/ {
     return FfiConverterString.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_user_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_user_id(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -27369,12 +27421,12 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    */
   public userIdServerName(): string /*throws*/ {
     return FfiConverterString.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_client_user_id_server_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_user_id_server_name(
             uniffiTypeClientObjectFactory.clonePointer(this),
             callStatus
           );
@@ -27388,10 +27440,11 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeClientObjectFactory.pointer(this);
       uniffiTypeClientObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeClientObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -27411,14 +27464,18 @@ const uniffiTypeClientObjectFactory: UniffiObjectFactory<ClientInterface> = {
   },
 
   bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-    return rustCall(
+    return uniffiCaller.rustCall(
       /*caller:*/ (status) =>
-        nativeModule().uniffi_internal_fn_method_client_ffi__bless_pointer(
+        nativeModule().ubrn_uniffi_internal_fn_method_client_ffi__bless_pointer(
           p,
           status
         ),
       /*liftString:*/ FfiConverterString.lift
     );
+  },
+
+  unbless(ptr: UniffiRustArcPtr) {
+    ptr.markDestroyed();
   },
 
   pointer(obj: ClientInterface): UnsafeMutableRawPointer {
@@ -27430,9 +27487,9 @@ const uniffiTypeClientObjectFactory: UniffiObjectFactory<ClientInterface> = {
 
   clonePointer(obj: ClientInterface): UnsafeMutableRawPointer {
     const pointer = this.pointer(obj);
-    return rustCall(
+    return uniffiCaller.rustCall(
       /*caller:*/ (callStatus) =>
-        nativeModule().uniffi_matrix_sdk_ffi_fn_clone_client(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_client(
           pointer,
           callStatus
         ),
@@ -27441,9 +27498,9 @@ const uniffiTypeClientObjectFactory: UniffiObjectFactory<ClientInterface> = {
   },
 
   freePointer(pointer: UnsafeMutableRawPointer): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) =>
-        nativeModule().uniffi_matrix_sdk_ffi_fn_free_client(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_client(
           pointer,
           callStatus
         ),
@@ -27573,9 +27630,9 @@ export class ClientBuilder
   readonly [pointerLiteralSymbol]: UnsafeMutableRawPointer;
   constructor() {
     super();
-    const pointer = rustCall(
+    const pointer = uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_clientbuilder_new(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_clientbuilder_new(
           callStatus
         );
       },
@@ -27590,9 +27647,9 @@ export class ClientBuilder
     certificates: Array<ArrayBuffer>
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_add_root_certificates(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_add_root_certificates(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterArrayArrayBuffer.lower(certificates),
             callStatus
@@ -27608,9 +27665,9 @@ export class ClientBuilder
    */
   public autoEnableBackups(autoEnableBackups: boolean): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_auto_enable_backups(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_auto_enable_backups(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterBool.lower(autoEnableBackups),
             callStatus
@@ -27625,9 +27682,9 @@ export class ClientBuilder
     autoEnableCrossSigning: boolean
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_auto_enable_cross_signing(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_auto_enable_cross_signing(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterBool.lower(autoEnableCrossSigning),
             callStatus
@@ -27648,9 +27705,9 @@ export class ClientBuilder
     backupDownloadStrategy: BackupDownloadStrategy
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_backup_download_strategy(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_backup_download_strategy(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterTypeBackupDownloadStrategy.lower(
               backupDownloadStrategy
@@ -27669,19 +27726,20 @@ export class ClientBuilder
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_build(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_build(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeClient.lift.bind(FfiConverterTypeClient),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27720,8 +27778,9 @@ export class ClientBuilder
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_build_with_qr_code(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_build_with_qr_code(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterTypeQrCodeData.lower(qrCodeData),
             FfiConverterTypeOidcConfiguration.lower(oidcConfiguration),
@@ -27729,13 +27788,13 @@ export class ClientBuilder
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeClient.lift.bind(FfiConverterTypeClient),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27755,9 +27814,9 @@ export class ClientBuilder
     holderName: string
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_cross_process_store_locks_holder_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_cross_process_store_locks_holder_name(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(holderName),
             callStatus
@@ -27770,9 +27829,9 @@ export class ClientBuilder
 
   public disableAutomaticTokenRefresh(): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_automatic_token_refresh(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_automatic_token_refresh(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             callStatus
           );
@@ -27789,9 +27848,9 @@ export class ClientBuilder
    */
   public disableBuiltInRootCertificates(): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_built_in_root_certificates(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_built_in_root_certificates(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             callStatus
           );
@@ -27803,9 +27862,9 @@ export class ClientBuilder
 
   public disableSslVerification(): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_ssl_verification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_ssl_verification(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             callStatus
           );
@@ -27817,9 +27876,9 @@ export class ClientBuilder
 
   public enableOidcRefreshLock(): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_enable_oidc_refresh_lock(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_enable_oidc_refresh_lock(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             callStatus
           );
@@ -27831,9 +27890,9 @@ export class ClientBuilder
 
   public homeserverUrl(url: string): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_homeserver_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_homeserver_url(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(url),
             callStatus
@@ -27846,9 +27905,9 @@ export class ClientBuilder
 
   public passphrase(passphrase: string | undefined): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_passphrase(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_passphrase(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterOptionalString.lower(passphrase),
             callStatus
@@ -27861,9 +27920,9 @@ export class ClientBuilder
 
   public proxy(url: string): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_proxy(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_proxy(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(url),
             callStatus
@@ -27879,9 +27938,9 @@ export class ClientBuilder
    */
   public requestConfig(config: RequestConfig): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_request_config(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_request_config(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterTypeRequestConfig.lower(config),
             callStatus
@@ -27899,9 +27958,9 @@ export class ClientBuilder
     trustRequirement: TrustRequirement
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_room_decryption_trust_requirement(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_room_decryption_trust_requirement(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterTypeTrustRequirement.lower(trustRequirement),
             callStatus
@@ -27920,9 +27979,9 @@ export class ClientBuilder
     strategy: CollectStrategy
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_room_key_recipient_strategy(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_room_key_recipient_strategy(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterTypeCollectStrategy.lower(strategy),
             callStatus
@@ -27935,9 +27994,9 @@ export class ClientBuilder
 
   public serverName(serverName: string): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_server_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_server_name(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(serverName),
             callStatus
@@ -27952,9 +28011,9 @@ export class ClientBuilder
     serverNameOrUrl: string
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_server_name_or_homeserver_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_server_name_or_homeserver_url(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(serverNameOrUrl),
             callStatus
@@ -27978,9 +28037,9 @@ export class ClientBuilder
     cachePath: string
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_session_paths(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_session_paths(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(dataPath),
             FfiConverterString.lower(cachePath),
@@ -27996,9 +28055,9 @@ export class ClientBuilder
     sessionDelegate: ClientSessionDelegate
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_set_session_delegate(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_set_session_delegate(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterTypeClientSessionDelegate.lower(sessionDelegate),
             callStatus
@@ -28013,9 +28072,9 @@ export class ClientBuilder
     versionBuilder: SlidingSyncVersionBuilder
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_sliding_sync_version_builder(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_sliding_sync_version_builder(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterTypeSlidingSyncVersionBuilder.lower(versionBuilder),
             callStatus
@@ -28043,9 +28102,9 @@ export class ClientBuilder
     value: boolean
   ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_use_event_cache_persistent_storage(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_use_event_cache_persistent_storage(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterBool.lower(value),
             callStatus
@@ -28058,9 +28117,9 @@ export class ClientBuilder
 
   public userAgent(userAgent: string): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_user_agent(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_user_agent(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(userAgent),
             callStatus
@@ -28073,9 +28132,9 @@ export class ClientBuilder
 
   public username(username: string): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_clientbuilder_username(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_username(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(username),
             callStatus
@@ -28090,10 +28149,11 @@ export class ClientBuilder
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeClientBuilderObjectFactory.pointer(this);
       uniffiTypeClientBuilderObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeClientBuilderObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -28114,14 +28174,18 @@ const uniffiTypeClientBuilderObjectFactory: UniffiObjectFactory<ClientBuilderInt
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_clientbuilder_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_clientbuilder_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: ClientBuilderInterface): UnsafeMutableRawPointer {
@@ -28133,9 +28197,9 @@ const uniffiTypeClientBuilderObjectFactory: UniffiObjectFactory<ClientBuilderInt
 
     clonePointer(obj: ClientBuilderInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_clientbuilder(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_clientbuilder(
             pointer,
             callStatus
           ),
@@ -28144,9 +28208,9 @@ const uniffiTypeClientBuilderObjectFactory: UniffiObjectFactory<ClientBuilderInt
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_clientbuilder(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_clientbuilder(
             pointer,
             callStatus
           ),
@@ -28301,16 +28365,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_backup_exists_on_server(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_backup_exists_on_server(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28328,9 +28396,9 @@ export class Encryption
 
   public backupState(): BackupState {
     return FfiConverterTypeBackupState.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_backup_state(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_backup_state(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             callStatus
           );
@@ -28344,9 +28412,9 @@ export class Encryption
     listener: BackupStateListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_backup_state_listener(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_backup_state_listener(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             FfiConverterTypeBackupStateListener.lower(listener),
             callStatus
@@ -28367,19 +28435,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_curve25519_key(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_curve25519_key(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -28400,17 +28469,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_disable_recovery(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_disable_recovery(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28436,19 +28508,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_ed25519_key(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_ed25519_key(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -28469,17 +28542,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_enable_backups(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_enable_backups(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28504,8 +28580,9 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_enable_recovery(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_enable_recovery(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             FfiConverterBool.lower(waitForBackupsToUpload),
             FfiConverterOptionalString.lower(passphrase),
@@ -28515,13 +28592,13 @@ export class Encryption
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28543,16 +28620,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_is_last_device(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_is_last_device(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28575,18 +28656,21 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_recover(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_recover(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             FfiConverterString.lower(recoveryKey)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28609,20 +28693,21 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_recover_and_reset(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_recover_and_reset(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             FfiConverterString.lower(oldRecoveryKey)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28640,9 +28725,9 @@ export class Encryption
 
   public recoveryState(): RecoveryState {
     return FfiConverterTypeRecoveryState.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_recovery_state(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_recovery_state(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             callStatus
           );
@@ -28656,9 +28741,9 @@ export class Encryption
     listener: RecoveryStateListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_recovery_state_listener(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_recovery_state_listener(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             FfiConverterTypeRecoveryStateListener.lower(listener),
             callStatus
@@ -28679,19 +28764,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_reset_identity(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_reset_identity(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeIdentityResetHandle.lift.bind(
           FfiConverterOptionalTypeIdentityResetHandle
         ),
@@ -28715,19 +28801,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_reset_recovery_key(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_reset_recovery_key(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28768,20 +28855,21 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_user_identity(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_user_identity(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeUserIdentity.lift.bind(
           FfiConverterOptionalTypeUserIdentity
         ),
@@ -28801,9 +28889,9 @@ export class Encryption
 
   public verificationState(): VerificationState {
     return FfiConverterTypeVerificationState.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_verification_state(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_verification_state(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             callStatus
           );
@@ -28817,9 +28905,9 @@ export class Encryption
     listener: VerificationStateListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_verification_state_listener(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_verification_state_listener(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             FfiConverterTypeVerificationStateListener.lower(listener),
             callStatus
@@ -28837,20 +28925,23 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_wait_for_backup_upload_steady_state(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_wait_for_backup_upload_steady_state(
             uniffiTypeEncryptionObjectFactory.clonePointer(this),
             FfiConverterOptionalTypeBackupSteadyStateListener.lower(
               progressListener
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -28876,17 +28967,20 @@ export class Encryption
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_encryption_wait_for_e2ee_initialization_tasks(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_encryption_wait_for_e2ee_initialization_tasks(
             uniffiTypeEncryptionObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -28903,10 +28997,11 @@ export class Encryption
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeEncryptionObjectFactory.pointer(this);
       uniffiTypeEncryptionObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeEncryptionObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -28927,14 +29022,18 @@ const uniffiTypeEncryptionObjectFactory: UniffiObjectFactory<EncryptionInterface
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_encryption_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_encryption_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: EncryptionInterface): UnsafeMutableRawPointer {
@@ -28946,9 +29045,9 @@ const uniffiTypeEncryptionObjectFactory: UniffiObjectFactory<EncryptionInterface
 
     clonePointer(obj: EncryptionInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_encryption(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_encryption(
             pointer,
             callStatus
           ),
@@ -28957,9 +29056,9 @@ const uniffiTypeEncryptionObjectFactory: UniffiObjectFactory<EncryptionInterface
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_encryption(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_encryption(
             pointer,
             callStatus
           ),
@@ -29022,9 +29121,9 @@ export class HomeserverLoginDetails
    */
   public slidingSyncVersion(): SlidingSyncVersion {
     return FfiConverterTypeSlidingSyncVersion.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_sliding_sync_version(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_sliding_sync_version(
             uniffiTypeHomeserverLoginDetailsObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29040,9 +29139,9 @@ export class HomeserverLoginDetails
    */
   public supportedOidcPrompts(): Array<OidcPrompt> {
     return FfiConverterArrayTypeOidcPrompt.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_supported_oidc_prompts(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_supported_oidc_prompts(
             uniffiTypeHomeserverLoginDetailsObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29057,9 +29156,9 @@ export class HomeserverLoginDetails
    */
   public supportsOidcLogin(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_supports_oidc_login(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_supports_oidc_login(
             uniffiTypeHomeserverLoginDetailsObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29074,9 +29173,9 @@ export class HomeserverLoginDetails
    */
   public supportsPasswordLogin(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_supports_password_login(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_supports_password_login(
             uniffiTypeHomeserverLoginDetailsObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29091,9 +29190,9 @@ export class HomeserverLoginDetails
    */
   public url(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_homeserverlogindetails_url(
             uniffiTypeHomeserverLoginDetailsObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29107,11 +29206,12 @@ export class HomeserverLoginDetails
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeHomeserverLoginDetailsObjectFactory.pointer(this);
       uniffiTypeHomeserverLoginDetailsObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeHomeserverLoginDetailsObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -29132,14 +29232,18 @@ const uniffiTypeHomeserverLoginDetailsObjectFactory: UniffiObjectFactory<Homeser
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_homeserverlogindetails_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_homeserverlogindetails_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: HomeserverLoginDetailsInterface): UnsafeMutableRawPointer {
@@ -29153,9 +29257,9 @@ const uniffiTypeHomeserverLoginDetailsObjectFactory: UniffiObjectFactory<Homeser
       obj: HomeserverLoginDetailsInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_homeserverlogindetails(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_homeserverlogindetails(
             pointer,
             callStatus
           ),
@@ -29164,9 +29268,9 @@ const uniffiTypeHomeserverLoginDetailsObjectFactory: UniffiObjectFactory<Homeser
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_homeserverlogindetails(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_homeserverlogindetails(
             pointer,
             callStatus
           ),
@@ -29229,9 +29333,9 @@ export class IdentityResetHandle
    */
   public authType(): CrossSigningResetAuthType {
     return FfiConverterTypeCrossSigningResetAuthType.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_identityresethandle_auth_type(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_identityresethandle_auth_type(
             uniffiTypeIdentityResetHandleObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29245,17 +29349,20 @@ export class IdentityResetHandle
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_identityresethandle_cancel(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_identityresethandle_cancel(
             uniffiTypeIdentityResetHandleObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -29284,18 +29391,21 @@ export class IdentityResetHandle
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_identityresethandle_reset(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_identityresethandle_reset(
             uniffiTypeIdentityResetHandleObjectFactory.clonePointer(this),
             FfiConverterOptionalTypeAuthData.lower(auth)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -29315,10 +29425,11 @@ export class IdentityResetHandle
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeIdentityResetHandleObjectFactory.pointer(this);
       uniffiTypeIdentityResetHandleObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeIdentityResetHandleObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -29339,14 +29450,18 @@ const uniffiTypeIdentityResetHandleObjectFactory: UniffiObjectFactory<IdentityRe
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_identityresethandle_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_identityresethandle_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: IdentityResetHandleInterface): UnsafeMutableRawPointer {
@@ -29358,9 +29473,9 @@ const uniffiTypeIdentityResetHandleObjectFactory: UniffiObjectFactory<IdentityRe
 
     clonePointer(obj: IdentityResetHandleInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_identityresethandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_identityresethandle(
             pointer,
             callStatus
           ),
@@ -29369,9 +29484,9 @@ const uniffiTypeIdentityResetHandleObjectFactory: UniffiObjectFactory<IdentityRe
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_identityresethandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_identityresethandle(
             pointer,
             callStatus
           ),
@@ -29413,9 +29528,9 @@ export class InReplyToDetails
 
   public event(): RepliedToEventDetails {
     return FfiConverterTypeRepliedToEventDetails.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_inreplytodetails_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_inreplytodetails_event(
             uniffiTypeInReplyToDetailsObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29427,9 +29542,9 @@ export class InReplyToDetails
 
   public eventId(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_inreplytodetails_event_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_inreplytodetails_event_id(
             uniffiTypeInReplyToDetailsObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29443,10 +29558,11 @@ export class InReplyToDetails
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeInReplyToDetailsObjectFactory.pointer(this);
       uniffiTypeInReplyToDetailsObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeInReplyToDetailsObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -29467,14 +29583,18 @@ const uniffiTypeInReplyToDetailsObjectFactory: UniffiObjectFactory<InReplyToDeta
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_inreplytodetails_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_inreplytodetails_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: InReplyToDetailsInterface): UnsafeMutableRawPointer {
@@ -29486,9 +29606,9 @@ const uniffiTypeInReplyToDetailsObjectFactory: UniffiObjectFactory<InReplyToDeta
 
     clonePointer(obj: InReplyToDetailsInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_inreplytodetails(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_inreplytodetails(
             pointer,
             callStatus
           ),
@@ -29497,9 +29617,9 @@ const uniffiTypeInReplyToDetailsObjectFactory: UniffiObjectFactory<InReplyToDeta
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_inreplytodetails(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_inreplytodetails(
             pointer,
             callStatus
           ),
@@ -29579,17 +29699,20 @@ export class KnockRequestActions
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_knockrequestactions_accept(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_knockrequestactions_accept(
             uniffiTypeKnockRequestActionsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -29616,18 +29739,21 @@ export class KnockRequestActions
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_knockrequestactions_decline(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_knockrequestactions_decline(
             uniffiTypeKnockRequestActionsObjectFactory.clonePointer(this),
             FfiConverterOptionalString.lower(reason)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -29654,18 +29780,21 @@ export class KnockRequestActions
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_knockrequestactions_decline_and_ban(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_knockrequestactions_decline_and_ban(
             uniffiTypeKnockRequestActionsObjectFactory.clonePointer(this),
             FfiConverterOptionalString.lower(reason)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -29693,17 +29822,20 @@ export class KnockRequestActions
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_knockrequestactions_mark_as_seen(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_knockrequestactions_mark_as_seen(
             uniffiTypeKnockRequestActionsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -29723,10 +29855,11 @@ export class KnockRequestActions
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeKnockRequestActionsObjectFactory.pointer(this);
       uniffiTypeKnockRequestActionsObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeKnockRequestActionsObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -29747,14 +29880,18 @@ const uniffiTypeKnockRequestActionsObjectFactory: UniffiObjectFactory<KnockReque
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_knockrequestactions_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_knockrequestactions_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: KnockRequestActionsInterface): UnsafeMutableRawPointer {
@@ -29766,9 +29903,9 @@ const uniffiTypeKnockRequestActionsObjectFactory: UniffiObjectFactory<KnockReque
 
     clonePointer(obj: KnockRequestActionsInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_knockrequestactions(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_knockrequestactions(
             pointer,
             callStatus
           ),
@@ -29777,9 +29914,9 @@ const uniffiTypeKnockRequestActionsObjectFactory: UniffiObjectFactory<KnockReque
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_knockrequestactions(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_knockrequestactions(
             pointer,
             callStatus
           ),
@@ -29841,9 +29978,9 @@ export class LazyTimelineItemProvider
    */
   public debugInfo(): EventTimelineItemDebugInfo {
     return FfiConverterTypeEventTimelineItemDebugInfo.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_debug_info(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_debug_info(
             uniffiTypeLazyTimelineItemProviderObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29859,9 +29996,9 @@ export class LazyTimelineItemProvider
    */
   public getSendHandle(): SendHandleInterface | undefined {
     return FfiConverterOptionalTypeSendHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_get_send_handle(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_get_send_handle(
             uniffiTypeLazyTimelineItemProviderObjectFactory.clonePointer(this),
             callStatus
           );
@@ -29876,9 +30013,9 @@ export class LazyTimelineItemProvider
    */
   public getShields(strict: boolean): ShieldState | undefined {
     return FfiConverterOptionalTypeShieldState.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_get_shields(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_get_shields(
             uniffiTypeLazyTimelineItemProviderObjectFactory.clonePointer(this),
             FfiConverterBool.lower(strict),
             callStatus
@@ -29893,11 +30030,12 @@ export class LazyTimelineItemProvider
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeLazyTimelineItemProviderObjectFactory.pointer(this);
       uniffiTypeLazyTimelineItemProviderObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeLazyTimelineItemProviderObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -29920,14 +30058,18 @@ const uniffiTypeLazyTimelineItemProviderObjectFactory: UniffiObjectFactory<LazyT
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_lazytimelineitemprovider_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_lazytimelineitemprovider_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: LazyTimelineItemProviderInterface): UnsafeMutableRawPointer {
@@ -29941,9 +30083,9 @@ const uniffiTypeLazyTimelineItemProviderObjectFactory: UniffiObjectFactory<LazyT
       obj: LazyTimelineItemProviderInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_lazytimelineitemprovider(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_lazytimelineitemprovider(
             pointer,
             callStatus
           ),
@@ -29952,9 +30094,9 @@ const uniffiTypeLazyTimelineItemProviderObjectFactory: UniffiObjectFactory<LazyT
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_lazytimelineitemprovider(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_lazytimelineitemprovider(
             pointer,
             callStatus
           ),
@@ -30010,12 +30152,12 @@ export class MediaFileHandle
    */
   public path(): string /*throws*/ {
     return FfiConverterString.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_mediafilehandle_path(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_mediafilehandle_path(
             uniffiTypeMediaFileHandleObjectFactory.clonePointer(this),
             callStatus
           );
@@ -30027,12 +30169,12 @@ export class MediaFileHandle
 
   public persist(path: string): boolean /*throws*/ {
     return FfiConverterBool.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_mediafilehandle_persist(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_mediafilehandle_persist(
             uniffiTypeMediaFileHandleObjectFactory.clonePointer(this),
             FfiConverterString.lower(path),
             callStatus
@@ -30047,10 +30189,11 @@ export class MediaFileHandle
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeMediaFileHandleObjectFactory.pointer(this);
       uniffiTypeMediaFileHandleObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeMediaFileHandleObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -30071,14 +30214,18 @@ const uniffiTypeMediaFileHandleObjectFactory: UniffiObjectFactory<MediaFileHandl
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_mediafilehandle_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_mediafilehandle_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: MediaFileHandleInterface): UnsafeMutableRawPointer {
@@ -30090,9 +30237,9 @@ const uniffiTypeMediaFileHandleObjectFactory: UniffiObjectFactory<MediaFileHandl
 
     clonePointer(obj: MediaFileHandleInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_mediafilehandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_mediafilehandle(
             pointer,
             callStatus
           ),
@@ -30101,9 +30248,9 @@ const uniffiTypeMediaFileHandleObjectFactory: UniffiObjectFactory<MediaFileHandl
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_mediafilehandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_mediafilehandle(
             pointer,
             callStatus
           ),
@@ -30145,12 +30292,12 @@ export class MediaSource
 
   public static fromJson(json: string): MediaSourceInterface /*throws*/ {
     return FfiConverterTypeMediaSource.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_mediasource_from_json(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_mediasource_from_json(
             FfiConverterString.lower(json),
             callStatus
           );
@@ -30162,12 +30309,12 @@ export class MediaSource
 
   public static fromUrl(url: string): MediaSourceInterface /*throws*/ {
     return FfiConverterTypeMediaSource.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_mediasource_from_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_mediasource_from_url(
             FfiConverterString.lower(url),
             callStatus
           );
@@ -30179,9 +30326,9 @@ export class MediaSource
 
   public toJson(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_mediasource_to_json(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_mediasource_to_json(
             uniffiTypeMediaSourceObjectFactory.clonePointer(this),
             callStatus
           );
@@ -30193,9 +30340,9 @@ export class MediaSource
 
   public url(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_mediasource_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_mediasource_url(
             uniffiTypeMediaSourceObjectFactory.clonePointer(this),
             callStatus
           );
@@ -30209,10 +30356,11 @@ export class MediaSource
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeMediaSourceObjectFactory.pointer(this);
       uniffiTypeMediaSourceObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeMediaSourceObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -30233,14 +30381,18 @@ const uniffiTypeMediaSourceObjectFactory: UniffiObjectFactory<MediaSourceInterfa
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_mediasource_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_mediasource_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: MediaSourceInterface): UnsafeMutableRawPointer {
@@ -30252,9 +30404,9 @@ const uniffiTypeMediaSourceObjectFactory: UniffiObjectFactory<MediaSourceInterfa
 
     clonePointer(obj: MediaSourceInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_mediasource(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_mediasource(
             pointer,
             callStatus
           ),
@@ -30263,9 +30415,9 @@ const uniffiTypeMediaSourceObjectFactory: UniffiObjectFactory<MediaSourceInterfa
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_mediasource(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_mediasource(
             pointer,
             callStatus
           ),
@@ -30324,21 +30476,22 @@ export class NotificationClient
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationclient_get_notification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationclient_get_notification(
             uniffiTypeNotificationClientObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId),
             FfiConverterString.lower(eventId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeNotificationItem.lift.bind(
           FfiConverterOptionalTypeNotificationItem
         ),
@@ -30360,10 +30513,11 @@ export class NotificationClient
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeNotificationClientObjectFactory.pointer(this);
       uniffiTypeNotificationClientObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeNotificationClientObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -30384,14 +30538,18 @@ const uniffiTypeNotificationClientObjectFactory: UniffiObjectFactory<Notificatio
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_notificationclient_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_notificationclient_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: NotificationClientInterface): UnsafeMutableRawPointer {
@@ -30403,9 +30561,9 @@ const uniffiTypeNotificationClientObjectFactory: UniffiObjectFactory<Notificatio
 
     clonePointer(obj: NotificationClientInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_notificationclient(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_notificationclient(
             pointer,
             callStatus
           ),
@@ -30414,9 +30572,9 @@ const uniffiTypeNotificationClientObjectFactory: UniffiObjectFactory<Notificatio
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_notificationclient(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_notificationclient(
             pointer,
             callStatus
           ),
@@ -30632,16 +30790,20 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_can_homeserver_push_encrypted_event_to_device(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_can_homeserver_push_encrypted_event_to_device(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -30665,16 +30827,20 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_can_push_encrypted_event_to_device(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_can_push_encrypted_event_to_device(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -30696,16 +30862,20 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_contains_keywords_rules(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_contains_keywords_rules(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -30738,21 +30908,22 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_get_default_room_notification_mode(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_get_default_room_notification_mode(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterBool.lower(isEncrypted),
             FfiConverterBool.lower(isOneToOne)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomNotificationMode.lift.bind(
           FfiConverterTypeRoomNotificationMode
         ),
@@ -30786,8 +30957,9 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_get_room_notification_settings(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_get_room_notification_settings(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId),
             FfiConverterBool.lower(isEncrypted),
@@ -30795,13 +30967,13 @@ export class NotificationSettings
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomNotificationSettings.lift.bind(
           FfiConverterTypeRoomNotificationSettings
         ),
@@ -30829,20 +31001,21 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_get_rooms_with_user_defined_rules(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_get_rooms_with_user_defined_rules(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterOptionalBool.lower(enabled)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterArrayString.lift.bind(
           FfiConverterArrayString
         ),
@@ -30867,20 +31040,21 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_get_user_defined_room_notification_mode(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_get_user_defined_room_notification_mode(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeRoomNotificationMode.lift.bind(
           FfiConverterOptionalTypeRoomNotificationMode
         ),
@@ -30907,16 +31081,20 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_is_call_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_is_call_enabled(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -30941,16 +31119,20 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_is_invite_for_me_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_is_invite_for_me_enabled(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -30975,16 +31157,20 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_is_room_mention_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_is_room_mention_enabled(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31009,16 +31195,20 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_is_user_mention_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_is_user_mention_enabled(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31044,18 +31234,21 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_restore_default_room_notification_mode(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_restore_default_room_notification_mode(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31081,18 +31274,21 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_call_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_call_enabled(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterBool.lower(enabled)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31127,20 +31323,23 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_default_room_notification_mode(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_default_room_notification_mode(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterBool.lower(isEncrypted),
             FfiConverterBool.lower(isOneToOne),
             FfiConverterTypeRoomNotificationMode.lower(mode)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31157,9 +31356,9 @@ export class NotificationSettings
   }
 
   public setDelegate(delegate: NotificationSettingsDelegate | undefined): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_delegate(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_delegate(
           uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
           FfiConverterOptionalTypeNotificationSettingsDelegate.lower(delegate),
           callStatus
@@ -31179,18 +31378,21 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_invite_for_me_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_invite_for_me_enabled(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterBool.lower(enabled)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31216,18 +31418,21 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_room_mention_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_room_mention_enabled(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterBool.lower(enabled)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31254,19 +31459,22 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_room_notification_mode(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_room_notification_mode(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId),
             FfiConverterTypeRoomNotificationMode.lower(mode)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31292,18 +31500,21 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_user_mention_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_user_mention_enabled(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterBool.lower(enabled)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31338,20 +31549,23 @@ export class NotificationSettings
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_notificationsettings_unmute_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_unmute_room(
             uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId),
             FfiConverterBool.lower(isEncrypted),
             FfiConverterBool.lower(isOneToOne)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -31371,10 +31585,11 @@ export class NotificationSettings
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeNotificationSettingsObjectFactory.pointer(this);
       uniffiTypeNotificationSettingsObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeNotificationSettingsObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -31395,14 +31610,18 @@ const uniffiTypeNotificationSettingsObjectFactory: UniffiObjectFactory<Notificat
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_notificationsettings_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_notificationsettings_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: NotificationSettingsInterface): UnsafeMutableRawPointer {
@@ -31414,9 +31633,9 @@ const uniffiTypeNotificationSettingsObjectFactory: UniffiObjectFactory<Notificat
 
     clonePointer(obj: NotificationSettingsInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_notificationsettings(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_notificationsettings(
             pointer,
             callStatus
           ),
@@ -31425,9 +31644,9 @@ const uniffiTypeNotificationSettingsObjectFactory: UniffiObjectFactory<Notificat
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_notificationsettings(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_notificationsettings(
             pointer,
             callStatus
           ),
@@ -31483,12 +31702,12 @@ export class QrCodeData
    */
   public static fromBytes(bytes: ArrayBuffer): QrCodeDataInterface /*throws*/ {
     return FfiConverterTypeQrCodeData.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeQrCodeDecodeError.lift.bind(
           FfiConverterTypeQrCodeDecodeError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_qrcodedata_from_bytes(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_qrcodedata_from_bytes(
             FfiConverterArrayBuffer.lower(bytes),
             callStatus
           );
@@ -31502,10 +31721,11 @@ export class QrCodeData
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeQrCodeDataObjectFactory.pointer(this);
       uniffiTypeQrCodeDataObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeQrCodeDataObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -31526,14 +31746,18 @@ const uniffiTypeQrCodeDataObjectFactory: UniffiObjectFactory<QrCodeDataInterface
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_qrcodedata_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_qrcodedata_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: QrCodeDataInterface): UnsafeMutableRawPointer {
@@ -31545,9 +31769,9 @@ const uniffiTypeQrCodeDataObjectFactory: UniffiObjectFactory<QrCodeDataInterface
 
     clonePointer(obj: QrCodeDataInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_qrcodedata(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_qrcodedata(
             pointer,
             callStatus
           ),
@@ -31556,9 +31780,9 @@ const uniffiTypeQrCodeDataObjectFactory: UniffiObjectFactory<QrCodeDataInterface
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_qrcodedata(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_qrcodedata(
             pointer,
             callStatus
           ),
@@ -32085,9 +32309,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public activeMembersCount(): /*u64*/ bigint {
     return FfiConverterUInt64.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_active_members_count(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_active_members_count(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32109,9 +32333,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    */
   public activeRoomCallParticipants(): Array<string> {
     return FfiConverterArrayString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_active_room_call_participants(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_active_room_call_participants(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32123,9 +32347,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public alternativeAliases(): Array<string> {
     return FfiConverterArrayString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_alternative_aliases(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_alternative_aliases(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32142,18 +32366,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_apply_power_level_changes(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_apply_power_level_changes(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterTypeRoomPowerLevelChanges.lower(changes)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32171,9 +32398,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public avatarUrl(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_avatar_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_avatar_url(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32191,19 +32418,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_ban_user(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_ban_user(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId),
             FfiConverterOptionalString.lower(reason)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32226,17 +32456,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_ban(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_ban(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32259,17 +32493,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_invite(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_invite(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32292,17 +32530,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_kick(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_kick(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32325,17 +32567,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_pin_unpin(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_pin_unpin(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32358,17 +32604,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_redact_other(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_redact_other(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32391,17 +32641,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_redact_own(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_redact_own(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32425,18 +32679,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_send_message(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_send_message(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId),
             FfiConverterTypeMessageLikeEventType.lower(message)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32460,18 +32718,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_send_state(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_send_state(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId),
             FfiConverterTypeStateEventType.lower(stateEvent)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32494,17 +32756,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_can_user_trigger_room_notification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_can_user_trigger_room_notification(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32522,9 +32788,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public canonicalAlias(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_canonical_alias(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_canonical_alias(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32543,17 +32809,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_clear_composer_draft(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_clear_composer_draft(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32581,17 +32850,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_clear_event_cache_storage(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_clear_event_cache_storage(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32622,17 +32894,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_discard_room_key(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_discard_room_key(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32655,9 +32930,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    */
   public displayName(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_display_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_display_name(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32681,8 +32956,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_edit(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_edit(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId),
             FfiConverterTypeRoomMessageEventContentWithoutRelation.lower(
@@ -32690,12 +32966,14 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32715,9 +32993,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    * Enable or disable the send queue for that particular room.
    */
   public enableSendQueue(enable: boolean): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_enable_send_queue(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_enable_send_queue(
           uniffiTypeRoomObjectFactory.clonePointer(this),
           FfiConverterBool.lower(enable),
           callStatus
@@ -32733,19 +33011,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_get_power_levels(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_get_power_levels(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomPowerLevels.lift.bind(
           FfiConverterTypeRoomPowerLevels
         ),
@@ -32769,9 +33048,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    */
   public hasActiveRoomCall(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_has_active_room_call(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_has_active_room_call(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32786,9 +33065,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    */
   public heroes(): Array<RoomHero> {
     return FfiConverterArrayTypeRoomHero.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_heroes(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_heroes(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32800,9 +33079,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public id(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_id(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32832,19 +33111,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_ignore_device_trust_and_resend(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_ignore_device_trust_and_resend(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterMapStringArrayString.lower(devices),
             FfiConverterTypeSendHandle.lower(sendHandle)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32874,18 +33156,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_ignore_user(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_ignore_user(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32908,18 +33193,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_invite_user_by_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_invite_user_by_id(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -32937,9 +33225,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public invitedMembersCount(): /*u64*/ bigint {
     return FfiConverterUInt64.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_invited_members_count(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_invited_members_count(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -32959,19 +33247,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_inviter(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_inviter(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeRoomMember.lift.bind(
           FfiConverterOptionalTypeRoomMember
         ),
@@ -32988,9 +33277,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public isDirect(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_is_direct(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_direct(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33002,12 +33291,12 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public isEncrypted(): boolean /*throws*/ {
     return FfiConverterBool.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_is_encrypted(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_encrypted(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33019,9 +33308,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public isPublic(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_is_public(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_public(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33037,9 +33326,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    */
   public isSendQueueEnabled(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_is_send_queue_enabled(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_send_queue_enabled(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33051,9 +33340,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public isSpace(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_is_space(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_space(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33065,9 +33354,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public isTombstoned(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_is_tombstoned(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_tombstoned(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33088,17 +33377,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_join(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_join(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33116,9 +33408,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public joinedMembersCount(): /*u64*/ bigint {
     return FfiConverterUInt64.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_joined_members_count(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_joined_members_count(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33136,19 +33428,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_kick_user(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_kick_user(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId),
             FfiConverterOptionalString.lower(reason)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33175,17 +33470,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_leave(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_leave(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33210,19 +33508,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_load_composer_draft(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_load_composer_draft(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeComposerDraft.lift.bind(
           FfiConverterOptionalTypeComposerDraft
         ),
@@ -33253,18 +33552,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_mark_as_read(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_mark_as_read(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterTypeReceiptType.lower(receiptType)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33287,20 +33589,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_matrix_to_event_permalink(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_matrix_to_event_permalink(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33322,19 +33625,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_matrix_to_permalink(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_matrix_to_permalink(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33357,20 +33661,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_member(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_member(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomMember.lift.bind(
           FfiConverterTypeRoomMember
         ),
@@ -33395,20 +33700,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_member_avatar_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_member_avatar_url(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -33433,20 +33739,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_member_display_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_member_display_name(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -33470,19 +33777,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_members(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_members(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoomMembersIterator.lift.bind(
           FfiConverterTypeRoomMembersIterator
         ),
@@ -33506,19 +33814,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_members_no_sync(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_members_no_sync(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoomMembersIterator.lift.bind(
           FfiConverterTypeRoomMembersIterator
         ),
@@ -33538,9 +33847,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public membership(): Membership {
     return FfiConverterTypeMembership.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_membership(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_membership(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33575,8 +33884,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_message_filtered_timeline(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_message_filtered_timeline(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterOptionalString.lower(internalIdPrefix),
             FfiConverterArrayTypeRoomMessageEventMessageType.lower(
@@ -33586,13 +33896,13 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeTimeline.lift.bind(
           FfiConverterTypeTimeline
         ),
@@ -33612,9 +33922,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public ownUserId(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_own_user_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_own_user_id(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33633,8 +33943,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_pinned_events_timeline(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_pinned_events_timeline(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterOptionalString.lower(internalIdPrefix),
             FfiConverterUInt16.lower(maxEventsToLoad),
@@ -33642,13 +33953,13 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeTimeline.lift.bind(
           FfiConverterTypeTimeline
         ),
@@ -33671,9 +33982,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    */
   public rawName(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_raw_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_raw_name(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33701,19 +34012,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_redact(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_redact(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId),
             FfiConverterOptionalString.lower(reason)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33738,17 +34052,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_remove_avatar(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_remove_avatar(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33785,20 +34102,23 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_report_content(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_report_content(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId),
             FfiConverterOptionalInt32.lower(score),
             FfiConverterOptionalString.lower(reason)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33820,19 +34140,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_reset_power_levels(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_reset_power_levels(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomPowerLevels.lift.bind(
           FfiConverterTypeRoomPowerLevels
         ),
@@ -33860,19 +34181,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_room_events_debug_string(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_room_events_debug_string(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterArrayString.lift.bind(
           FfiConverterArrayString
         ),
@@ -33896,19 +34218,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_room_info(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_room_info(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomInfo.lift.bind(
           FfiConverterTypeRoomInfo
         ),
@@ -33937,18 +34260,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_save_composer_draft(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_save_composer_draft(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterTypeComposerDraft.lower(draft)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33987,8 +34313,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_send_call_notification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_send_call_notification(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(callId),
             FfiConverterTypeRtcApplicationType.lower(application),
@@ -33996,12 +34323,14 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
             FfiConverterTypeMentions.lower(mentions)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34034,17 +34363,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_send_call_notification_if_needed(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_send_call_notification_if_needed(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34077,19 +34409,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_send_raw(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_send_raw(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventType),
             FfiConverterString.lower(content)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34113,19 +34448,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_set_is_favourite(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_set_is_favourite(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterBool.lower(isFavourite),
             FfiConverterOptionalFloat64.lower(tagOrder)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34149,19 +34487,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_set_is_low_priority(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_set_is_low_priority(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterBool.lower(isLowPriority),
             FfiConverterOptionalFloat64.lower(tagOrder)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34187,18 +34528,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_set_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_set_name(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(name)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34224,18 +34568,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_set_topic(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_set_topic(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(topic)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34262,18 +34609,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_set_unread_flag(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_set_unread_flag(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterBool.lower(newValue)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34293,9 +34643,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     listener: IdentityStatusChangeListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_identity_status_changes(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_identity_status_changes(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterTypeIdentityStatusChangeListener.lower(listener),
             callStatus
@@ -34321,20 +34671,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_knock_requests(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_knock_requests(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterTypeKnockRequestsListener.lower(listener)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeTaskHandle.lift.bind(
           FfiConverterTypeTaskHandle
         ),
@@ -34356,9 +34707,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     listener: RoomInfoListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_room_info_updates(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_room_info_updates(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterTypeRoomInfoListener.lower(listener),
             callStatus
@@ -34373,9 +34724,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     listener: TypingNotificationsListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_typing_notifications(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_typing_notifications(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterTypeTypingNotificationsListener.lower(listener),
             callStatus
@@ -34393,20 +34744,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_suggested_role_for_user(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_suggested_role_for_user(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomMemberRole.lift.bind(
           FfiConverterTypeRoomMemberRole
         ),
@@ -34430,19 +34782,20 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_timeline(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_timeline(
             uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeTimeline.lift.bind(
           FfiConverterTypeTimeline
         ),
@@ -34475,8 +34828,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_timeline_focused_on_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_timeline_focused_on_event(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId),
             FfiConverterUInt16.lower(numContextEvents),
@@ -34484,13 +34838,13 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeTimeline.lift.bind(
           FfiConverterTypeTimeline
         ),
@@ -34510,9 +34864,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
 
   public topic(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_topic(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_topic(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -34529,18 +34883,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_typing_notice(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_typing_notice(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterBool.lower(isTyping)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34564,19 +34921,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_unban_user(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_unban_user(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(userId),
             FfiConverterOptionalString.lower(reason)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34599,18 +34959,21 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_update_power_levels_for_users(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_update_power_levels_for_users(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterArrayTypeUserPowerLevelUpdate.lower(updates)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34650,20 +35013,23 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_upload_avatar(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_upload_avatar(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(mimeType),
             FfiConverterArrayBuffer.lower(data),
             FfiConverterOptionalTypeImageInfo.lower(mediaInfo)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34699,19 +35065,22 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_room_withdraw_verification_and_resend(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_withdraw_verification_and_resend(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterArrayString.lower(userIds),
             FfiConverterTypeSendHandle.lower(sendHandle)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34731,10 +35100,11 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeRoomObjectFactory.pointer(this);
       uniffiTypeRoomObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -34754,14 +35124,18 @@ const uniffiTypeRoomObjectFactory: UniffiObjectFactory<RoomInterface> = {
   },
 
   bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-    return rustCall(
+    return uniffiCaller.rustCall(
       /*caller:*/ (status) =>
-        nativeModule().uniffi_internal_fn_method_room_ffi__bless_pointer(
+        nativeModule().ubrn_uniffi_internal_fn_method_room_ffi__bless_pointer(
           p,
           status
         ),
       /*liftString:*/ FfiConverterString.lift
     );
+  },
+
+  unbless(ptr: UniffiRustArcPtr) {
+    ptr.markDestroyed();
   },
 
   pointer(obj: RoomInterface): UnsafeMutableRawPointer {
@@ -34773,17 +35147,23 @@ const uniffiTypeRoomObjectFactory: UniffiObjectFactory<RoomInterface> = {
 
   clonePointer(obj: RoomInterface): UnsafeMutableRawPointer {
     const pointer = this.pointer(obj);
-    return rustCall(
+    return uniffiCaller.rustCall(
       /*caller:*/ (callStatus) =>
-        nativeModule().uniffi_matrix_sdk_ffi_fn_clone_room(pointer, callStatus),
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_room(
+          pointer,
+          callStatus
+        ),
       /*liftString:*/ FfiConverterString.lift
     );
   },
 
   freePointer(pointer: UnsafeMutableRawPointer): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) =>
-        nativeModule().uniffi_matrix_sdk_ffi_fn_free_room(pointer, callStatus),
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_room(
+          pointer,
+          callStatus
+        ),
       /*liftString:*/ FfiConverterString.lift
     );
   },
@@ -34882,16 +35262,20 @@ export class RoomDirectorySearch
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_is_at_last_page(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_is_at_last_page(
             uniffiTypeRoomDirectorySearchObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34916,17 +35300,20 @@ export class RoomDirectorySearch
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_loaded_pages(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_loaded_pages(
             uniffiTypeRoomDirectorySearchObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_u32,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_u32,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_u32,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_u32,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_u32,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_u32,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_u32,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_u32,
         /*liftFunc:*/ FfiConverterUInt32.lift.bind(FfiConverterUInt32),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34951,17 +35338,20 @@ export class RoomDirectorySearch
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_next_page(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_next_page(
             uniffiTypeRoomDirectorySearchObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -34988,20 +35378,21 @@ export class RoomDirectorySearch
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_results(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_results(
             uniffiTypeRoomDirectorySearchObjectFactory.clonePointer(this),
             FfiConverterTypeRoomDirectorySearchEntriesListener.lower(listener)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeTaskHandle.lift.bind(
           FfiConverterTypeTaskHandle
         ),
@@ -35037,20 +35428,23 @@ export class RoomDirectorySearch
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_search(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomdirectorysearch_search(
             uniffiTypeRoomDirectorySearchObjectFactory.clonePointer(this),
             FfiConverterOptionalString.lower(filter),
             FfiConverterUInt32.lower(batchSize),
             FfiConverterOptionalString.lower(viaServerName)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -35070,10 +35464,11 @@ export class RoomDirectorySearch
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeRoomDirectorySearchObjectFactory.pointer(this);
       uniffiTypeRoomDirectorySearchObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomDirectorySearchObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -35094,14 +35489,18 @@ const uniffiTypeRoomDirectorySearchObjectFactory: UniffiObjectFactory<RoomDirect
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roomdirectorysearch_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roomdirectorysearch_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: RoomDirectorySearchInterface): UnsafeMutableRawPointer {
@@ -35113,9 +35512,9 @@ const uniffiTypeRoomDirectorySearchObjectFactory: UniffiObjectFactory<RoomDirect
 
     clonePointer(obj: RoomDirectorySearchInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roomdirectorysearch(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomdirectorysearch(
             pointer,
             callStatus
           ),
@@ -35124,9 +35523,9 @@ const uniffiTypeRoomDirectorySearchObjectFactory: UniffiObjectFactory<RoomDirect
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roomdirectorysearch(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomdirectorysearch(
             pointer,
             callStatus
           ),
@@ -35177,9 +35576,9 @@ export class RoomList
     listener: RoomListEntriesListener
   ): RoomListEntriesWithDynamicAdaptersResultInterface {
     return FfiConverterTypeRoomListEntriesWithDynamicAdaptersResult.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlist_entries_with_dynamic_adapters(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlist_entries_with_dynamic_adapters(
             uniffiTypeRoomListObjectFactory.clonePointer(this),
             FfiConverterUInt32.lower(pageSize),
             FfiConverterTypeRoomListEntriesListener.lower(listener),
@@ -35195,12 +35594,12 @@ export class RoomList
     listener: RoomListLoadingStateListener
   ): RoomListLoadingStateResult /*throws*/ {
     return FfiConverterTypeRoomListLoadingStateResult.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
           FfiConverterTypeRoomListError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlist_loading_state(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlist_loading_state(
             uniffiTypeRoomListObjectFactory.clonePointer(this),
             FfiConverterTypeRoomListLoadingStateListener.lower(listener),
             callStatus
@@ -35213,12 +35612,12 @@ export class RoomList
 
   public room(roomId: string): RoomListItemInterface /*throws*/ {
     return FfiConverterTypeRoomListItem.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
           FfiConverterTypeRoomListError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlist_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlist_room(
             uniffiTypeRoomListObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId),
             callStatus
@@ -35233,10 +35632,11 @@ export class RoomList
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeRoomListObjectFactory.pointer(this);
       uniffiTypeRoomListObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomListObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -35257,14 +35657,18 @@ const uniffiTypeRoomListObjectFactory: UniffiObjectFactory<RoomListInterface> =
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roomlist_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roomlist_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: RoomListInterface): UnsafeMutableRawPointer {
@@ -35276,9 +35680,9 @@ const uniffiTypeRoomListObjectFactory: UniffiObjectFactory<RoomListInterface> =
 
     clonePointer(obj: RoomListInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roomlist(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlist(
             pointer,
             callStatus
           ),
@@ -35287,9 +35691,9 @@ const uniffiTypeRoomListObjectFactory: UniffiObjectFactory<RoomListInterface> =
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roomlist(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlist(
             pointer,
             callStatus
           ),
@@ -35330,9 +35734,9 @@ export class RoomListDynamicEntriesController
   }
 
   public addOnePage(): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistdynamicentriescontroller_add_one_page(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistdynamicentriescontroller_add_one_page(
           uniffiTypeRoomListDynamicEntriesControllerObjectFactory.clonePointer(
             this
           ),
@@ -35344,9 +35748,9 @@ export class RoomListDynamicEntriesController
   }
 
   public resetToOnePage(): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistdynamicentriescontroller_reset_to_one_page(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistdynamicentriescontroller_reset_to_one_page(
           uniffiTypeRoomListDynamicEntriesControllerObjectFactory.clonePointer(
             this
           ),
@@ -35359,9 +35763,9 @@ export class RoomListDynamicEntriesController
 
   public setFilter(kind: RoomListEntriesDynamicFilterKind): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistdynamicentriescontroller_set_filter(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistdynamicentriescontroller_set_filter(
             uniffiTypeRoomListDynamicEntriesControllerObjectFactory.clonePointer(
               this
             ),
@@ -35378,13 +35782,14 @@ export class RoomListDynamicEntriesController
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeRoomListDynamicEntriesControllerObjectFactory.pointer(this);
       uniffiTypeRoomListDynamicEntriesControllerObjectFactory.freePointer(
         pointer
       );
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomListDynamicEntriesControllerObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -35411,14 +35816,18 @@ const uniffiTypeRoomListDynamicEntriesControllerObjectFactory: UniffiObjectFacto
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roomlistdynamicentriescontroller_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roomlistdynamicentriescontroller_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(
@@ -35434,9 +35843,9 @@ const uniffiTypeRoomListDynamicEntriesControllerObjectFactory: UniffiObjectFacto
       obj: RoomListDynamicEntriesControllerInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roomlistdynamicentriescontroller(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistdynamicentriescontroller(
             pointer,
             callStatus
           ),
@@ -35445,9 +35854,9 @@ const uniffiTypeRoomListDynamicEntriesControllerObjectFactory: UniffiObjectFacto
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roomlistdynamicentriescontroller(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistdynamicentriescontroller(
             pointer,
             callStatus
           ),
@@ -35491,9 +35900,9 @@ export class RoomListEntriesWithDynamicAdaptersResult
 
   public controller(): RoomListDynamicEntriesControllerInterface {
     return FfiConverterTypeRoomListDynamicEntriesController.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistentrieswithdynamicadaptersresult_controller(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistentrieswithdynamicadaptersresult_controller(
             uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory.clonePointer(
               this
             ),
@@ -35507,9 +35916,9 @@ export class RoomListEntriesWithDynamicAdaptersResult
 
   public entriesStream(): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistentrieswithdynamicadaptersresult_entries_stream(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistentrieswithdynamicadaptersresult_entries_stream(
             uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory.clonePointer(
               this
             ),
@@ -35525,7 +35934,8 @@ export class RoomListEntriesWithDynamicAdaptersResult
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory.pointer(
           this
@@ -35533,7 +35943,9 @@ export class RoomListEntriesWithDynamicAdaptersResult
       uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory.freePointer(
         pointer
       );
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory.unbless(
+        ptr
+      );
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -35561,14 +35973,18 @@ const uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory: UniffiObj
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roomlistentrieswithdynamicadaptersresult_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roomlistentrieswithdynamicadaptersresult_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(
@@ -35584,9 +36000,9 @@ const uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory: UniffiObj
       obj: RoomListEntriesWithDynamicAdaptersResultInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roomlistentrieswithdynamicadaptersresult(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistentrieswithdynamicadaptersresult(
             pointer,
             callStatus
           ),
@@ -35595,9 +36011,9 @@ const uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory: UniffiObj
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roomlistentrieswithdynamicadaptersresult(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistentrieswithdynamicadaptersresult(
             pointer,
             callStatus
           ),
@@ -35712,9 +36128,9 @@ export class RoomListItem
 
   public avatarUrl(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_avatar_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_avatar_url(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35726,9 +36142,9 @@ export class RoomListItem
 
   public canonicalAlias(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_canonical_alias(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_canonical_alias(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35745,9 +36161,9 @@ export class RoomListItem
    */
   public displayName(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_display_name(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_display_name(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35765,12 +36181,12 @@ export class RoomListItem
    */
   public fullRoom(): RoomInterface /*throws*/ {
     return FfiConverterTypeRoom.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
           FfiConverterTypeRoomListError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_full_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_full_room(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35782,9 +36198,9 @@ export class RoomListItem
 
   public id(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_id(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35812,8 +36228,9 @@ export class RoomListItem
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_init_timeline(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_init_timeline(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             FfiConverterOptionalTypeTimelineEventTypeFilter.lower(
               eventTypeFilter
@@ -35821,12 +36238,14 @@ export class RoomListItem
             FfiConverterOptionalString.lower(internalIdPrefix)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -35853,12 +36272,12 @@ export class RoomListItem
    */
   public invitedRoom(): RoomInterface /*throws*/ {
     return FfiConverterTypeRoom.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
           FfiConverterTypeRoomListError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_invited_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_invited_room(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35870,9 +36289,9 @@ export class RoomListItem
 
   public isDirect(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_direct(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_direct(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35894,16 +36313,20 @@ export class RoomListItem
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_encrypted(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_encrypted(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -35921,9 +36344,9 @@ export class RoomListItem
    */
   public isTimelineInitialized(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_timeline_initialized(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_timeline_initialized(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35939,19 +36362,20 @@ export class RoomListItem
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_latest_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_latest_event(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeEventTimelineItem.lift.bind(
           FfiConverterOptionalTypeEventTimelineItem
         ),
@@ -35971,9 +36395,9 @@ export class RoomListItem
    */
   public membership(): Membership {
     return FfiConverterTypeMembership.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_membership(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_membership(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -35997,20 +36421,21 @@ export class RoomListItem
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_preview_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_preview_room(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this),
             FfiConverterArrayString.lower(via)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoomPreview.lift.bind(
           FfiConverterTypeRoomPreview
         ),
@@ -36034,19 +36459,20 @@ export class RoomListItem
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistitem_room_info(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_room_info(
             uniffiTypeRoomListItemObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomInfo.lift.bind(
           FfiConverterTypeRoomInfo
         ),
@@ -36068,10 +36494,11 @@ export class RoomListItem
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeRoomListItemObjectFactory.pointer(this);
       uniffiTypeRoomListItemObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomListItemObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -36092,14 +36519,18 @@ const uniffiTypeRoomListItemObjectFactory: UniffiObjectFactory<RoomListItemInter
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roomlistitem_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roomlistitem_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: RoomListItemInterface): UnsafeMutableRawPointer {
@@ -36111,9 +36542,9 @@ const uniffiTypeRoomListItemObjectFactory: UniffiObjectFactory<RoomListItemInter
 
     clonePointer(obj: RoomListItemInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roomlistitem(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistitem(
             pointer,
             callStatus
           ),
@@ -36122,9 +36553,9 @@ const uniffiTypeRoomListItemObjectFactory: UniffiObjectFactory<RoomListItemInter
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roomlistitem(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistitem(
             pointer,
             callStatus
           ),
@@ -36179,19 +36610,20 @@ export class RoomListService
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistservice_all_rooms(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistservice_all_rooms(
             uniffiTypeRoomListServiceObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeRoomList.lift.bind(
           FfiConverterTypeRoomList
         ),
@@ -36211,12 +36643,12 @@ export class RoomListService
 
   public room(roomId: string): RoomListItemInterface /*throws*/ {
     return FfiConverterTypeRoomListItem.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
           FfiConverterTypeRoomListError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistservice_room(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistservice_room(
             uniffiTypeRoomListServiceObjectFactory.clonePointer(this),
             FfiConverterString.lower(roomId),
             callStatus
@@ -36229,9 +36661,9 @@ export class RoomListService
 
   public state(listener: RoomListServiceStateListener): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistservice_state(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistservice_state(
             uniffiTypeRoomListServiceObjectFactory.clonePointer(this),
             FfiConverterTypeRoomListServiceStateListener.lower(listener),
             callStatus
@@ -36243,12 +36675,12 @@ export class RoomListService
   }
 
   public subscribeToRooms(roomIds: Array<string>): void /*throws*/ {
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
         FfiConverterTypeRoomListError
       ),
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistservice_subscribe_to_rooms(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistservice_subscribe_to_rooms(
           uniffiTypeRoomListServiceObjectFactory.clonePointer(this),
           FfiConverterArrayString.lower(roomIds),
           callStatus
@@ -36264,9 +36696,9 @@ export class RoomListService
     listener: RoomListServiceSyncIndicatorListener
   ): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roomlistservice_sync_indicator(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistservice_sync_indicator(
             uniffiTypeRoomListServiceObjectFactory.clonePointer(this),
             FfiConverterUInt32.lower(delayBeforeShowingInMs),
             FfiConverterUInt32.lower(delayBeforeHidingInMs),
@@ -36285,10 +36717,11 @@ export class RoomListService
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeRoomListServiceObjectFactory.pointer(this);
       uniffiTypeRoomListServiceObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomListServiceObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -36309,14 +36742,18 @@ const uniffiTypeRoomListServiceObjectFactory: UniffiObjectFactory<RoomListServic
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roomlistservice_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roomlistservice_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: RoomListServiceInterface): UnsafeMutableRawPointer {
@@ -36328,9 +36765,9 @@ const uniffiTypeRoomListServiceObjectFactory: UniffiObjectFactory<RoomListServic
 
     clonePointer(obj: RoomListServiceInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roomlistservice(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistservice(
             pointer,
             callStatus
           ),
@@ -36339,9 +36776,9 @@ const uniffiTypeRoomListServiceObjectFactory: UniffiObjectFactory<RoomListServic
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roomlistservice(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistservice(
             pointer,
             callStatus
           ),
@@ -36383,9 +36820,9 @@ export class RoomMembersIterator
 
   public len(): /*u32*/ number {
     return FfiConverterUInt32.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roommembersiterator_len(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roommembersiterator_len(
             uniffiTypeRoomMembersIteratorObjectFactory.clonePointer(this),
             callStatus
           );
@@ -36397,9 +36834,9 @@ export class RoomMembersIterator
 
   public nextChunk(chunkSize: /*u32*/ number): Array<RoomMember> | undefined {
     return FfiConverterOptionalArrayTypeRoomMember.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roommembersiterator_next_chunk(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roommembersiterator_next_chunk(
             uniffiTypeRoomMembersIteratorObjectFactory.clonePointer(this),
             FfiConverterUInt32.lower(chunkSize),
             callStatus
@@ -36414,10 +36851,11 @@ export class RoomMembersIterator
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeRoomMembersIteratorObjectFactory.pointer(this);
       uniffiTypeRoomMembersIteratorObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomMembersIteratorObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -36438,14 +36876,18 @@ const uniffiTypeRoomMembersIteratorObjectFactory: UniffiObjectFactory<RoomMember
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roommembersiterator_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roommembersiterator_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: RoomMembersIteratorInterface): UnsafeMutableRawPointer {
@@ -36457,9 +36899,9 @@ const uniffiTypeRoomMembersIteratorObjectFactory: UniffiObjectFactory<RoomMember
 
     clonePointer(obj: RoomMembersIteratorInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roommembersiterator(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roommembersiterator(
             pointer,
             callStatus
           ),
@@ -36468,9 +36910,9 @@ const uniffiTypeRoomMembersIteratorObjectFactory: UniffiObjectFactory<RoomMember
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roommembersiterator(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roommembersiterator(
             pointer,
             callStatus
           ),
@@ -36517,9 +36959,9 @@ export class RoomMessageEventContentWithoutRelation
     mentions: Mentions
   ): RoomMessageEventContentWithoutRelationInterface {
     return FfiConverterTypeRoomMessageEventContentWithoutRelation.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roommessageeventcontentwithoutrelation_with_mentions(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roommessageeventcontentwithoutrelation_with_mentions(
             uniffiTypeRoomMessageEventContentWithoutRelationObjectFactory.clonePointer(
               this
             ),
@@ -36536,7 +36978,8 @@ export class RoomMessageEventContentWithoutRelation
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeRoomMessageEventContentWithoutRelationObjectFactory.pointer(
           this
@@ -36544,7 +36987,9 @@ export class RoomMessageEventContentWithoutRelation
       uniffiTypeRoomMessageEventContentWithoutRelationObjectFactory.freePointer(
         pointer
       );
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomMessageEventContentWithoutRelationObjectFactory.unbless(
+        ptr
+      );
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -36571,14 +37016,18 @@ const uniffiTypeRoomMessageEventContentWithoutRelationObjectFactory: UniffiObjec
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roommessageeventcontentwithoutrelation_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roommessageeventcontentwithoutrelation_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(
@@ -36594,9 +37043,9 @@ const uniffiTypeRoomMessageEventContentWithoutRelationObjectFactory: UniffiObjec
       obj: RoomMessageEventContentWithoutRelationInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roommessageeventcontentwithoutrelation(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roommessageeventcontentwithoutrelation(
             pointer,
             callStatus
           ),
@@ -36605,9 +37054,9 @@ const uniffiTypeRoomMessageEventContentWithoutRelationObjectFactory: UniffiObjec
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roommessageeventcontentwithoutrelation(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roommessageeventcontentwithoutrelation(
             pointer,
             callStatus
           ),
@@ -36678,12 +37127,12 @@ export class RoomPreview
    */
   public info(): RoomPreviewInfo /*throws*/ {
     return FfiConverterTypeRoomPreviewInfo.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roompreview_info(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roompreview_info(
             uniffiTypeRoomPreviewObjectFactory.clonePointer(this),
             callStatus
           );
@@ -36702,19 +37151,20 @@ export class RoomPreview
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roompreview_inviter(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roompreview_inviter(
             uniffiTypeRoomPreviewObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalTypeRoomMember.lift.bind(
           FfiConverterOptionalTypeRoomMember
         ),
@@ -36741,17 +37191,20 @@ export class RoomPreview
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_roompreview_leave(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roompreview_leave(
             uniffiTypeRoomPreviewObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -36771,10 +37224,11 @@ export class RoomPreview
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeRoomPreviewObjectFactory.pointer(this);
       uniffiTypeRoomPreviewObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeRoomPreviewObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -36795,14 +37249,18 @@ const uniffiTypeRoomPreviewObjectFactory: UniffiObjectFactory<RoomPreviewInterfa
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_roompreview_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_roompreview_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: RoomPreviewInterface): UnsafeMutableRawPointer {
@@ -36814,9 +37272,9 @@ const uniffiTypeRoomPreviewObjectFactory: UniffiObjectFactory<RoomPreviewInterfa
 
     clonePointer(obj: RoomPreviewInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_roompreview(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roompreview(
             pointer,
             callStatus
           ),
@@ -36825,9 +37283,9 @@ const uniffiTypeRoomPreviewObjectFactory: UniffiObjectFactory<RoomPreviewInterfa
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_roompreview(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roompreview(
             pointer,
             callStatus
           ),
@@ -36883,9 +37341,9 @@ export class SendAttachmentJoinHandle
    * A subsequent call to [`Self::join`] will return immediately.
    */
   public cancel(): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_sendattachmentjoinhandle_cancel(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sendattachmentjoinhandle_cancel(
           uniffiTypeSendAttachmentJoinHandleObjectFactory.clonePointer(this),
           callStatus
         );
@@ -36905,17 +37363,20 @@ export class SendAttachmentJoinHandle
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sendattachmentjoinhandle_join(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sendattachmentjoinhandle_join(
             uniffiTypeSendAttachmentJoinHandleObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -36935,11 +37396,12 @@ export class SendAttachmentJoinHandle
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeSendAttachmentJoinHandleObjectFactory.pointer(this);
       uniffiTypeSendAttachmentJoinHandleObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeSendAttachmentJoinHandleObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -36962,14 +37424,18 @@ const uniffiTypeSendAttachmentJoinHandleObjectFactory: UniffiObjectFactory<SendA
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_sendattachmentjoinhandle_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_sendattachmentjoinhandle_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: SendAttachmentJoinHandleInterface): UnsafeMutableRawPointer {
@@ -36983,9 +37449,9 @@ const uniffiTypeSendAttachmentJoinHandleObjectFactory: UniffiObjectFactory<SendA
       obj: SendAttachmentJoinHandleInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_sendattachmentjoinhandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendattachmentjoinhandle(
             pointer,
             callStatus
           ),
@@ -36994,9 +37460,9 @@ const uniffiTypeSendAttachmentJoinHandleObjectFactory: UniffiObjectFactory<SendA
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_sendattachmentjoinhandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendattachmentjoinhandle(
             pointer,
             callStatus
           ),
@@ -37082,16 +37548,20 @@ export class SendHandle
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sendhandle_abort(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sendhandle_abort(
             uniffiTypeSendHandleObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37127,17 +37597,20 @@ export class SendHandle
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sendhandle_try_resend(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sendhandle_try_resend(
             uniffiTypeSendHandleObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37157,10 +37630,11 @@ export class SendHandle
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeSendHandleObjectFactory.pointer(this);
       uniffiTypeSendHandleObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeSendHandleObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -37181,14 +37655,18 @@ const uniffiTypeSendHandleObjectFactory: UniffiObjectFactory<SendHandleInterface
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_sendhandle_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_sendhandle_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: SendHandleInterface): UnsafeMutableRawPointer {
@@ -37200,9 +37678,9 @@ const uniffiTypeSendHandleObjectFactory: UniffiObjectFactory<SendHandleInterface
 
     clonePointer(obj: SendHandleInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_sendhandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendhandle(
             pointer,
             callStatus
           ),
@@ -37211,9 +37689,9 @@ const uniffiTypeSendHandleObjectFactory: UniffiObjectFactory<SendHandleInterface
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_sendhandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendhandle(
             pointer,
             callStatus
           ),
@@ -37310,19 +37788,22 @@ export class SessionVerificationController
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_accept_verification_request(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_accept_verification_request(
             uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
               this
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37352,8 +37833,9 @@ export class SessionVerificationController
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_acknowledge_verification_request(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_acknowledge_verification_request(
             uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
               this
             ),
@@ -37361,12 +37843,14 @@ export class SessionVerificationController
             FfiConverterString.lower(flowId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37391,19 +37875,22 @@ export class SessionVerificationController
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_approve_verification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_approve_verification(
             uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
               this
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37428,19 +37915,22 @@ export class SessionVerificationController
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_cancel_verification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_cancel_verification(
             uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
               this
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37465,19 +37955,22 @@ export class SessionVerificationController
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_decline_verification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_decline_verification(
             uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
               this
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37502,19 +37995,22 @@ export class SessionVerificationController
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_request_verification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_request_verification(
             uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
               this
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37533,9 +38029,9 @@ export class SessionVerificationController
   public setDelegate(
     delegate: SessionVerificationControllerDelegate | undefined
   ): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_set_delegate(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_set_delegate(
           uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
             this
           ),
@@ -37559,19 +38055,22 @@ export class SessionVerificationController
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_start_sas_verification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_start_sas_verification(
             uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
               this
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -37591,11 +38090,12 @@ export class SessionVerificationController
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeSessionVerificationControllerObjectFactory.pointer(this);
       uniffiTypeSessionVerificationControllerObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeSessionVerificationControllerObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -37620,14 +38120,18 @@ const uniffiTypeSessionVerificationControllerObjectFactory: UniffiObjectFactory<
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_sessionverificationcontroller_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_sessionverificationcontroller_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(
@@ -37643,9 +38147,9 @@ const uniffiTypeSessionVerificationControllerObjectFactory: UniffiObjectFactory<
       obj: SessionVerificationControllerInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_sessionverificationcontroller(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sessionverificationcontroller(
             pointer,
             callStatus
           ),
@@ -37654,9 +38158,9 @@ const uniffiTypeSessionVerificationControllerObjectFactory: UniffiObjectFactory<
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_sessionverificationcontroller(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sessionverificationcontroller(
             pointer,
             callStatus
           ),
@@ -37698,9 +38202,9 @@ export class SessionVerificationEmoji
 
   public description(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationemoji_description(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationemoji_description(
             uniffiTypeSessionVerificationEmojiObjectFactory.clonePointer(this),
             callStatus
           );
@@ -37712,9 +38216,9 @@ export class SessionVerificationEmoji
 
   public symbol(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_sessionverificationemoji_symbol(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationemoji_symbol(
             uniffiTypeSessionVerificationEmojiObjectFactory.clonePointer(this),
             callStatus
           );
@@ -37728,11 +38232,12 @@ export class SessionVerificationEmoji
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeSessionVerificationEmojiObjectFactory.pointer(this);
       uniffiTypeSessionVerificationEmojiObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeSessionVerificationEmojiObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -37755,14 +38260,18 @@ const uniffiTypeSessionVerificationEmojiObjectFactory: UniffiObjectFactory<Sessi
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_sessionverificationemoji_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_sessionverificationemoji_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: SessionVerificationEmojiInterface): UnsafeMutableRawPointer {
@@ -37776,9 +38285,9 @@ const uniffiTypeSessionVerificationEmojiObjectFactory: UniffiObjectFactory<Sessi
       obj: SessionVerificationEmojiInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_sessionverificationemoji(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sessionverificationemoji(
             pointer,
             callStatus
           ),
@@ -37787,9 +38296,9 @@ const uniffiTypeSessionVerificationEmojiObjectFactory: UniffiObjectFactory<Sessi
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_sessionverificationemoji(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sessionverificationemoji(
             pointer,
             callStatus
           ),
@@ -37853,9 +38362,9 @@ export class Span extends UniffiAbstractObject implements SpanInterface {
     name: string
   ) {
     super();
-    const pointer = rustCall(
+    const pointer = uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_span_new(
+        return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_span_new(
           FfiConverterString.lower(file),
           FfiConverterOptionalUInt32.lower(line),
           FfiConverterTypeLogLevel.lower(level),
@@ -37872,9 +38381,9 @@ export class Span extends UniffiAbstractObject implements SpanInterface {
 
   public static current(): SpanInterface {
     return FfiConverterTypeSpan.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_span_current(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_span_current(
             callStatus
           );
         },
@@ -37884,9 +38393,9 @@ export class Span extends UniffiAbstractObject implements SpanInterface {
   }
 
   public enter(): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_span_enter(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_span_enter(
           uniffiTypeSpanObjectFactory.clonePointer(this),
           callStatus
         );
@@ -37896,9 +38405,9 @@ export class Span extends UniffiAbstractObject implements SpanInterface {
   }
 
   public exit(): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_span_exit(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_span_exit(
           uniffiTypeSpanObjectFactory.clonePointer(this),
           callStatus
         );
@@ -37909,9 +38418,9 @@ export class Span extends UniffiAbstractObject implements SpanInterface {
 
   public isNone(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_span_is_none(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_span_is_none(
             uniffiTypeSpanObjectFactory.clonePointer(this),
             callStatus
           );
@@ -37925,10 +38434,11 @@ export class Span extends UniffiAbstractObject implements SpanInterface {
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeSpanObjectFactory.pointer(this);
       uniffiTypeSpanObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeSpanObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -37948,14 +38458,18 @@ const uniffiTypeSpanObjectFactory: UniffiObjectFactory<SpanInterface> = {
   },
 
   bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-    return rustCall(
+    return uniffiCaller.rustCall(
       /*caller:*/ (status) =>
-        nativeModule().uniffi_internal_fn_method_span_ffi__bless_pointer(
+        nativeModule().ubrn_uniffi_internal_fn_method_span_ffi__bless_pointer(
           p,
           status
         ),
       /*liftString:*/ FfiConverterString.lift
     );
+  },
+
+  unbless(ptr: UniffiRustArcPtr) {
+    ptr.markDestroyed();
   },
 
   pointer(obj: SpanInterface): UnsafeMutableRawPointer {
@@ -37967,17 +38481,23 @@ const uniffiTypeSpanObjectFactory: UniffiObjectFactory<SpanInterface> = {
 
   clonePointer(obj: SpanInterface): UnsafeMutableRawPointer {
     const pointer = this.pointer(obj);
-    return rustCall(
+    return uniffiCaller.rustCall(
       /*caller:*/ (callStatus) =>
-        nativeModule().uniffi_matrix_sdk_ffi_fn_clone_span(pointer, callStatus),
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_span(
+          pointer,
+          callStatus
+        ),
       /*liftString:*/ FfiConverterString.lift
     );
   },
 
   freePointer(pointer: UnsafeMutableRawPointer): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) =>
-        nativeModule().uniffi_matrix_sdk_ffi_fn_free_span(pointer, callStatus),
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_span(
+          pointer,
+          callStatus
+        ),
       /*liftString:*/ FfiConverterString.lift
     );
   },
@@ -38038,18 +38558,21 @@ export class SsoHandler
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_ssohandler_finish(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_ssohandler_finish(
             uniffiTypeSsoHandlerObjectFactory.clonePointer(this),
             FfiConverterString.lower(callbackUrl)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -38072,9 +38595,9 @@ export class SsoHandler
    */
   public url(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_ssohandler_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_ssohandler_url(
             uniffiTypeSsoHandlerObjectFactory.clonePointer(this),
             callStatus
           );
@@ -38088,10 +38611,11 @@ export class SsoHandler
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeSsoHandlerObjectFactory.pointer(this);
       uniffiTypeSsoHandlerObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeSsoHandlerObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -38112,14 +38636,18 @@ const uniffiTypeSsoHandlerObjectFactory: UniffiObjectFactory<SsoHandlerInterface
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_ssohandler_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_ssohandler_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: SsoHandlerInterface): UnsafeMutableRawPointer {
@@ -38131,9 +38659,9 @@ const uniffiTypeSsoHandlerObjectFactory: UniffiObjectFactory<SsoHandlerInterface
 
     clonePointer(obj: SsoHandlerInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_ssohandler(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_ssohandler(
             pointer,
             callStatus
           ),
@@ -38142,9 +38670,9 @@ const uniffiTypeSsoHandlerObjectFactory: UniffiObjectFactory<SsoHandlerInterface
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_ssohandler(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_ssohandler(
             pointer,
             callStatus
           ),
@@ -38187,9 +38715,9 @@ export class SyncService
 
   public roomListService(): RoomListServiceInterface {
     return FfiConverterTypeRoomListService.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_syncservice_room_list_service(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservice_room_list_service(
             uniffiTypeSyncServiceObjectFactory.clonePointer(this),
             callStatus
           );
@@ -38203,17 +38731,20 @@ export class SyncService
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_syncservice_start(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservice_start(
             uniffiTypeSyncServiceObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -38228,9 +38759,9 @@ export class SyncService
 
   public state(listener: SyncServiceStateObserver): TaskHandleInterface {
     return FfiConverterTypeTaskHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_syncservice_state(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservice_state(
             uniffiTypeSyncServiceObjectFactory.clonePointer(this),
             FfiConverterTypeSyncServiceStateObserver.lower(listener),
             callStatus
@@ -38247,17 +38778,20 @@ export class SyncService
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_syncservice_stop(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservice_stop(
             uniffiTypeSyncServiceObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -38277,10 +38811,11 @@ export class SyncService
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeSyncServiceObjectFactory.pointer(this);
       uniffiTypeSyncServiceObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeSyncServiceObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -38301,14 +38836,18 @@ const uniffiTypeSyncServiceObjectFactory: UniffiObjectFactory<SyncServiceInterfa
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_syncservice_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_syncservice_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: SyncServiceInterface): UnsafeMutableRawPointer {
@@ -38320,9 +38859,9 @@ const uniffiTypeSyncServiceObjectFactory: UniffiObjectFactory<SyncServiceInterfa
 
     clonePointer(obj: SyncServiceInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_syncservice(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_syncservice(
             pointer,
             callStatus
           ),
@@ -38331,9 +38870,9 @@ const uniffiTypeSyncServiceObjectFactory: UniffiObjectFactory<SyncServiceInterfa
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_syncservice(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_syncservice(
             pointer,
             callStatus
           ),
@@ -38385,19 +38924,20 @@ export class SyncServiceBuilder
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_finish(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_finish(
             uniffiTypeSyncServiceBuilderObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeSyncService.lift.bind(
           FfiConverterTypeSyncService
         ),
@@ -38417,9 +38957,9 @@ export class SyncServiceBuilder
 
   public withCrossProcessLock(): SyncServiceBuilderInterface {
     return FfiConverterTypeSyncServiceBuilder.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(
             uniffiTypeSyncServiceBuilderObjectFactory.clonePointer(this),
             callStatus
           );
@@ -38436,20 +38976,21 @@ export class SyncServiceBuilder
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_utd_hook(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_utd_hook(
             uniffiTypeSyncServiceBuilderObjectFactory.clonePointer(this),
             FfiConverterTypeUnableToDecryptDelegate.lower(delegate)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeSyncServiceBuilder.lift.bind(
           FfiConverterTypeSyncServiceBuilder
         ),
@@ -38468,10 +39009,11 @@ export class SyncServiceBuilder
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeSyncServiceBuilderObjectFactory.pointer(this);
       uniffiTypeSyncServiceBuilderObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeSyncServiceBuilderObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -38492,14 +39034,18 @@ const uniffiTypeSyncServiceBuilderObjectFactory: UniffiObjectFactory<SyncService
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_syncservicebuilder_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_syncservicebuilder_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: SyncServiceBuilderInterface): UnsafeMutableRawPointer {
@@ -38511,9 +39057,9 @@ const uniffiTypeSyncServiceBuilderObjectFactory: UniffiObjectFactory<SyncService
 
     clonePointer(obj: SyncServiceBuilderInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_syncservicebuilder(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_syncservicebuilder(
             pointer,
             callStatus
           ),
@@ -38522,9 +39068,9 @@ const uniffiTypeSyncServiceBuilderObjectFactory: UniffiObjectFactory<SyncService
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_syncservicebuilder(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_syncservicebuilder(
             pointer,
             callStatus
           ),
@@ -38580,9 +39126,9 @@ export class TaskHandle
   }
 
   public cancel(): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_taskhandle_cancel(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_taskhandle_cancel(
           uniffiTypeTaskHandleObjectFactory.clonePointer(this),
           callStatus
         );
@@ -38596,9 +39142,9 @@ export class TaskHandle
    */
   public isFinished(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_taskhandle_is_finished(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_taskhandle_is_finished(
             uniffiTypeTaskHandleObjectFactory.clonePointer(this),
             callStatus
           );
@@ -38612,10 +39158,11 @@ export class TaskHandle
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeTaskHandleObjectFactory.pointer(this);
       uniffiTypeTaskHandleObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeTaskHandleObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -38636,14 +39183,18 @@ const uniffiTypeTaskHandleObjectFactory: UniffiObjectFactory<TaskHandleInterface
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_taskhandle_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_taskhandle_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: TaskHandleInterface): UnsafeMutableRawPointer {
@@ -38655,9 +39206,9 @@ const uniffiTypeTaskHandleObjectFactory: UniffiObjectFactory<TaskHandleInterface
 
     clonePointer(obj: TaskHandleInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_taskhandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_taskhandle(
             pointer,
             callStatus
           ),
@@ -38666,9 +39217,9 @@ const uniffiTypeTaskHandleObjectFactory: UniffiObjectFactory<TaskHandleInterface
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_taskhandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_taskhandle(
             pointer,
             callStatus
           ),
@@ -38939,20 +39490,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_add_listener(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_add_listener(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeTimelineListener.lower(listener)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeTaskHandle.lift.bind(
           FfiConverterTypeTaskHandle
         ),
@@ -38971,9 +39523,9 @@ export class Timeline
     msgType: MessageType
   ): RoomMessageEventContentWithoutRelationInterface | undefined {
     return FfiConverterOptionalTypeRoomMessageEventContentWithoutRelation.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_create_message_content(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_create_message_content(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeMessageType.lower(msgType),
             callStatus
@@ -38994,8 +39546,9 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_create_poll(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_create_poll(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(question),
             FfiConverterArrayString.lower(answers),
@@ -39003,12 +39556,14 @@ export class Timeline
             FfiConverterTypePollKind.lower(pollKind)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39042,19 +39597,22 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_edit(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_edit(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeEventOrTransactionId.lower(eventOrTransactionId),
             FfiConverterTypeEditedContent.lower(newContent)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39071,12 +39629,12 @@ export class Timeline
   }
 
   public endPoll(pollStartEventId: string, text: string): void /*throws*/ {
-    rustCallWithError(
+    uniffiCaller.rustCallWithError(
       /*liftError:*/ FfiConverterTypeClientError.lift.bind(
         FfiConverterTypeClientError
       ),
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_end_poll(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_end_poll(
           uniffiTypeTimelineObjectFactory.clonePointer(this),
           FfiConverterString.lower(pollStartEventId),
           FfiConverterString.lower(text),
@@ -39094,18 +39652,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_fetch_details_for_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_fetch_details_for_event(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39127,17 +39688,20 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_fetch_members(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_fetch_members(
             uniffiTypeTimelineObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -39162,17 +39726,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_focused_paginate_forwards(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_focused_paginate_forwards(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterUInt16.lower(numEvents)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39205,20 +39773,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_get_event_timeline_item_by_event_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_get_event_timeline_item_by_event_id(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeEventTimelineItem.lift.bind(
           FfiConverterTypeEventTimelineItem
         ),
@@ -39249,20 +39818,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_load_reply_details(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_load_reply_details(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventIdStr)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeInReplyToDetails.lift.bind(
           FfiConverterTypeInReplyToDetails
         ),
@@ -39295,18 +39865,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_mark_as_read(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_mark_as_read(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeReceiptType.lower(receiptType)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39334,17 +39907,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_paginate_backwards(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_paginate_backwards(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterUInt16.lower(numEvents)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39374,17 +39951,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_pin_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_pin_event(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39419,19 +40000,22 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_redact_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_redact_event(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeEventOrTransactionId.lower(eventOrTransactionId),
             FfiConverterOptionalString.lower(reason)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39448,9 +40032,9 @@ export class Timeline
   }
 
   public retryDecryption(sessionIds: Array<string>): void {
-    rustCall(
+    uniffiCaller.rustCall(
       /*caller:*/ (callStatus) => {
-        nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_retry_decryption(
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_retry_decryption(
           uniffiTypeTimelineObjectFactory.clonePointer(this),
           FfiConverterArrayString.lower(sessionIds),
           callStatus
@@ -39474,20 +40058,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeRoomMessageEventContentWithoutRelation.lower(msg)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeSendHandle.lift.bind(
           FfiConverterTypeSendHandle
         ),
@@ -39514,9 +40099,9 @@ export class Timeline
     useSendQueue: boolean
   ): SendAttachmentJoinHandleInterface {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_audio(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_audio(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(url),
             FfiConverterTypeAudioInfo.lower(audioInfo),
@@ -39541,9 +40126,9 @@ export class Timeline
     useSendQueue: boolean
   ): SendAttachmentJoinHandleInterface {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_file(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_file(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(url),
             FfiConverterTypeFileInfo.lower(fileInfo),
@@ -39569,9 +40154,9 @@ export class Timeline
     useSendQueue: boolean
   ): SendAttachmentJoinHandleInterface {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_image(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_image(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(url),
             FfiConverterOptionalString.lower(thumbnailUrl),
@@ -39599,8 +40184,9 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_location(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_location(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(body),
             FfiConverterString.lower(geoUri),
@@ -39609,12 +40195,14 @@ export class Timeline
             FfiConverterOptionalTypeAssetType.lower(assetType)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -39635,19 +40223,22 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_poll_response(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_poll_response(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(pollStartEventId),
             FfiConverterArrayString.lower(answers)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39671,19 +40262,22 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_read_receipt(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_read_receipt(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeReceiptType.lower(receiptType),
             FfiConverterString.lower(eventId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39707,19 +40301,22 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_reply(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_reply(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeRoomMessageEventContentWithoutRelation.lower(msg),
             FfiConverterString.lower(eventId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39745,9 +40342,9 @@ export class Timeline
     useSendQueue: boolean
   ): SendAttachmentJoinHandleInterface {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_video(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_video(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(url),
             FfiConverterOptionalString.lower(thumbnailUrl),
@@ -39774,9 +40371,9 @@ export class Timeline
     useSendQueue: boolean
   ): SendAttachmentJoinHandleInterface {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_send_voice_message(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_voice_message(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(url),
             FfiConverterTypeAudioInfo.lower(audioInfo),
@@ -39800,20 +40397,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_subscribe_to_back_pagination_status(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_subscribe_to_back_pagination_status(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypePaginationStatusListener.lower(listener)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_pointer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
         /*liftFunc:*/ FfiConverterTypeTaskHandle.lift.bind(
           FfiConverterTypeTaskHandle
         ),
@@ -39852,19 +40450,22 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_toggle_reaction(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_toggle_reaction(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeEventOrTransactionId.lower(itemId),
             FfiConverterString.lower(key)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39894,17 +40495,21 @@ export class Timeline
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timeline_unpin_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_unpin_event(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -39924,10 +40529,11 @@ export class Timeline
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeTimelineObjectFactory.pointer(this);
       uniffiTypeTimelineObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeTimelineObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -39948,14 +40554,18 @@ const uniffiTypeTimelineObjectFactory: UniffiObjectFactory<TimelineInterface> =
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_timeline_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_timeline_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: TimelineInterface): UnsafeMutableRawPointer {
@@ -39967,9 +40577,9 @@ const uniffiTypeTimelineObjectFactory: UniffiObjectFactory<TimelineInterface> =
 
     clonePointer(obj: TimelineInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_timeline(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timeline(
             pointer,
             callStatus
           ),
@@ -39978,9 +40588,9 @@ const uniffiTypeTimelineObjectFactory: UniffiObjectFactory<TimelineInterface> =
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_timeline(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timeline(
             pointer,
             callStatus
           ),
@@ -40028,9 +40638,9 @@ export class TimelineDiff
 
   public append(): Array<TimelineItemInterface> | undefined {
     return FfiConverterOptionalArrayTypeTimelineItem.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_append(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_append(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40042,9 +40652,9 @@ export class TimelineDiff
 
   public change(): TimelineChange {
     return FfiConverterTypeTimelineChange.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_change(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_change(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40056,9 +40666,9 @@ export class TimelineDiff
 
   public insert(): InsertData | undefined {
     return FfiConverterOptionalTypeInsertData.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_insert(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_insert(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40070,9 +40680,9 @@ export class TimelineDiff
 
   public pushBack(): TimelineItemInterface | undefined {
     return FfiConverterOptionalTypeTimelineItem.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_push_back(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_push_back(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40084,9 +40694,9 @@ export class TimelineDiff
 
   public pushFront(): TimelineItemInterface | undefined {
     return FfiConverterOptionalTypeTimelineItem.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_push_front(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_push_front(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40098,9 +40708,9 @@ export class TimelineDiff
 
   public remove(): /*u32*/ number | undefined {
     return FfiConverterOptionalUInt32.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_remove(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_remove(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40112,9 +40722,9 @@ export class TimelineDiff
 
   public reset(): Array<TimelineItemInterface> | undefined {
     return FfiConverterOptionalArrayTypeTimelineItem.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_reset(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_reset(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40126,9 +40736,9 @@ export class TimelineDiff
 
   public set(): SetData | undefined {
     return FfiConverterOptionalTypeSetData.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_set(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_set(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40140,9 +40750,9 @@ export class TimelineDiff
 
   public truncate(): /*u32*/ number | undefined {
     return FfiConverterOptionalUInt32.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelinediff_truncate(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelinediff_truncate(
             uniffiTypeTimelineDiffObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40156,10 +40766,11 @@ export class TimelineDiff
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeTimelineDiffObjectFactory.pointer(this);
       uniffiTypeTimelineDiffObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeTimelineDiffObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -40180,14 +40791,18 @@ const uniffiTypeTimelineDiffObjectFactory: UniffiObjectFactory<TimelineDiffInter
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_timelinediff_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_timelinediff_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: TimelineDiffInterface): UnsafeMutableRawPointer {
@@ -40199,9 +40814,9 @@ const uniffiTypeTimelineDiffObjectFactory: UniffiObjectFactory<TimelineDiffInter
 
     clonePointer(obj: TimelineDiffInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_timelinediff(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelinediff(
             pointer,
             callStatus
           ),
@@ -40210,9 +40825,9 @@ const uniffiTypeTimelineDiffObjectFactory: UniffiObjectFactory<TimelineDiffInter
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_timelinediff(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelinediff(
             pointer,
             callStatus
           ),
@@ -40256,9 +40871,9 @@ export class TimelineEvent
 
   public eventId(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelineevent_event_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineevent_event_id(
             uniffiTypeTimelineEventObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40270,12 +40885,12 @@ export class TimelineEvent
 
   public eventType(): TimelineEventType /*throws*/ {
     return FfiConverterTypeTimelineEventType.lift(
-      rustCallWithError(
+      uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         ),
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelineevent_event_type(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineevent_event_type(
             uniffiTypeTimelineEventObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40287,9 +40902,9 @@ export class TimelineEvent
 
   public senderId(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelineevent_sender_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineevent_sender_id(
             uniffiTypeTimelineEventObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40301,9 +40916,9 @@ export class TimelineEvent
 
   public timestamp(): /*u64*/ bigint {
     return FfiConverterUInt64.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelineevent_timestamp(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineevent_timestamp(
             uniffiTypeTimelineEventObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40317,10 +40932,11 @@ export class TimelineEvent
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeTimelineEventObjectFactory.pointer(this);
       uniffiTypeTimelineEventObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeTimelineEventObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -40341,14 +40957,18 @@ const uniffiTypeTimelineEventObjectFactory: UniffiObjectFactory<TimelineEventInt
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_timelineevent_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_timelineevent_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: TimelineEventInterface): UnsafeMutableRawPointer {
@@ -40360,9 +40980,9 @@ const uniffiTypeTimelineEventObjectFactory: UniffiObjectFactory<TimelineEventInt
 
     clonePointer(obj: TimelineEventInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_timelineevent(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineevent(
             pointer,
             callStatus
           ),
@@ -40371,9 +40991,9 @@ const uniffiTypeTimelineEventObjectFactory: UniffiObjectFactory<TimelineEventInt
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_timelineevent(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineevent(
             pointer,
             callStatus
           ),
@@ -40414,9 +41034,9 @@ export class TimelineEventTypeFilter
     eventTypes: Array<FilterTimelineEventType>
   ): TimelineEventTypeFilterInterface {
     return FfiConverterTypeTimelineEventTypeFilter.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_timelineeventtypefilter_exclude(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_timelineeventtypefilter_exclude(
             FfiConverterArrayTypeFilterTimelineEventType.lower(eventTypes),
             callStatus
           );
@@ -40430,9 +41050,9 @@ export class TimelineEventTypeFilter
     eventTypes: Array<FilterTimelineEventType>
   ): TimelineEventTypeFilterInterface {
     return FfiConverterTypeTimelineEventTypeFilter.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_constructor_timelineeventtypefilter_include(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_timelineeventtypefilter_include(
             FfiConverterArrayTypeFilterTimelineEventType.lower(eventTypes),
             callStatus
           );
@@ -40446,11 +41066,12 @@ export class TimelineEventTypeFilter
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeTimelineEventTypeFilterObjectFactory.pointer(this);
       uniffiTypeTimelineEventTypeFilterObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeTimelineEventTypeFilterObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -40471,14 +41092,18 @@ const uniffiTypeTimelineEventTypeFilterObjectFactory: UniffiObjectFactory<Timeli
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_timelineeventtypefilter_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_timelineeventtypefilter_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: TimelineEventTypeFilterInterface): UnsafeMutableRawPointer {
@@ -40492,9 +41117,9 @@ const uniffiTypeTimelineEventTypeFilterObjectFactory: UniffiObjectFactory<Timeli
       obj: TimelineEventTypeFilterInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_timelineeventtypefilter(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineeventtypefilter(
             pointer,
             callStatus
           ),
@@ -40503,9 +41128,9 @@ const uniffiTypeTimelineEventTypeFilterObjectFactory: UniffiObjectFactory<Timeli
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_timelineeventtypefilter(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineeventtypefilter(
             pointer,
             callStatus
           ),
@@ -40552,9 +41177,9 @@ export class TimelineItem
 
   public asEvent(): EventTimelineItem | undefined {
     return FfiConverterOptionalTypeEventTimelineItem.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelineitem_as_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineitem_as_event(
             uniffiTypeTimelineItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40566,9 +41191,9 @@ export class TimelineItem
 
   public asVirtual(): VirtualTimelineItem | undefined {
     return FfiConverterOptionalTypeVirtualTimelineItem.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelineitem_as_virtual(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineitem_as_virtual(
             uniffiTypeTimelineItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40580,9 +41205,9 @@ export class TimelineItem
 
   public fmtDebug(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelineitem_fmt_debug(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineitem_fmt_debug(
             uniffiTypeTimelineItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40597,9 +41222,9 @@ export class TimelineItem
    */
   public uniqueId(): TimelineUniqueId {
     return FfiConverterTypeTimelineUniqueId.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_timelineitem_unique_id(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineitem_unique_id(
             uniffiTypeTimelineItemObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40613,10 +41238,11 @@ export class TimelineItem
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeTimelineItemObjectFactory.pointer(this);
       uniffiTypeTimelineItemObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeTimelineItemObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -40637,14 +41263,18 @@ const uniffiTypeTimelineItemObjectFactory: UniffiObjectFactory<TimelineItemInter
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_timelineitem_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_timelineitem_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: TimelineItemInterface): UnsafeMutableRawPointer {
@@ -40656,9 +41286,9 @@ const uniffiTypeTimelineItemObjectFactory: UniffiObjectFactory<TimelineItemInter
 
     clonePointer(obj: TimelineItemInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_timelineitem(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineitem(
             pointer,
             callStatus
           ),
@@ -40667,9 +41297,9 @@ const uniffiTypeTimelineItemObjectFactory: UniffiObjectFactory<TimelineItemInter
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_timelineitem(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineitem(
             pointer,
             callStatus
           ),
@@ -40712,9 +41342,9 @@ export class UnreadNotificationsCount
 
   public hasNotifications(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_unreadnotificationscount_has_notifications(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_unreadnotificationscount_has_notifications(
             uniffiTypeUnreadNotificationsCountObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40726,9 +41356,9 @@ export class UnreadNotificationsCount
 
   public highlightCount(): /*u32*/ number {
     return FfiConverterUInt32.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_unreadnotificationscount_highlight_count(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_unreadnotificationscount_highlight_count(
             uniffiTypeUnreadNotificationsCountObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40740,9 +41370,9 @@ export class UnreadNotificationsCount
 
   public notificationCount(): /*u32*/ number {
     return FfiConverterUInt32.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_unreadnotificationscount_notification_count(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_unreadnotificationscount_notification_count(
             uniffiTypeUnreadNotificationsCountObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40756,11 +41386,12 @@ export class UnreadNotificationsCount
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeUnreadNotificationsCountObjectFactory.pointer(this);
       uniffiTypeUnreadNotificationsCountObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeUnreadNotificationsCountObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -40783,14 +41414,18 @@ const uniffiTypeUnreadNotificationsCountObjectFactory: UniffiObjectFactory<Unrea
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_unreadnotificationscount_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_unreadnotificationscount_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: UnreadNotificationsCountInterface): UnsafeMutableRawPointer {
@@ -40804,9 +41439,9 @@ const uniffiTypeUnreadNotificationsCountObjectFactory: UniffiObjectFactory<Unrea
       obj: UnreadNotificationsCountInterface
     ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_unreadnotificationscount(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_unreadnotificationscount(
             pointer,
             callStatus
           ),
@@ -40815,9 +41450,9 @@ const uniffiTypeUnreadNotificationsCountObjectFactory: UniffiObjectFactory<Unrea
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_unreadnotificationscount(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_unreadnotificationscount(
             pointer,
             callStatus
           ),
@@ -40902,9 +41537,9 @@ export class UserIdentity
    */
   public isVerified(): boolean {
     return FfiConverterBool.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_useridentity_is_verified(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_useridentity_is_verified(
             uniffiTypeUserIdentityObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40924,9 +41559,9 @@ export class UserIdentity
    */
   public masterKey(): string | undefined {
     return FfiConverterOptionalString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_useridentity_master_key(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_useridentity_master_key(
             uniffiTypeUserIdentityObjectFactory.clonePointer(this),
             callStatus
           );
@@ -40958,17 +41593,20 @@ export class UserIdentity
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_useridentity_pin(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_useridentity_pin(
             uniffiTypeUserIdentityObjectFactory.clonePointer(this)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -40988,10 +41626,11 @@ export class UserIdentity
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeUserIdentityObjectFactory.pointer(this);
       uniffiTypeUserIdentityObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeUserIdentityObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -41012,14 +41651,18 @@ const uniffiTypeUserIdentityObjectFactory: UniffiObjectFactory<UserIdentityInter
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_useridentity_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_useridentity_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: UserIdentityInterface): UnsafeMutableRawPointer {
@@ -41031,9 +41674,9 @@ const uniffiTypeUserIdentityObjectFactory: UniffiObjectFactory<UserIdentityInter
 
     clonePointer(obj: UserIdentityInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_useridentity(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_useridentity(
             pointer,
             callStatus
           ),
@@ -41042,9 +41685,9 @@ const uniffiTypeUserIdentityObjectFactory: UniffiObjectFactory<UserIdentityInter
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_useridentity(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_useridentity(
             pointer,
             callStatus
           ),
@@ -41103,8 +41746,9 @@ export class WidgetDriver
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_widgetdriver_run(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_widgetdriver_run(
             uniffiTypeWidgetDriverObjectFactory.clonePointer(this),
             FfiConverterTypeRoom.lower(room),
             FfiConverterTypeWidgetCapabilitiesProvider.lower(
@@ -41112,12 +41756,14 @@ export class WidgetDriver
             )
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_void,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -41134,10 +41780,11 @@ export class WidgetDriver
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeWidgetDriverObjectFactory.pointer(this);
       uniffiTypeWidgetDriverObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeWidgetDriverObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -41158,14 +41805,18 @@ const uniffiTypeWidgetDriverObjectFactory: UniffiObjectFactory<WidgetDriverInter
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_widgetdriver_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_widgetdriver_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: WidgetDriverInterface): UnsafeMutableRawPointer {
@@ -41177,9 +41828,9 @@ const uniffiTypeWidgetDriverObjectFactory: UniffiObjectFactory<WidgetDriverInter
 
     clonePointer(obj: WidgetDriverInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_widgetdriver(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_widgetdriver(
             pointer,
             callStatus
           ),
@@ -41188,9 +41839,9 @@ const uniffiTypeWidgetDriverObjectFactory: UniffiObjectFactory<WidgetDriverInter
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_widgetdriver(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_widgetdriver(
             pointer,
             callStatus
           ),
@@ -41262,19 +41913,20 @@ export class WidgetDriverHandle
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_widgetdriverhandle_recv(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_widgetdriverhandle_recv(
             uniffiTypeWidgetDriverHandleObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
         /*cancelFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
         /*freeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
           FfiConverterOptionalString
         ),
@@ -41300,17 +41952,21 @@ export class WidgetDriverHandle
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().uniffi_matrix_sdk_ffi_fn_method_widgetdriverhandle_send(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_widgetdriverhandle_send(
             uniffiTypeWidgetDriverHandleObjectFactory.clonePointer(this),
             FfiConverterString.lower(msg)
           );
         },
-        /*pollFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
         /*completeFunc:*/ nativeModule()
-          .ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule().ffi_matrix_sdk_ffi_rust_future_free_i8,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
         /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
@@ -41327,10 +41983,11 @@ export class WidgetDriverHandle
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer = uniffiTypeWidgetDriverHandleObjectFactory.pointer(this);
       uniffiTypeWidgetDriverHandleObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeWidgetDriverHandleObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -41351,14 +42008,18 @@ const uniffiTypeWidgetDriverHandleObjectFactory: UniffiObjectFactory<WidgetDrive
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_widgetdriverhandle_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_widgetdriverhandle_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: WidgetDriverHandleInterface): UnsafeMutableRawPointer {
@@ -41370,9 +42031,9 @@ const uniffiTypeWidgetDriverHandleObjectFactory: UniffiObjectFactory<WidgetDrive
 
     clonePointer(obj: WidgetDriverHandleInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_clone_widgetdriverhandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_widgetdriverhandle(
             pointer,
             callStatus
           ),
@@ -41381,9 +42042,9 @@ const uniffiTypeWidgetDriverHandleObjectFactory: UniffiObjectFactory<WidgetDrive
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_ffi_fn_free_widgetdriverhandle(
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_widgetdriverhandle(
             pointer,
             callStatus
           ),
@@ -41846,10 +42507,10 @@ const FfiConverterOptionalArrayTypeTimelineItem = new FfiConverterOptional(
  */
 function uniffiEnsureInitialized() {
   // Get the bindings contract version from our ComponentInterface
-  const bindingsContractVersion = 26;
+  const bindingsContractVersion = 29;
   // Get the scaffolding contract version by calling the into the dylib
   const scaffoldingContractVersion =
-    nativeModule().ffi_matrix_sdk_ffi_uniffi_contract_version();
+    nativeModule().ubrn_ffi_matrix_sdk_ffi_uniffi_contract_version();
   if (bindingsContractVersion !== scaffoldingContractVersion) {
     throw new UniffiInternalError.ContractVersionMismatch(
       scaffoldingContractVersion,
@@ -41857,7 +42518,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_content_without_relation_from_message() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_content_without_relation_from_message() !==
     1366
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41865,7 +42526,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_create_caption_edit() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_create_caption_edit() !==
     49747
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41873,7 +42534,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_gen_transaction_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_gen_transaction_id() !==
     15808
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41881,7 +42542,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_generate_webview_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_generate_webview_url() !==
     6844
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41889,7 +42550,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_get_element_call_required_permissions() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_get_element_call_required_permissions() !==
     30181
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41897,7 +42558,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_is_room_alias_format_valid() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_is_room_alias_format_valid() !==
     54845
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41905,14 +42566,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_log_event() !== 62286
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_log_event() !==
+    62286
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_func_log_event'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_make_element_well_known() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_make_element_well_known() !==
     21379
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41920,7 +42582,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_make_widget_driver() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_make_widget_driver() !==
     34206
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41928,7 +42590,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_matrix_to_room_alias_permalink() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_matrix_to_room_alias_permalink() !==
     13776
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41936,7 +42598,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_matrix_to_user_permalink() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_matrix_to_user_permalink() !==
     46473
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41944,7 +42606,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_html() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_html() !==
     37203
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41952,7 +42614,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_html_as_emote() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_html_as_emote() !==
     8938
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41960,7 +42622,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_markdown() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_markdown() !==
     58385
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41968,7 +42630,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_markdown_as_emote() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_markdown_as_emote() !==
     20152
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41976,7 +42638,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_message_event_content_new() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_message_event_content_new() !==
     57839
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41984,7 +42646,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_new_virtual_element_call_widget() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_new_virtual_element_call_widget() !==
     4988
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -41992,7 +42654,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_parse_matrix_entity_from() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_parse_matrix_entity_from() !==
     49710
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42000,7 +42662,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_room_alias_name_from_room_display_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_room_alias_name_from_room_display_name() !==
     65010
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42008,21 +42670,23 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_sdk_git_sha() !== 4038
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_sdk_git_sha() !==
+    4038
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_func_sdk_git_sha'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_setup_tracing() !== 45018
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_setup_tracing() !==
+    45018
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_func_setup_tracing'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_suggested_power_level_for_role() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_suggested_power_level_for_role() !==
     61777
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42030,7 +42694,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_func_suggested_role_for_power_level() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_suggested_role_for_power_level() !==
     48532
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42038,15 +42702,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions() !==
-    8867
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions'
-    );
-  }
-  if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_abort_oidc_auth() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_abort_oidc_auth() !==
     6754
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42054,7 +42710,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_account_data() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_account_data() !==
     50433
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42062,7 +42718,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_account_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_account_url() !==
     42373
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42070,7 +42726,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_available_sliding_sync_versions() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_available_sliding_sync_versions() !==
     35296
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42078,7 +42734,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_avatar_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_avatar_url() !==
     27867
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42086,7 +42742,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_await_room_remote_echo() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_await_room_remote_echo() !==
     18126
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42094,7 +42750,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_cached_avatar_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_cached_avatar_url() !==
     58990
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42102,7 +42758,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_can_deactivate_account() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_can_deactivate_account() !==
     39890
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42110,7 +42766,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_create_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_create_room() !==
     52700
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42118,7 +42774,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_create_room_alias() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_create_room_alias() !==
     54261
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42126,7 +42782,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_custom_login_with_jwt() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_custom_login_with_jwt() !==
     19710
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42134,7 +42790,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_deactivate_account() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_deactivate_account() !==
     20658
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42142,7 +42798,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_delete_pusher() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_delete_pusher() !==
     45990
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42150,7 +42806,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_device_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_device_id() !==
     44340
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42158,7 +42814,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_display_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_display_name() !==
     56259
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42166,7 +42822,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_enable_all_send_queues() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_enable_all_send_queues() !==
     30834
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42174,7 +42830,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_encryption() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_encryption() !==
     9657
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42182,7 +42838,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_dm_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_dm_room() !==
     5137
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42190,7 +42846,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_media_content() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_media_content() !==
     40308
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42198,7 +42854,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_media_file() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_media_file() !==
     52604
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42206,7 +42862,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_media_thumbnail() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_media_thumbnail() !==
     52601
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42214,7 +42870,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_notification_settings() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_notification_settings() !==
     6359
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42222,7 +42878,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_profile() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_profile() !==
     60062
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42230,7 +42886,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_recently_visited_rooms() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_recently_visited_rooms() !==
     22399
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42238,7 +42894,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_room_preview_from_room_alias() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_room_preview_from_room_alias() !==
     7674
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42246,7 +42902,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_room_preview_from_room_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_room_preview_from_room_id() !==
     36348
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42254,7 +42910,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_session_verification_controller() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_session_verification_controller() !==
     55934
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42262,7 +42918,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_get_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_url() !==
     50489
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42270,7 +42926,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_homeserver() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_homeserver() !==
     26427
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42278,7 +42934,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_homeserver_login_details() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_homeserver_login_details() !==
     63487
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42286,7 +42942,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_ignore_user() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_ignore_user() !==
     14588
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42294,7 +42950,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_ignored_users() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_ignored_users() !==
     49620
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42302,7 +42958,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_is_room_alias_available() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_is_room_alias_available() !==
     23322
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42310,7 +42966,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id() !==
     64032
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42318,7 +42974,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id_or_alias() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id_or_alias() !==
     18521
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42326,7 +42982,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_knock() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_knock() !==
     48652
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42334,7 +42990,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_login() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_login() !==
     33276
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42342,7 +42998,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_login_with_email() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_login_with_email() !==
     11789
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42350,7 +43006,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_login_with_oidc_callback() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_login_with_oidc_callback() !==
     35005
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42358,7 +43014,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_logout() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_logout() !==
     7576
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42366,7 +43022,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_notification_client() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_notification_client() !==
     37308
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42374,7 +43030,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_remove_avatar() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_remove_avatar() !==
     29033
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42382,7 +43038,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_reset_server_capabilities() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_reset_server_capabilities() !==
     39651
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42390,7 +43046,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_resolve_room_alias() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_resolve_room_alias() !==
     3551
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42398,7 +43054,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_restore_session() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_restore_session() !==
     40455
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42406,7 +43062,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_room_alias_exists() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_room_alias_exists() !==
     20359
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42414,7 +43070,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_room_directory_search() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_room_directory_search() !==
     39855
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42422,7 +43078,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_rooms() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_rooms() !==
     29558
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42430,7 +43086,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_search_users() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_search_users() !==
     42927
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42438,7 +43094,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_server() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_server() !==
     63276
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42446,7 +43102,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_session() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_session() !==
     8085
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42454,7 +43110,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_set_account_data() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_account_data() !==
     18256
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42462,7 +43118,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_set_delegate() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_delegate() !==
     59796
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42470,7 +43126,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_set_display_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_display_name() !==
     15292
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42478,7 +43134,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_set_pusher() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_pusher() !==
     41975
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42486,7 +43142,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_sliding_sync_version() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_sliding_sync_version() !==
     4957
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42494,7 +43150,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_start_sso_login() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_start_sso_login() !==
     34571
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42502,7 +43158,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_ignored_users() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_ignored_users() !==
     23285
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42510,7 +43166,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_send_queue_status() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_send_queue_status() !==
     57403
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42518,7 +43174,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_sync_service() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_sync_service() !==
     52812
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42526,7 +43182,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_track_recently_visited_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_track_recently_visited_room() !==
     56986
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42534,7 +43190,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_unignore_user() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_unignore_user() !==
     8489
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42542,7 +43198,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_upload_avatar() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_upload_avatar() !==
     64486
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42550,7 +43206,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_upload_media() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_upload_media() !==
     51195
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42558,7 +43214,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oidc() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oidc() !==
     30079
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42566,7 +43222,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_user_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_user_id() !==
     40531
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42574,7 +43230,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_client_user_id_server_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_user_id_server_name() !==
     57725
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42582,7 +43238,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_add_root_certificates() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_add_root_certificates() !==
     14763
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42590,7 +43246,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_auto_enable_backups() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_auto_enable_backups() !==
     44502
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42598,7 +43254,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_auto_enable_cross_signing() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_auto_enable_cross_signing() !==
     37167
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42606,7 +43262,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_backup_download_strategy() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_backup_download_strategy() !==
     11959
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42614,7 +43270,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build() !==
     56018
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42622,7 +43278,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build_with_qr_code() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build_with_qr_code() !==
     51905
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42630,7 +43286,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_cross_process_store_locks_holder_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_cross_process_store_locks_holder_name() !==
     46627
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42638,7 +43294,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_automatic_token_refresh() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_automatic_token_refresh() !==
     43839
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42646,7 +43302,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_built_in_root_certificates() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_built_in_root_certificates() !==
     47525
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42654,7 +43310,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_ssl_verification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_ssl_verification() !==
     2334
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42662,7 +43318,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_oidc_refresh_lock() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_oidc_refresh_lock() !==
     42214
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42670,7 +43326,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_homeserver_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_homeserver_url() !==
     28347
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42678,7 +43334,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_passphrase() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_passphrase() !==
     14286
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42686,7 +43342,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_proxy() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_proxy() !==
     5659
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42694,7 +43350,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_request_config() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_request_config() !==
     58783
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42702,7 +43358,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_room_decryption_trust_requirement() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_room_decryption_trust_requirement() !==
     2776
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42710,7 +43366,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_room_key_recipient_strategy() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_room_key_recipient_strategy() !==
     41183
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42718,7 +43374,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_server_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_server_name() !==
     29096
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42726,7 +43382,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_server_name_or_homeserver_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_server_name_or_homeserver_url() !==
     30022
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42734,7 +43390,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_paths() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_paths() !==
     54230
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42742,7 +43398,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_set_session_delegate() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_set_session_delegate() !==
     8576
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42750,7 +43406,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_sliding_sync_version_builder() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_sliding_sync_version_builder() !==
     39381
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42758,7 +43414,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_use_event_cache_persistent_storage() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_use_event_cache_persistent_storage() !==
     58836
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42766,7 +43422,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_user_agent() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_user_agent() !==
     13719
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42774,7 +43430,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_username() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_username() !==
     45302
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42782,7 +43438,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_exists_on_server() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_exists_on_server() !==
     45490
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42790,7 +43446,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_state() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_state() !==
     51049
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42798,7 +43454,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_state_listener() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_state_listener() !==
     14246
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42806,7 +43462,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_curve25519_key() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_curve25519_key() !==
     58425
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42814,7 +43470,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_disable_recovery() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_disable_recovery() !==
     18699
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42822,7 +43478,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_ed25519_key() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_ed25519_key() !==
     11864
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42830,7 +43486,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_backups() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_backups() !==
     55446
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42838,7 +43494,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_recovery() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_recovery() !==
     64351
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42846,7 +43502,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_is_last_device() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_is_last_device() !==
     27955
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42854,7 +43510,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_recover() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_recover() !==
     33712
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42862,7 +43518,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_recover_and_reset() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_recover_and_reset() !==
     12902
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42870,7 +43526,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_recovery_state() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_recovery_state() !==
     54051
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42878,7 +43534,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_recovery_state_listener() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_recovery_state_listener() !==
     36612
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42886,7 +43542,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_identity() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_identity() !==
     13780
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42894,7 +43550,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_recovery_key() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_recovery_key() !==
     20380
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42902,7 +43558,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_user_identity() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_user_identity() !==
     20644
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42910,7 +43566,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state() !==
     29114
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42918,7 +43574,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state_listener() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state_listener() !==
     59806
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42926,7 +43582,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_wait_for_backup_upload_steady_state() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_wait_for_backup_upload_steady_state() !==
     37503
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42934,7 +43590,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_encryption_wait_for_e2ee_initialization_tasks() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_encryption_wait_for_e2ee_initialization_tasks() !==
     41585
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42942,7 +43598,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_sliding_sync_version() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_sliding_sync_version() !==
     36573
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42950,7 +43606,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supported_oidc_prompts() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supported_oidc_prompts() !==
     63396
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42958,7 +43614,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_oidc_login() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_oidc_login() !==
     46090
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42966,7 +43622,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_password_login() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_password_login() !==
     33501
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42974,7 +43630,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_url() !==
     61326
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42982,7 +43638,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_auth_type() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_auth_type() !==
     43501
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42990,7 +43646,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_cancel() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_cancel() !==
     57622
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -42998,7 +43654,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_reset() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_reset() !==
     11997
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43006,7 +43662,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event() !==
     51792
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43014,7 +43670,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event_id() !==
     5876
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43022,7 +43678,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_accept() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_accept() !==
     25656
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43030,7 +43686,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_decline() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_decline() !==
     65054
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43038,7 +43694,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_decline_and_ban() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_decline_and_ban() !==
     26242
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43046,7 +43702,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_mark_as_seen() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_mark_as_seen() !==
     36036
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43054,7 +43710,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_debug_info() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_debug_info() !==
     55450
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43062,7 +43718,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_send_handle() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_send_handle() !==
     46057
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43070,7 +43726,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_shields() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_shields() !==
     12518
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43078,7 +43734,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_path() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_path() !==
     16357
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43086,7 +43742,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_persist() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_persist() !==
     12883
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43094,7 +43750,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json() !==
     23306
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43102,7 +43758,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_mediasource_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_mediasource_url() !==
     62692
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43110,7 +43766,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notification() !==
     2524
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43118,7 +43774,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_can_homeserver_push_encrypted_event_to_device() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_can_homeserver_push_encrypted_event_to_device() !==
     37323
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43126,7 +43782,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_can_push_encrypted_event_to_device() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_can_push_encrypted_event_to_device() !==
     21251
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43134,7 +43790,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_contains_keywords_rules() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_contains_keywords_rules() !==
     60025
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43142,7 +43798,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_default_room_notification_mode() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_default_room_notification_mode() !==
     36211
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43150,7 +43806,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_room_notification_settings() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_room_notification_settings() !==
     55295
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43158,7 +43814,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_rooms_with_user_defined_rules() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_rooms_with_user_defined_rules() !==
     19849
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43166,7 +43822,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_user_defined_room_notification_mode() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_user_defined_room_notification_mode() !==
     18228
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43174,7 +43830,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_call_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_call_enabled() !==
     12210
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43182,7 +43838,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_invite_for_me_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_invite_for_me_enabled() !==
     533
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43190,7 +43846,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_room_mention_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_room_mention_enabled() !==
     13304
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43198,7 +43854,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_user_mention_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_user_mention_enabled() !==
     49857
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43206,7 +43862,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_restore_default_room_notification_mode() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_restore_default_room_notification_mode() !==
     35399
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43214,7 +43870,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_call_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_call_enabled() !==
     16823
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43222,7 +43878,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_default_room_notification_mode() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_default_room_notification_mode() !==
     9426
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43230,7 +43886,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_delegate() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_delegate() !==
     57636
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43238,7 +43894,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_invite_for_me_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_invite_for_me_enabled() !==
     11988
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43246,7 +43902,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_room_mention_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_room_mention_enabled() !==
     31650
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43254,7 +43910,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_room_notification_mode() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_room_notification_mode() !==
     4135
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43262,7 +43918,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_user_mention_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_user_mention_enabled() !==
     56594
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43270,7 +43926,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_unmute_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_unmute_room() !==
     47580
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43278,7 +43934,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_active_members_count() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_active_members_count() !==
     61905
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43286,7 +43942,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_active_room_call_participants() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_active_room_call_participants() !==
     41533
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43294,7 +43950,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_alternative_aliases() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_alternative_aliases() !==
     28555
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43302,7 +43958,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_apply_power_level_changes() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_apply_power_level_changes() !==
     44206
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43310,7 +43966,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_avatar_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_avatar_url() !==
     34637
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43318,7 +43974,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_ban_user() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_ban_user() !==
     35046
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43326,7 +43982,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_ban() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_ban() !==
     64711
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43334,7 +43990,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_invite() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_invite() !==
     62459
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43342,7 +43998,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_kick() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_kick() !==
     12773
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43350,7 +44006,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_pin_unpin() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_pin_unpin() !==
     8341
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43358,7 +44014,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_redact_other() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_redact_other() !==
     13274
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43366,7 +44022,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_redact_own() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_redact_own() !==
     57442
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43374,7 +44030,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_send_message() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_send_message() !==
     36743
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43382,7 +44038,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_send_state() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_send_state() !==
     19062
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43390,7 +44046,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_can_user_trigger_room_notification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_trigger_room_notification() !==
     18832
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43398,7 +44054,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_canonical_alias() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_canonical_alias() !==
     19786
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43406,7 +44062,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_clear_composer_draft() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_clear_composer_draft() !==
     39667
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43414,7 +44070,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_clear_event_cache_storage() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_clear_event_cache_storage() !==
     13838
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43422,7 +44078,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_discard_room_key() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_discard_room_key() !==
     18081
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43430,7 +44086,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_display_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_display_name() !==
     64194
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43438,14 +44094,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_edit() !== 61956
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_edit() !==
+    61956
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_edit'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_enable_send_queue() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_enable_send_queue() !==
     23914
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43453,7 +44110,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_get_power_levels() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_get_power_levels() !==
     54094
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43461,7 +44118,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_has_active_room_call() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_has_active_room_call() !==
     33588
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43469,21 +44126,23 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_heroes() !== 22313
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_heroes() !==
+    22313
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_heroes'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_id() !== 61990
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_id() !==
+    61990
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_id'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_ignore_device_trust_and_resend() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_ignore_device_trust_and_resend() !==
     39984
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43491,7 +44150,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_ignore_user() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_ignore_user() !==
     62239
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43499,7 +44158,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_invite_user_by_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_invite_user_by_id() !==
     41133
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43507,7 +44166,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_invited_members_count() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_invited_members_count() !==
     1023
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43515,7 +44174,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_inviter() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_inviter() !==
     49874
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43523,7 +44182,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_is_direct() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_direct() !==
     16947
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43531,7 +44190,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_is_encrypted() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_encrypted() !==
     55158
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43539,7 +44198,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_is_public() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_public() !==
     7336
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43547,7 +44206,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_is_send_queue_enabled() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_send_queue_enabled() !==
     36591
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43555,7 +44214,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_is_space() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_space() !==
     16919
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43563,7 +44222,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_is_tombstoned() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_tombstoned() !==
     49186
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43571,14 +44230,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_join() !== 9240
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_join() !==
+    9240
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_join'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_joined_members_count() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_joined_members_count() !==
     55835
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43586,7 +44246,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_kick_user() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_kick_user() !==
     28600
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43594,14 +44254,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_leave() !== 63688
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_leave() !==
+    63688
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_leave'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_load_composer_draft() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_load_composer_draft() !==
     38115
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43609,7 +44270,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_mark_as_read() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_mark_as_read() !==
     16004
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43617,7 +44278,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_matrix_to_event_permalink() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_matrix_to_event_permalink() !==
     36705
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43625,7 +44286,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_matrix_to_permalink() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_matrix_to_permalink() !==
     47781
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43633,14 +44294,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_member() !== 48980
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_member() !==
+    48980
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_member'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_member_avatar_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_member_avatar_url() !==
     29492
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43648,7 +44310,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_member_display_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_member_display_name() !==
     33206
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43656,7 +44318,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_members() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_members() !==
     42691
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43664,7 +44326,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_members_no_sync() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_members_no_sync() !==
     3255
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43672,7 +44334,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_membership() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_membership() !==
     26065
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43680,7 +44342,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_message_filtered_timeline() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_message_filtered_timeline() !==
     32258
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43688,7 +44350,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_own_user_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_own_user_id() !==
     39510
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43696,7 +44358,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_pinned_events_timeline() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_pinned_events_timeline() !==
     29596
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43704,7 +44366,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_raw_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_raw_name() !==
     15453
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43712,14 +44374,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_redact() !== 45810
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_redact() !==
+    45810
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_redact'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_remove_avatar() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_remove_avatar() !==
     7230
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43727,7 +44390,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_report_content() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_report_content() !==
     16529
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43735,7 +44398,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_reset_power_levels() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_reset_power_levels() !==
     63622
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43743,7 +44406,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_room_events_debug_string() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_room_events_debug_string() !==
     37832
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43751,7 +44414,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_room_info() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_room_info() !==
     41146
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43759,7 +44422,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_save_composer_draft() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_save_composer_draft() !==
     62232
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43767,7 +44430,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_send_call_notification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_send_call_notification() !==
     43366
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43775,7 +44438,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_send_call_notification_if_needed() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_send_call_notification_if_needed() !==
     53551
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43783,7 +44446,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_send_raw() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_send_raw() !==
     20486
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43791,7 +44454,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_set_is_favourite() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_set_is_favourite() !==
     64403
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43799,7 +44462,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_set_is_low_priority() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_set_is_low_priority() !==
     48070
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43807,7 +44470,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_set_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_set_name() !==
     52127
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43815,7 +44478,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_set_topic() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_set_topic() !==
     5576
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43823,7 +44486,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_set_unread_flag() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_set_unread_flag() !==
     2381
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43831,7 +44494,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes() !==
     14290
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43839,7 +44502,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_knock_requests() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_knock_requests() !==
     30649
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43847,7 +44510,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_room_info_updates() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_room_info_updates() !==
     48209
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43855,7 +44518,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_typing_notifications() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_typing_notifications() !==
     38524
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43863,7 +44526,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_suggested_role_for_user() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_suggested_role_for_user() !==
     47787
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43871,14 +44534,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_timeline() !== 701
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_timeline() !==
+    701
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_timeline'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_timeline_focused_on_event() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_timeline_focused_on_event() !==
     27319
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43886,14 +44550,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_topic() !== 59745
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_topic() !==
+    59745
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_topic'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_typing_notice() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_typing_notice() !==
     28642
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43901,7 +44566,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_unban_user() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_unban_user() !==
     1803
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43909,7 +44574,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_update_power_levels_for_users() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_update_power_levels_for_users() !==
     52057
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43917,7 +44582,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_upload_avatar() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_upload_avatar() !==
     19069
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43925,7 +44590,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_room_withdraw_verification_and_resend() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_withdraw_verification_and_resend() !==
     33485
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43933,7 +44598,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_is_at_last_page() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_is_at_last_page() !==
     34221
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43941,7 +44606,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_loaded_pages() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_loaded_pages() !==
     2923
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43949,7 +44614,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_next_page() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_next_page() !==
     29305
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43957,7 +44622,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_results() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_results() !==
     30207
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43965,7 +44630,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_search() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_search() !==
     24438
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43973,7 +44638,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlist_entries_with_dynamic_adapters() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlist_entries_with_dynamic_adapters() !==
     36097
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43981,7 +44646,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlist_loading_state() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlist_loading_state() !==
     21585
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43989,7 +44654,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlist_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlist_room() !==
     8801
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -43997,7 +44662,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_add_one_page() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_add_one_page() !==
     47748
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44005,7 +44670,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_reset_to_one_page() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_reset_to_one_page() !==
     61352
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44013,7 +44678,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_set_filter() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_set_filter() !==
     61202
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44021,7 +44686,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieswithdynamicadaptersresult_controller() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieswithdynamicadaptersresult_controller() !==
     36258
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44029,7 +44694,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieswithdynamicadaptersresult_entries_stream() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieswithdynamicadaptersresult_entries_stream() !==
     56632
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44037,7 +44702,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_avatar_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_avatar_url() !==
     39097
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44045,7 +44710,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_canonical_alias() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_canonical_alias() !==
     63300
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44053,7 +44718,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_display_name() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_display_name() !==
     8651
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44061,7 +44726,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_full_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_full_room() !==
     17298
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44069,7 +44734,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_id() !==
     41176
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44077,7 +44742,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_init_timeline() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_init_timeline() !==
     61817
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44085,7 +44750,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_invited_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_invited_room() !==
     44344
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44093,7 +44758,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_direct() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_direct() !==
     46873
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44101,7 +44766,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_encrypted() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_encrypted() !==
     65150
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44109,7 +44774,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_timeline_initialized() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_timeline_initialized() !==
     46855
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44117,7 +44782,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_latest_event() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_latest_event() !==
     38259
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44125,7 +44790,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_membership() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_membership() !==
     1596
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44133,7 +44798,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_preview_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_preview_room() !==
     32277
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44141,7 +44806,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_room_info() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_room_info() !==
     32985
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44149,7 +44814,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_all_rooms() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_all_rooms() !==
     49704
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44157,7 +44822,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_room() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_room() !==
     5185
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44165,7 +44830,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_state() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_state() !==
     64650
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44173,7 +44838,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_subscribe_to_rooms() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_subscribe_to_rooms() !==
     59765
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44181,7 +44846,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_sync_indicator() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_sync_indicator() !==
     16821
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44189,7 +44854,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_len() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_len() !==
     39835
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44197,7 +44862,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_next_chunk() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_next_chunk() !==
     23186
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44205,7 +44870,15 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roompreview_info() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions() !==
+    8867
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roompreview_info() !==
     9145
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44213,7 +44886,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roompreview_inviter() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roompreview_inviter() !==
     1297
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44221,7 +44894,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roompreview_leave() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roompreview_leave() !==
     5096
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44229,7 +44902,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_cancel() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_cancel() !==
     62384
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44237,7 +44910,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_join() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_join() !==
     1903
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44245,7 +44918,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sendhandle_abort() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sendhandle_abort() !==
     11570
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44253,7 +44926,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sendhandle_try_resend() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sendhandle_try_resend() !==
     28691
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44261,7 +44934,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_accept_verification_request() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_accept_verification_request() !==
     53466
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44269,7 +44942,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_acknowledge_verification_request() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_acknowledge_verification_request() !==
     37982
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44277,7 +44950,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_approve_verification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_approve_verification() !==
     27140
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44285,7 +44958,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_cancel_verification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_cancel_verification() !==
     32994
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44293,7 +44966,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_decline_verification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_decline_verification() !==
     64345
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44301,7 +44974,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_verification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_verification() !==
     17229
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44309,7 +44982,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_set_delegate() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_set_delegate() !==
     42324
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44317,7 +44990,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_start_sas_verification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_start_sas_verification() !==
     16328
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44325,7 +44998,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationemoji_description() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationemoji_description() !==
     21346
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44333,7 +45006,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationemoji_symbol() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationemoji_symbol() !==
     46075
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44341,21 +45014,23 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_span_enter() !== 8900
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_span_enter() !==
+    8900
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_span_enter'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_span_exit() !== 47924
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_span_exit() !==
+    47924
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_span_exit'
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_span_is_none() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_span_is_none() !==
     33327
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44363,7 +45038,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_ssohandler_finish() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_ssohandler_finish() !==
     64706
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44371,7 +45046,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_ssohandler_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_ssohandler_url() !==
     10889
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44379,7 +45054,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_syncservice_room_list_service() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservice_room_list_service() !==
     26426
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44387,7 +45062,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_syncservice_start() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservice_start() !==
     16010
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44395,7 +45070,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_syncservice_state() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservice_state() !==
     61806
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44403,7 +45078,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_syncservice_stop() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservice_stop() !==
     23138
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44411,7 +45086,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_finish() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_finish() !==
     22814
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44419,7 +45094,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_cross_process_lock() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_cross_process_lock() !==
     56326
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44427,7 +45102,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_utd_hook() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_utd_hook() !==
     9029
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44435,7 +45110,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_taskhandle_cancel() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_taskhandle_cancel() !==
     9124
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44443,7 +45118,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_taskhandle_is_finished() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_taskhandle_is_finished() !==
     29008
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44451,7 +45126,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_add_listener() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_add_listener() !==
     18746
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44459,7 +45134,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_create_message_content() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_create_message_content() !==
     21811
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44467,7 +45142,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_create_poll() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_create_poll() !==
     37925
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44475,7 +45150,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_edit() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_edit() !==
     42189
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44483,7 +45158,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_end_poll() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_end_poll() !==
     61329
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44491,7 +45166,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_fetch_details_for_event() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_fetch_details_for_event() !==
     54068
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44499,7 +45174,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_fetch_members() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_fetch_members() !==
     37994
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44507,7 +45182,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_focused_paginate_forwards() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_focused_paginate_forwards() !==
     51003
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44515,7 +45190,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_get_event_timeline_item_by_event_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_get_event_timeline_item_by_event_id() !==
     33999
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44523,7 +45198,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_load_reply_details() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_load_reply_details() !==
     54225
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44531,7 +45206,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_mark_as_read() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_mark_as_read() !==
     16621
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44539,7 +45214,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_backwards() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_backwards() !==
     65175
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44547,7 +45222,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_pin_event() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_pin_event() !==
     41687
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44555,7 +45230,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_redact_event() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_redact_event() !==
     48707
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44563,7 +45238,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_retry_decryption() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_retry_decryption() !==
     21112
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44571,7 +45246,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send() !==
     9553
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44579,7 +45254,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_audio() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_audio() !==
     43163
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44587,7 +45262,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_file() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_file() !==
     37925
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44595,7 +45270,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_image() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_image() !==
     45681
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44603,7 +45278,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_location() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_location() !==
     47400
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44611,7 +45286,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_poll_response() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_poll_response() !==
     7453
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44619,7 +45294,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_read_receipt() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_read_receipt() !==
     37532
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44627,7 +45302,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_reply() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_reply() !==
     64747
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44635,7 +45310,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_video() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_video() !==
     22670
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44643,7 +45318,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_send_voice_message() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_voice_message() !==
     58509
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44651,7 +45326,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_subscribe_to_back_pagination_status() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_subscribe_to_back_pagination_status() !==
     46161
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44659,7 +45334,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_toggle_reaction() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_toggle_reaction() !==
     29303
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44667,7 +45342,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timeline_unpin_event() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_unpin_event() !==
     52414
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44675,7 +45350,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_append() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_append() !==
     8453
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44683,7 +45358,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_change() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_change() !==
     4562
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44691,7 +45366,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_insert() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_insert() !==
     26630
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44699,7 +45374,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_push_back() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_push_back() !==
     53464
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44707,7 +45382,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_push_front() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_push_front() !==
     42084
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44715,7 +45390,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_remove() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_remove() !==
     74
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44723,7 +45398,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_reset() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_reset() !==
     34118
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44731,7 +45406,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_set() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_set() !==
     13334
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44739,7 +45414,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinediff_truncate() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinediff_truncate() !==
     34040
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44747,7 +45422,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelineevent_event_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineevent_event_id() !==
     11088
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44755,7 +45430,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelineevent_event_type() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineevent_event_type() !==
     12922
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44763,7 +45438,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelineevent_sender_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineevent_sender_id() !==
     18142
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44771,7 +45446,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelineevent_timestamp() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineevent_timestamp() !==
     58123
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44779,7 +45454,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelineitem_as_event() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineitem_as_event() !==
     6106
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44787,7 +45462,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelineitem_as_virtual() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineitem_as_virtual() !==
     50960
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44795,7 +45470,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelineitem_fmt_debug() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineitem_fmt_debug() !==
     38094
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44803,7 +45478,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelineitem_unique_id() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineitem_unique_id() !==
     39945
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44811,7 +45486,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_has_notifications() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_has_notifications() !==
     33024
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44819,7 +45494,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_highlight_count() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_highlight_count() !==
     35997
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44827,7 +45502,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_notification_count() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_notification_count() !==
     35655
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44835,7 +45510,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_useridentity_is_verified() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_useridentity_is_verified() !==
     61954
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44843,7 +45518,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key() !==
     4041
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44851,7 +45526,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin() !==
     62925
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44859,7 +45534,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_widgetdriver_run() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_widgetdriver_run() !==
     7519
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44867,7 +45542,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_widgetdriverhandle_recv() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_widgetdriverhandle_recv() !==
     2662
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44875,7 +45550,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_widgetdriverhandle_send() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_widgetdriverhandle_send() !==
     18689
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44883,7 +45558,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new() !==
     27991
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44891,7 +45566,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_json() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_json() !==
     10564
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44899,7 +45574,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_url() !==
     11983
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44907,7 +45582,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_qrcodedata_from_bytes() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_constructor_qrcodedata_from_bytes() !==
     32675
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44915,7 +45590,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_span_current() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_constructor_span_current() !==
     53698
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44923,7 +45598,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_span_new() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_constructor_span_new() !==
     14105
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44931,7 +45606,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_timelineeventtypefilter_exclude() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_constructor_timelineeventtypefilter_exclude() !==
     53805
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44939,7 +45614,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_constructor_timelineeventtypefilter_include() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_constructor_timelineeventtypefilter_include() !==
     25498
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44947,7 +45622,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_backupstatelistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_backupstatelistener_on_update() !==
     12849
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44955,7 +45630,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_backupsteadystatelistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_backupsteadystatelistener_on_update() !==
     41052
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44963,7 +45638,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_did_receive_auth_error() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_did_receive_auth_error() !==
     26350
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44971,7 +45646,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_did_refresh_tokens() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_did_refresh_tokens() !==
     16325
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44979,7 +45654,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientsessiondelegate_retrieve_session_from_keychain() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientsessiondelegate_retrieve_session_from_keychain() !==
     43954
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44987,7 +45662,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_clientsessiondelegate_save_session_in_keychain() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientsessiondelegate_save_session_in_keychain() !==
     53223
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -44995,7 +45670,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_enablerecoveryprogresslistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_enablerecoveryprogresslistener_on_update() !==
     13538
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45003,7 +45678,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_identitystatuschangelistener_call() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_identitystatuschangelistener_call() !==
     57311
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45011,7 +45686,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_ignoreduserslistener_call() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_ignoreduserslistener_call() !==
     47519
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45019,7 +45694,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_knockrequestslistener_call() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_knockrequestslistener_call() !==
     10077
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45027,7 +45702,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_notificationsettingsdelegate_settings_did_change() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettingsdelegate_settings_did_change() !==
     51708
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45035,7 +45710,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_paginationstatuslistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_paginationstatuslistener_on_update() !==
     29884
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45043,7 +45718,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_progresswatcher_transmission_progress() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_progresswatcher_transmission_progress() !==
     41133
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45051,7 +45726,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_qrloginprogresslistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_qrloginprogresslistener_on_update() !==
     9758
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45059,7 +45734,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_recoverystatelistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_recoverystatelistener_on_update() !==
     64575
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45067,7 +45742,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearchentrieslistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearchentrieslistener_on_update() !==
     41968
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45075,7 +45750,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roominfolistener_call() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roominfolistener_call() !==
     44934
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45083,7 +45758,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieslistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieslistener_on_update() !==
     12576
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45091,7 +45766,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistloadingstatelistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistloadingstatelistener_on_update() !==
     23169
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45099,7 +45774,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistservicestatelistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservicestatelistener_on_update() !==
     24823
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45107,7 +45782,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_roomlistservicesyncindicatorlistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservicesyncindicatorlistener_on_update() !==
     36937
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45115,7 +45790,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sendqueueroomerrorlistener_on_error() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sendqueueroomerrorlistener_on_error() !==
     38224
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45123,7 +45798,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_request() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_request() !==
     3417
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45131,7 +45806,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_accept_verification_request() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_accept_verification_request() !==
     3733
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45139,7 +45814,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_start_sas_verification() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_start_sas_verification() !==
     56833
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45147,7 +45822,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_data() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_data() !==
     30840
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45155,7 +45830,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_fail() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_fail() !==
     32164
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45163,7 +45838,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_cancel() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_cancel() !==
     3367
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45171,7 +45846,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_finish() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_finish() !==
     37905
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45179,7 +45854,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_syncservicestateobserver_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicestateobserver_on_update() !==
     62231
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45187,7 +45862,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_timelinelistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelinelistener_on_update() !==
     30147
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45195,7 +45870,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_typingnotificationslistener_call() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_typingnotificationslistener_call() !==
     64299
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45203,7 +45878,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_unabletodecryptdelegate_on_utd() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_unabletodecryptdelegate_on_utd() !==
     61791
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45211,7 +45886,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_verificationstatelistener_on_update() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_verificationstatelistener_on_update() !==
     38998
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
@@ -45219,7 +45894,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_ffi_checksum_method_widgetcapabilitiesprovider_acquire_capabilities() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_widgetcapabilitiesprovider_acquire_capabilities() !==
     12846
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(

@@ -50,9 +50,11 @@ fileprivate extension ForeignBytes {
 
 fileprivate extension Data {
     init(rustBuffer: RustBuffer) {
-        // TODO: This copies the buffer. Can we read directly from a
-        // Rust buffer?
-        self.init(bytes: rustBuffer.data!, count: Int(rustBuffer.len))
+        self.init(
+            bytesNoCopy: rustBuffer.data!,
+            count: Int(rustBuffer.len),
+            deallocator: .none
+        )
     }
 }
 
@@ -168,10 +170,16 @@ fileprivate protocol FfiConverter {
 fileprivate protocol FfiConverterPrimitive: FfiConverter where FfiType == SwiftType { }
 
 extension FfiConverterPrimitive {
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public static func lift(_ value: FfiType) throws -> SwiftType {
         return value
     }
 
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public static func lower(_ value: SwiftType) -> FfiType {
         return value
     }
@@ -182,6 +190,9 @@ extension FfiConverterPrimitive {
 fileprivate protocol FfiConverterRustBuffer: FfiConverter where FfiType == RustBuffer {}
 
 extension FfiConverterRustBuffer {
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public static func lift(_ buf: RustBuffer) throws -> SwiftType {
         var reader = createReader(data: Data(rustBuffer: buf))
         let value = try read(from: &reader)
@@ -192,6 +203,9 @@ extension FfiConverterRustBuffer {
         return value
     }
 
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public static func lower(_ value: SwiftType) -> RustBuffer {
           var writer = createWriter()
           write(value, into: &writer)
@@ -267,7 +281,7 @@ private func makeRustCall<T, E: Swift.Error>(
     _ callback: (UnsafeMutablePointer<RustCallStatus>) -> T,
     errorHandler: ((RustBuffer) throws -> E)?
 ) throws -> T {
-    uniffiEnsureInitialized()
+    uniffiEnsureMatrixSdkCryptoInitialized()
     var callStatus = RustCallStatus.init()
     let returnedVal = callback(&callStatus)
     try uniffiCheckCallStatus(callStatus: callStatus, errorHandler: errorHandler)
@@ -338,9 +352,10 @@ private func uniffiTraitInterfaceCallWithError<T, E>(
         callStatus.pointee.errorBuf = FfiConverterString.lower(String(describing: error))
     }
 }
-fileprivate class UniffiHandleMap<T> {
-    private var map: [UInt64: T] = [:]
+fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
+    // All mutation happens with this lock held, which is why we implement @unchecked Sendable.
     private let lock = NSLock()
+    private var map: [UInt64: T] = [:]
     private var currentHandle: UInt64 = 1
 
     func insert(obj: T) -> UInt64 {
@@ -382,6 +397,9 @@ fileprivate class UniffiHandleMap<T> {
 // Public interface members begin here.
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterBool : FfiConverter {
     typealias FfiType = Int8
     typealias SwiftType = Bool
@@ -403,6 +421,9 @@ fileprivate struct FfiConverterBool : FfiConverter {
     }
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -465,6 +486,9 @@ public struct DecryptionSettings {
     }
 }
 
+#if compiler(>=6)
+extension DecryptionSettings: Sendable {}
+#endif
 
 
 extension DecryptionSettings: Equatable, Hashable {
@@ -481,6 +505,10 @@ extension DecryptionSettings: Equatable, Hashable {
 }
 
 
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeDecryptionSettings: FfiConverterRustBuffer {
     public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> DecryptionSettings {
         return
@@ -495,10 +523,16 @@ public struct FfiConverterTypeDecryptionSettings: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeDecryptionSettings_lift(_ buf: RustBuffer) throws -> DecryptionSettings {
     return try FfiConverterTypeDecryptionSettings.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeDecryptionSettings_lower(_ value: DecryptionSettings) -> RustBuffer {
     return FfiConverterTypeDecryptionSettings.lower(value)
 }
@@ -549,6 +583,13 @@ public enum CollectStrategy {
 }
 
 
+#if compiler(>=6)
+extension CollectStrategy: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeCollectStrategy: FfiConverterRustBuffer {
     typealias SwiftType = CollectStrategy
 
@@ -583,14 +624,19 @@ public struct FfiConverterTypeCollectStrategy: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeCollectStrategy_lift(_ buf: RustBuffer) throws -> CollectStrategy {
     return try FfiConverterTypeCollectStrategy.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeCollectStrategy_lower(_ value: CollectStrategy) -> RustBuffer {
     return FfiConverterTypeCollectStrategy.lower(value)
 }
-
 
 
 extension CollectStrategy: Equatable, Hashable {}
@@ -633,6 +679,13 @@ public enum IdentityState {
 }
 
 
+#if compiler(>=6)
+extension IdentityState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeIdentityState: FfiConverterRustBuffer {
     typealias SwiftType = IdentityState
 
@@ -676,14 +729,19 @@ public struct FfiConverterTypeIdentityState: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeIdentityState_lift(_ buf: RustBuffer) throws -> IdentityState {
     return try FfiConverterTypeIdentityState.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeIdentityState_lower(_ value: IdentityState) -> RustBuffer {
     return FfiConverterTypeIdentityState.lower(value)
 }
-
 
 
 extension IdentityState: Equatable, Hashable {}
@@ -717,6 +775,13 @@ public enum LocalTrust {
 }
 
 
+#if compiler(>=6)
+extension LocalTrust: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeLocalTrust: FfiConverterRustBuffer {
     typealias SwiftType = LocalTrust
 
@@ -760,14 +825,19 @@ public struct FfiConverterTypeLocalTrust: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeLocalTrust_lift(_ buf: RustBuffer) throws -> LocalTrust {
     return try FfiConverterTypeLocalTrust.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeLocalTrust_lower(_ value: LocalTrust) -> RustBuffer {
     return FfiConverterTypeLocalTrust.lower(value)
 }
-
 
 
 extension LocalTrust: Equatable, Hashable {}
@@ -822,6 +892,9 @@ public enum LoginQrCodeDecodeError {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeLoginQrCodeDecodeError: FfiConverterRustBuffer {
     typealias SwiftType = LoginQrCodeDecodeError
 
@@ -892,13 +965,31 @@ public struct FfiConverterTypeLoginQrCodeDecodeError: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLoginQrCodeDecodeError_lift(_ buf: RustBuffer) throws -> LoginQrCodeDecodeError {
+    return try FfiConverterTypeLoginQrCodeDecodeError.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLoginQrCodeDecodeError_lower(_ value: LoginQrCodeDecodeError) -> RustBuffer {
+    return FfiConverterTypeLoginQrCodeDecodeError.lower(value)
+}
+
+
 extension LoginQrCodeDecodeError: Equatable, Hashable {}
+
+
 
 extension LoginQrCodeDecodeError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
 
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
@@ -929,6 +1020,13 @@ public enum SignatureState {
 }
 
 
+#if compiler(>=6)
+extension SignatureState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeSignatureState: FfiConverterRustBuffer {
     typealias SwiftType = SignatureState
 
@@ -972,14 +1070,19 @@ public struct FfiConverterTypeSignatureState: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeSignatureState_lift(_ buf: RustBuffer) throws -> SignatureState {
     return try FfiConverterTypeSignatureState.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeSignatureState_lower(_ value: SignatureState) -> RustBuffer {
     return FfiConverterTypeSignatureState.lower(value)
 }
-
 
 
 extension SignatureState: Equatable, Hashable {}
@@ -1011,6 +1114,13 @@ public enum TrustRequirement {
 }
 
 
+#if compiler(>=6)
+extension TrustRequirement: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeTrustRequirement: FfiConverterRustBuffer {
     typealias SwiftType = TrustRequirement
 
@@ -1048,14 +1158,19 @@ public struct FfiConverterTypeTrustRequirement: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeTrustRequirement_lift(_ buf: RustBuffer) throws -> TrustRequirement {
     return try FfiConverterTypeTrustRequirement.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeTrustRequirement_lower(_ value: TrustRequirement) -> RustBuffer {
     return FfiConverterTypeTrustRequirement.lower(value)
 }
-
 
 
 extension TrustRequirement: Equatable, Hashable {}
@@ -1155,6 +1270,13 @@ public enum UtdCause {
 }
 
 
+#if compiler(>=6)
+extension UtdCause: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeUtdCause: FfiConverterRustBuffer {
     typealias SwiftType = UtdCause
 
@@ -1228,14 +1350,19 @@ public struct FfiConverterTypeUtdCause: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeUtdCause_lift(_ buf: RustBuffer) throws -> UtdCause {
     return try FfiConverterTypeUtdCause.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeUtdCause_lower(_ value: UtdCause) -> RustBuffer {
     return FfiConverterTypeUtdCause.lower(value)
 }
-
 
 
 extension UtdCause: Equatable, Hashable {}
@@ -1249,9 +1376,9 @@ private enum InitializationResult {
 }
 // Use a global variable to perform the versioning checks. Swift ensures that
 // the code inside is only computed once.
-private var initializationResult: InitializationResult = {
+private let initializationResult: InitializationResult = {
     // Get the bindings contract version from our ComponentInterface
-    let bindings_contract_version = 26
+    let bindings_contract_version = 29
     // Get the scaffolding contract version by calling the into the dylib
     let scaffolding_contract_version = ffi_matrix_sdk_crypto_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
@@ -1261,7 +1388,9 @@ private var initializationResult: InitializationResult = {
     return InitializationResult.ok
 }()
 
-private func uniffiEnsureInitialized() {
+// Make the ensure init function public so that other modules which have external type references to
+// our types can call it.
+public func uniffiEnsureMatrixSdkCryptoInitialized() {
     switch initializationResult {
     case .ok:
         break
