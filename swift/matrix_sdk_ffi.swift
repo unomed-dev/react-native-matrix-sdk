@@ -35085,8 +35085,8 @@ private let initializationResult: InitializationResult = {
     uniffiCallbackInitUnableToDecryptDelegate()
     uniffiCallbackInitVerificationStateListener()
     uniffiCallbackInitWidgetCapabilitiesProvider()
-    uniffiEnsureMatrixSdkCommonInitialized()
     uniffiEnsureMatrixSdkInitialized()
+    uniffiEnsureMatrixSdkCommonInitialized()
     uniffiEnsureMatrixSdkUiInitialized()
     uniffiEnsureMatrixSdkCryptoInitialized()
     return InitializationResult.ok

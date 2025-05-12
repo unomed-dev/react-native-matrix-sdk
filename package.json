@@ -1,6 +1,6 @@
 {
   "name": "@unomed/react-native-matrix-sdk",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "⚡️ FFI bindings for matrix-rust-sdk in a React Native Turbo Module ⚡️",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
