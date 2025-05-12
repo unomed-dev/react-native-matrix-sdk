@@ -3,40 +3,41 @@
 
 import {
   type StructuralEquality as UniffiStructuralEquality,
-  type UniffiReferenceHolder,
-  type UniffiRustArcPtr,
+  type UniffiForeignFuture as RuntimeUniffiForeignFuture,
   type UniffiRustCallStatus,
+  type UniffiRustArcPtr,
   type UniffiRustFutureContinuationCallback as RuntimeUniffiRustFutureContinuationCallback,
+  type UniffiResult,
 } from 'uniffi-bindgen-react-native';
 
 interface NativeModuleInterface {
-  uniffi_internal_fn_func_ffi__string_to_byte_length(
+  ubrn_uniffi_internal_fn_func_ffi__string_to_byte_length(
     string: string,
     uniffi_out_err: UniffiRustCallStatus
   ): number;
-  uniffi_internal_fn_func_ffi__string_to_arraybuffer(
+  ubrn_uniffi_internal_fn_func_ffi__string_to_arraybuffer(
     string: string,
     uniffi_out_err: UniffiRustCallStatus
-  ): ArrayBuffer;
-  uniffi_internal_fn_func_ffi__arraybuffer_to_string(
-    buffer: ArrayBuffer,
+  ): Uint8Array;
+  ubrn_uniffi_internal_fn_func_ffi__arraybuffer_to_string(
+    buffer: Uint8Array,
     uniffi_out_err: UniffiRustCallStatus
   ): string;
-  uniffi_matrix_sdk_fn_clone_oidcauthorizationdata(
+  ubrn_uniffi_matrix_sdk_fn_clone_oidcauthorizationdata(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
-  uniffi_matrix_sdk_fn_free_oidcauthorizationdata(
+  ubrn_uniffi_matrix_sdk_fn_free_oidcauthorizationdata(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): void;
-  uniffi_matrix_sdk_fn_method_oidcauthorizationdata_login_url(
+  ubrn_uniffi_matrix_sdk_fn_method_oidcauthorizationdata_login_url(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
-  ): ArrayBuffer;
-  uniffi_matrix_sdk_checksum_method_oidcauthorizationdata_login_url(): number;
-  ffi_matrix_sdk_uniffi_contract_version(): number;
-  uniffi_internal_fn_method_oidcauthorizationdata_ffi__bless_pointer(
+  ): Uint8Array;
+  ubrn_uniffi_matrix_sdk_checksum_method_oidcauthorizationdata_login_url(): number;
+  ubrn_ffi_matrix_sdk_uniffi_contract_version(): number;
+  ubrn_uniffi_internal_fn_method_oidcauthorizationdata_ffi__bless_pointer(
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): UniffiRustArcPtr;
@@ -56,8 +57,8 @@ export type UniffiRustFutureContinuationCallback = (
   data: bigint,
   pollResult: number
 ) => void;
-export type UniffiForeignFutureFree = (handle: bigint) => void;
-export type UniffiCallbackInterfaceFree = (handle: bigint) => void;
+type UniffiForeignFutureFree = (handle: bigint) => void;
+type UniffiCallbackInterfaceFree = (handle: bigint) => void;
 export type UniffiForeignFuture = {
   handle: bigint;
   free: UniffiForeignFutureFree;
@@ -151,7 +152,7 @@ export type UniffiForeignFutureCompletePointer = (
   result: UniffiForeignFutureStructPointer
 ) => void;
 export type UniffiForeignFutureStructRustBuffer = {
-  returnValue: ArrayBuffer;
+  returnValue: Uint8Array;
   callStatus: UniffiRustCallStatus;
 };
 export type UniffiForeignFutureCompleteRustBuffer = (
@@ -194,4 +195,8 @@ export type UniffiForeignFutureCompleteVoid = (
 const isRustFutureContinuationCallbackTypeCompatible: UniffiStructuralEquality<
   RuntimeUniffiRustFutureContinuationCallback,
   UniffiRustFutureContinuationCallback
+> = true;
+const isUniffiForeignFutureTypeCompatible: UniffiStructuralEquality<
+  RuntimeUniffiForeignFuture,
+  UniffiForeignFuture
 > = true;

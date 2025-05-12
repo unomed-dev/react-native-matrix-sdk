@@ -2,7 +2,13 @@
 import installer from './NativeReactNativeMatrixSdk';
 
 // Register the rust crate with Hermes
-installer.installRustCrate();
+// - the boolean flag ensures this loads exactly once, even if the JS
+//   code is reloaded (e.g. during development with metro).
+let rustInstalled = false;
+if (!rustInstalled) {
+  installer.installRustCrate();
+  rustInstalled = true;
+}
 
 // Export the generated bindings to the app.
 export * from './generated/matrix_sdk';
@@ -23,12 +29,18 @@ import * as matrix_sdk_ffi from './generated/matrix_sdk_ffi';
 import * as matrix_sdk_ui from './generated/matrix_sdk_ui';
 
 // Initialize the generated bindings: mostly checksums, but also callbacks.
-matrix_sdk.default.initialize();
-matrix_sdk_base.default.initialize();
-matrix_sdk_common.default.initialize();
-matrix_sdk_crypto.default.initialize();
-matrix_sdk_ffi.default.initialize();
-matrix_sdk_ui.default.initialize();
+// - the boolean flag ensures this loads exactly once, even if the JS code
+//   is reloaded (e.g. during development with metro).
+let initialized = false;
+if (!initialized) {
+  matrix_sdk.default.initialize();
+  matrix_sdk_base.default.initialize();
+  matrix_sdk_common.default.initialize();
+  matrix_sdk_crypto.default.initialize();
+  matrix_sdk_ffi.default.initialize();
+  matrix_sdk_ui.default.initialize();
+  initialized = true;
+}
 
 // Export the crates as individually namespaced objects.
 export default {

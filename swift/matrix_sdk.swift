@@ -50,9 +50,11 @@ fileprivate extension ForeignBytes {
 
 fileprivate extension Data {
     init(rustBuffer: RustBuffer) {
-        // TODO: This copies the buffer. Can we read directly from a
-        // Rust buffer?
-        self.init(bytes: rustBuffer.data!, count: Int(rustBuffer.len))
+        self.init(
+            bytesNoCopy: rustBuffer.data!,
+            count: Int(rustBuffer.len),
+            deallocator: .none
+        )
     }
 }
 
@@ -168,10 +170,16 @@ fileprivate protocol FfiConverter {
 fileprivate protocol FfiConverterPrimitive: FfiConverter where FfiType == SwiftType { }
 
 extension FfiConverterPrimitive {
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public static func lift(_ value: FfiType) throws -> SwiftType {
         return value
     }
 
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public static func lower(_ value: SwiftType) -> FfiType {
         return value
     }
@@ -182,6 +190,9 @@ extension FfiConverterPrimitive {
 fileprivate protocol FfiConverterRustBuffer: FfiConverter where FfiType == RustBuffer {}
 
 extension FfiConverterRustBuffer {
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public static func lift(_ buf: RustBuffer) throws -> SwiftType {
         var reader = createReader(data: Data(rustBuffer: buf))
         let value = try read(from: &reader)
@@ -192,6 +203,9 @@ extension FfiConverterRustBuffer {
         return value
     }
 
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public static func lower(_ value: SwiftType) -> RustBuffer {
           var writer = createWriter()
           write(value, into: &writer)
@@ -267,7 +281,7 @@ private func makeRustCall<T, E: Swift.Error>(
     _ callback: (UnsafeMutablePointer<RustCallStatus>) -> T,
     errorHandler: ((RustBuffer) throws -> E)?
 ) throws -> T {
-    uniffiEnsureInitialized()
+    uniffiEnsureMatrixSdkInitialized()
     var callStatus = RustCallStatus.init()
     let returnedVal = callback(&callStatus)
     try uniffiCheckCallStatus(callStatus: callStatus, errorHandler: errorHandler)
@@ -338,9 +352,10 @@ private func uniffiTraitInterfaceCallWithError<T, E>(
         callStatus.pointee.errorBuf = FfiConverterString.lower(String(describing: error))
     }
 }
-fileprivate class UniffiHandleMap<T> {
-    private var map: [UInt64: T] = [:]
+fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
+    // All mutation happens with this lock held, which is why we implement @unchecked Sendable.
     private let lock = NSLock()
+    private var map: [UInt64: T] = [:]
     private var currentHandle: UInt64 = 1
 
     func insert(obj: T) -> UInt64 {
@@ -382,6 +397,9 @@ fileprivate class UniffiHandleMap<T> {
 // Public interface members begin here.
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
     typealias FfiType = Int64
     typealias SwiftType = Int64
@@ -395,6 +413,9 @@ fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
     }
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -439,7 +460,7 @@ fileprivate struct FfiConverterString: FfiConverter {
 /**
  * The data needed to perform authorization using OpenID Connect.
  */
-public protocol OidcAuthorizationDataProtocol : AnyObject {
+public protocol OidcAuthorizationDataProtocol: AnyObject {
     
     /**
      * The login URL to use for authorization.
@@ -447,15 +468,16 @@ public protocol OidcAuthorizationDataProtocol : AnyObject {
     func loginUrl()  -> String
     
 }
-
 /**
  * The data needed to perform authorization using OpenID Connect.
  */
-open class OidcAuthorizationData:
-    OidcAuthorizationDataProtocol {
+open class OidcAuthorizationData: OidcAuthorizationDataProtocol, @unchecked Sendable {
     fileprivate let pointer: UnsafeMutableRawPointer!
 
     /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public struct NoPointer {
         public init() {}
     }
@@ -467,15 +489,21 @@ open class OidcAuthorizationData:
         self.pointer = pointer
     }
 
-    /// This constructor can be used to instantiate a fake object.
-    /// - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
-    ///
-    /// - Warning:
-    ///     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public init(noPointer: NoPointer) {
         self.pointer = nil
     }
 
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public func uniffiClonePointer() -> UnsafeMutableRawPointer {
         return try! rustCall { uniffi_matrix_sdk_fn_clone_oidcauthorizationdata(self.pointer, $0) }
     }
@@ -495,7 +523,7 @@ open class OidcAuthorizationData:
     /**
      * The login URL to use for authorization.
      */
-open func loginUrl() -> String {
+open func loginUrl() -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_matrix_sdk_fn_method_oidcauthorizationdata_login_url(self.uniffiClonePointer(),$0
     )
@@ -505,6 +533,10 @@ open func loginUrl() -> String {
 
 }
 
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeOidcAuthorizationData: FfiConverter {
 
     typealias FfiType = UnsafeMutableRawPointer
@@ -537,15 +569,21 @@ public struct FfiConverterTypeOidcAuthorizationData: FfiConverter {
 }
 
 
-
-
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeOidcAuthorizationData_lift(_ pointer: UnsafeMutableRawPointer) throws -> OidcAuthorizationData {
     return try FfiConverterTypeOidcAuthorizationData.lift(pointer)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeOidcAuthorizationData_lower(_ value: OidcAuthorizationData) -> UnsafeMutableRawPointer {
     return FfiConverterTypeOidcAuthorizationData.lower(value)
 }
+
+
 
 
 /**
@@ -641,6 +679,9 @@ public struct RoomPowerLevelChanges {
     }
 }
 
+#if compiler(>=6)
+extension RoomPowerLevelChanges: Sendable {}
+#endif
 
 
 extension RoomPowerLevelChanges: Equatable, Hashable {
@@ -693,6 +734,10 @@ extension RoomPowerLevelChanges: Equatable, Hashable {
 }
 
 
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeRoomPowerLevelChanges: FfiConverterRustBuffer {
     public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RoomPowerLevelChanges {
         return
@@ -725,10 +770,16 @@ public struct FfiConverterTypeRoomPowerLevelChanges: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeRoomPowerLevelChanges_lift(_ buf: RustBuffer) throws -> RoomPowerLevelChanges {
     return try FfiConverterTypeRoomPowerLevelChanges.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeRoomPowerLevelChanges_lower(_ value: RoomPowerLevelChanges) -> RustBuffer {
     return FfiConverterTypeRoomPowerLevelChanges.lower(value)
 }
@@ -768,6 +819,13 @@ public enum BackupDownloadStrategy {
 }
 
 
+#if compiler(>=6)
+extension BackupDownloadStrategy: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeBackupDownloadStrategy: FfiConverterRustBuffer {
     typealias SwiftType = BackupDownloadStrategy
 
@@ -805,14 +863,19 @@ public struct FfiConverterTypeBackupDownloadStrategy: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeBackupDownloadStrategy_lift(_ buf: RustBuffer) throws -> BackupDownloadStrategy {
     return try FfiConverterTypeBackupDownloadStrategy.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeBackupDownloadStrategy_lower(_ value: BackupDownloadStrategy) -> RustBuffer {
     return FfiConverterTypeBackupDownloadStrategy.lower(value)
 }
-
 
 
 extension BackupDownloadStrategy: Equatable, Hashable {}
@@ -847,6 +910,13 @@ public enum PaginatorState {
 }
 
 
+#if compiler(>=6)
+extension PaginatorState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypePaginatorState: FfiConverterRustBuffer {
     typealias SwiftType = PaginatorState
 
@@ -890,14 +960,19 @@ public struct FfiConverterTypePaginatorState: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypePaginatorState_lift(_ buf: RustBuffer) throws -> PaginatorState {
     return try FfiConverterTypePaginatorState.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypePaginatorState_lower(_ value: PaginatorState) -> RustBuffer {
     return FfiConverterTypePaginatorState.lower(value)
 }
-
 
 
 extension PaginatorState: Equatable, Hashable {}
@@ -964,6 +1039,9 @@ public enum QrCodeLoginError {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeQRCodeLoginError: FfiConverterRustBuffer {
     typealias SwiftType = QrCodeLoginError
 
@@ -1046,13 +1124,31 @@ public struct FfiConverterTypeQRCodeLoginError: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeQRCodeLoginError_lift(_ buf: RustBuffer) throws -> QrCodeLoginError {
+    return try FfiConverterTypeQRCodeLoginError.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeQRCodeLoginError_lower(_ value: QrCodeLoginError) -> RustBuffer {
+    return FfiConverterTypeQRCodeLoginError.lower(value)
+}
+
+
 extension QrCodeLoginError: Equatable, Hashable {}
+
+
 
 extension QrCodeLoginError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
 
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
@@ -1077,6 +1173,13 @@ public enum RoomMemberRole {
 }
 
 
+#if compiler(>=6)
+extension RoomMemberRole: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public struct FfiConverterTypeRoomMemberRole: FfiConverterRustBuffer {
     typealias SwiftType = RoomMemberRole
 
@@ -1114,20 +1217,28 @@ public struct FfiConverterTypeRoomMemberRole: FfiConverterRustBuffer {
 }
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeRoomMemberRole_lift(_ buf: RustBuffer) throws -> RoomMemberRole {
     return try FfiConverterTypeRoomMemberRole.lift(buf)
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeRoomMemberRole_lower(_ value: RoomMemberRole) -> RustBuffer {
     return FfiConverterTypeRoomMemberRole.lower(value)
 }
-
 
 
 extension RoomMemberRole: Equatable, Hashable {}
 
 
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionInt64: FfiConverterRustBuffer {
     typealias SwiftType = Int64?
 
@@ -1156,9 +1267,9 @@ private enum InitializationResult {
 }
 // Use a global variable to perform the versioning checks. Swift ensures that
 // the code inside is only computed once.
-private var initializationResult: InitializationResult = {
+private let initializationResult: InitializationResult = {
     // Get the bindings contract version from our ComponentInterface
-    let bindings_contract_version = 26
+    let bindings_contract_version = 29
     // Get the scaffolding contract version by calling the into the dylib
     let scaffolding_contract_version = ffi_matrix_sdk_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
@@ -1171,7 +1282,9 @@ private var initializationResult: InitializationResult = {
     return InitializationResult.ok
 }()
 
-private func uniffiEnsureInitialized() {
+// Make the ensure init function public so that other modules which have external type references to
+// our types can call it.
+public func uniffiEnsureMatrixSdkInitialized() {
     switch initializationResult {
     case .ok:
         break

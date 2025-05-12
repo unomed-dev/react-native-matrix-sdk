@@ -2,8 +2,6 @@
 // Trust me, you don't want to mess with it!
 import nativeModule, {
   type UniffiRustFutureContinuationCallback,
-  type UniffiForeignFutureFree,
-  type UniffiCallbackInterfaceFree,
   type UniffiForeignFuture,
   type UniffiForeignFutureStructU8,
   type UniffiForeignFutureCompleteU8,
@@ -34,10 +32,11 @@ import nativeModule, {
 } from './matrix_sdk-ffi';
 import {
   type FfiConverter,
+  type UniffiByteArray,
   type UniffiObjectFactory,
   type UniffiRustArcPtr,
   type UnsafeMutableRawPointer,
-  AbstractFfiConverterArrayBuffer,
+  AbstractFfiConverterByteArray,
   FfiConverterBool,
   FfiConverterInt32,
   FfiConverterInt64,
@@ -48,15 +47,17 @@ import {
   UniffiAbstractObject,
   UniffiError,
   UniffiInternalError,
+  UniffiRustCaller,
   destructorGuardSymbol,
   pointerLiteralSymbol,
-  rustCall,
+  uniffiCreateFfiConverterString,
   uniffiCreateRecord,
   uniffiTypeNameSymbol,
   variantOrdinalSymbol,
 } from 'uniffi-bindgen-react-native';
 
 // Get converters from the other files, if any.
+const uniffiCaller = new UniffiRustCaller();
 
 const uniffiIsDebug =
   // @ts-ignore -- The process global might not be defined
@@ -158,7 +159,7 @@ export const RoomPowerLevelChanges = (() => {
 
 const FfiConverterTypeRoomPowerLevelChanges = (() => {
   type TypeName = RoomPowerLevelChanges;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         ban: FfiConverterOptionalInt64.read(from),
@@ -203,52 +204,30 @@ const FfiConverterTypeRoomPowerLevelChanges = (() => {
   return new FFIConverter();
 })();
 
-const stringToArrayBuffer = (s: string): ArrayBuffer =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__string_to_arraybuffer(s, status)
-  );
-
-const arrayBufferToString = (ab: ArrayBuffer): string =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__arraybuffer_to_string(
-      ab,
-      status
-    )
-  );
-
-const stringByteLength = (s: string): number =>
-  rustCall((status) =>
-    nativeModule().uniffi_internal_fn_func_ffi__string_to_byte_length(s, status)
-  );
-
-const FfiConverterString = (() => {
-  const lengthConverter = FfiConverterInt32;
-  type TypeName = string;
-  class FFIConverter implements FfiConverter<ArrayBuffer, TypeName> {
-    lift(value: ArrayBuffer): TypeName {
-      return arrayBufferToString(value);
-    }
-    lower(value: TypeName): ArrayBuffer {
-      return stringToArrayBuffer(value);
-    }
-    read(from: RustBuffer): TypeName {
-      const length = lengthConverter.read(from);
-      const bytes = from.readBytes(length);
-      return arrayBufferToString(bytes);
-    }
-    write(value: TypeName, into: RustBuffer): void {
-      const buffer = stringToArrayBuffer(value);
-      const numBytes = buffer.byteLength;
-      lengthConverter.write(numBytes, into);
-      into.writeBytes(buffer);
-    }
-    allocationSize(value: TypeName): number {
-      return lengthConverter.allocationSize(0) + stringByteLength(value);
-    }
-  }
-
-  return new FFIConverter();
-})();
+const stringConverter = {
+  stringToBytes: (s: string) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__string_to_arraybuffer(
+        s,
+        status
+      )
+    ),
+  bytesToString: (ab: UniffiByteArray) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__arraybuffer_to_string(
+        ab,
+        status
+      )
+    ),
+  stringByteLength: (s: string) =>
+    uniffiCaller.rustCall((status) =>
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__string_to_byte_length(
+        s,
+        status
+      )
+    ),
+};
+const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
 
 /**
  * Settings for end-to-end encryption features.
@@ -283,7 +262,7 @@ export enum BackupDownloadStrategy {
 const FfiConverterTypeBackupDownloadStrategy = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = BackupDownloadStrategy;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -339,7 +318,7 @@ export enum PaginatorState {
 const FfiConverterTypePaginatorState = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = PaginatorState;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -651,7 +630,7 @@ export type QrCodeLoginError = InstanceType<
 const FfiConverterTypeQRCodeLoginError = (() => {
   const intConverter = FfiConverterInt32;
   type TypeName = QrCodeLoginError;
-  class FfiConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FfiConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
@@ -734,7 +713,7 @@ export enum RoomMemberRole {
 const FfiConverterTypeRoomMemberRole = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomMemberRole;
-  class FFIConverter extends AbstractFfiConverterArrayBuffer<TypeName> {
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
@@ -797,9 +776,9 @@ export class OidcAuthorizationData
    */
   public loginUrl(): string {
     return FfiConverterString.lift(
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().uniffi_matrix_sdk_fn_method_oidcauthorizationdata_login_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_fn_method_oidcauthorizationdata_login_url(
             uniffiTypeOidcAuthorizationDataObjectFactory.clonePointer(this),
             callStatus
           );
@@ -813,11 +792,12 @@ export class OidcAuthorizationData
    * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
    */
   uniffiDestroy(): void {
-    if ((this as any)[destructorGuardSymbol]) {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
       const pointer =
         uniffiTypeOidcAuthorizationDataObjectFactory.pointer(this);
       uniffiTypeOidcAuthorizationDataObjectFactory.freePointer(pointer);
-      this[destructorGuardSymbol].markDestroyed();
+      uniffiTypeOidcAuthorizationDataObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
@@ -838,14 +818,18 @@ const uniffiTypeOidcAuthorizationDataObjectFactory: UniffiObjectFactory<OidcAuth
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().uniffi_internal_fn_method_oidcauthorizationdata_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_oidcauthorizationdata_ffi__bless_pointer(
             p,
             status
           ),
         /*liftString:*/ FfiConverterString.lift
       );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
     },
 
     pointer(obj: OidcAuthorizationDataInterface): UnsafeMutableRawPointer {
@@ -857,9 +841,9 @@ const uniffiTypeOidcAuthorizationDataObjectFactory: UniffiObjectFactory<OidcAuth
 
     clonePointer(obj: OidcAuthorizationDataInterface): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
-      return rustCall(
+      return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_fn_clone_oidcauthorizationdata(
+          nativeModule().ubrn_uniffi_matrix_sdk_fn_clone_oidcauthorizationdata(
             pointer,
             callStatus
           ),
@@ -868,9 +852,9 @@ const uniffiTypeOidcAuthorizationDataObjectFactory: UniffiObjectFactory<OidcAuth
     },
 
     freePointer(pointer: UnsafeMutableRawPointer): void {
-      rustCall(
+      uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().uniffi_matrix_sdk_fn_free_oidcauthorizationdata(
+          nativeModule().ubrn_uniffi_matrix_sdk_fn_free_oidcauthorizationdata(
             pointer,
             callStatus
           ),
@@ -905,10 +889,10 @@ const FfiConverterOptionalInt64 = new FfiConverterOptional(FfiConverterInt64);
  */
 function uniffiEnsureInitialized() {
   // Get the bindings contract version from our ComponentInterface
-  const bindingsContractVersion = 26;
+  const bindingsContractVersion = 29;
   // Get the scaffolding contract version by calling the into the dylib
   const scaffoldingContractVersion =
-    nativeModule().ffi_matrix_sdk_uniffi_contract_version();
+    nativeModule().ubrn_ffi_matrix_sdk_uniffi_contract_version();
   if (bindingsContractVersion !== scaffoldingContractVersion) {
     throw new UniffiInternalError.ContractVersionMismatch(
       scaffoldingContractVersion,
@@ -916,7 +900,7 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().uniffi_matrix_sdk_checksum_method_oidcauthorizationdata_login_url() !==
+    nativeModule().ubrn_uniffi_matrix_sdk_checksum_method_oidcauthorizationdata_login_url() !==
     59213
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
