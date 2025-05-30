@@ -1,5 +1,5 @@
 {
-  "name": "@unomed/react-native-matrix-sdk",
+  "name": "react-native-matrix-sdk",
   "version": "0.5.0",
   "description": "⚡️ FFI bindings for matrix-rust-sdk in a React Native Turbo Module ⚡️",
   "source": "./src/index.tsx",
@@ -44,6 +44,7 @@
     "ubrn:ios:build": "CARGO_FEATURE_NO_NEON=1 ubrn build ios --config ubrn.yaml --native-bindings",
     "ubrn:ios:build:release": "yarn ubrn:ios:build --release",
     "ubrn:ios:generate": "ubrn generate all --config ubrn.yaml build/RnMatrixRustSdk.xcframework/ios-arm64/libmatrix_sdk_ffi.a && del-cli swift && mv ios/swift swift && (cd example/ios && pod install)",
+    "ubrn:web:build": "ubrn build web --config ubrn.yaml",
     "ubrn:checkout": "( test -d rust_modules/matrix-rust-sdk && git -C rust_modules/matrix-rust-sdk reset --hard HEAD ); ubrn checkout --config ubrn.yaml && ( cd rust_modules/matrix-rust-sdk && git apply ../../matrix-rust-sdk.patch )",
     "ubrn:clean": "del-cli -v cpp android/src/main/java ios \"src/Native*\" src/generated \"src/index.ts*\"",
     "generate": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build && yarn ubrn:ios:build && yarn ubrn:ios:generate",
@@ -100,7 +101,7 @@
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2",
-    "uniffi-bindgen-react-native": "0.29.0-0"
+    "uniffi-bindgen-react-native": "git+https://github.com/jhugman/uniffi-bindgen-react-native#ad1e3351459f6acce95d403742999fac1b343e64"
   },
   "resolutions": {
     "@types/react": "^18.2.44"
