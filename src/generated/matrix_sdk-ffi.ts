@@ -23,21 +23,21 @@ interface NativeModuleInterface {
     buffer: Uint8Array,
     uniffi_out_err: UniffiRustCallStatus
   ): string;
-  ubrn_uniffi_matrix_sdk_fn_clone_oidcauthorizationdata(
+  ubrn_uniffi_matrix_sdk_fn_clone_oauthauthorizationdata(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
-  ubrn_uniffi_matrix_sdk_fn_free_oidcauthorizationdata(
+  ubrn_uniffi_matrix_sdk_fn_free_oauthauthorizationdata(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): void;
-  ubrn_uniffi_matrix_sdk_fn_method_oidcauthorizationdata_login_url(
+  ubrn_uniffi_matrix_sdk_fn_method_oauthauthorizationdata_login_url(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): Uint8Array;
-  ubrn_uniffi_matrix_sdk_checksum_method_oidcauthorizationdata_login_url(): number;
+  ubrn_uniffi_matrix_sdk_checksum_method_oauthauthorizationdata_login_url(): number;
   ubrn_ffi_matrix_sdk_uniffi_contract_version(): number;
-  ubrn_uniffi_internal_fn_method_oidcauthorizationdata_ffi__bless_pointer(
+  ubrn_uniffi_internal_fn_method_oauthauthorizationdata_ffi__bless_pointer(
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): UniffiRustArcPtr;

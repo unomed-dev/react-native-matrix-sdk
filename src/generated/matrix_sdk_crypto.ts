@@ -33,10 +33,8 @@ import nativeModule, {
 import {
   type UniffiByteArray,
   AbstractFfiConverterByteArray,
-  FfiConverterBool,
   FfiConverterInt32,
   RustBuffer,
-  UniffiEnum,
   UniffiError,
   UniffiInternalError,
   UniffiRustCaller,
@@ -148,156 +146,50 @@ const stringConverter = {
 };
 const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
 
-// Enum: CollectStrategy
-export enum CollectStrategy_Tags {
-  DeviceBasedStrategy = 'DeviceBasedStrategy',
-  IdentityBasedStrategy = 'IdentityBasedStrategy',
-}
 /**
  * Strategy to collect the devices that should receive room keys for the
  * current discussion.
  */
-export const CollectStrategy = (() => {
-  type DeviceBasedStrategy__interface = {
-    tag: CollectStrategy_Tags.DeviceBasedStrategy;
-    inner: Readonly<{
-      onlyAllowTrustedDevices: boolean;
-      errorOnVerifiedUserProblem: boolean;
-    }>;
-  };
-
+export enum CollectStrategy {
   /**
-   * Device based sharing strategy.
+   * Share with all (unblacklisted) devices.
    */
-  class DeviceBasedStrategy_
-    extends UniffiEnum
-    implements DeviceBasedStrategy__interface
-  {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'CollectStrategy';
-    readonly tag = CollectStrategy_Tags.DeviceBasedStrategy;
-    readonly inner: Readonly<{
-      onlyAllowTrustedDevices: boolean;
-      errorOnVerifiedUserProblem: boolean;
-    }>;
-    constructor(inner: {
-      /**
-       * If `true`, devices that are not trusted will be excluded from the
-       * conversation. A device is trusted if any of the following is true:
-       * - It was manually marked as trusted.
-       * - It was marked as verified via interactive verification.
-       * - It is signed by its owner identity, and this identity has been
-       * trusted via interactive verification.
-       * - It is the current own device of the user.
-       */ onlyAllowTrustedDevices: boolean;
-      /**
-       * If `true`, and a verified user has an unsigned device, key sharing
-       * will fail with a
-       * [`SessionRecipientCollectionError::VerifiedUserHasUnsignedDevice`].
-       *
-       * If `true`, and a verified user has replaced their identity, key
-       * sharing will fail with a
-       * [`SessionRecipientCollectionError::VerifiedUserChangedIdentity`].
-       *
-       * Otherwise, keys are shared with unsigned devices as normal.
-       *
-       * Once the problematic devices are blacklisted or whitelisted the
-       * caller can retry to share a second time.
-       */ errorOnVerifiedUserProblem: boolean;
-    }) {
-      super('CollectStrategy', 'DeviceBasedStrategy');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: {
-      /**
-       * If `true`, devices that are not trusted will be excluded from the
-       * conversation. A device is trusted if any of the following is true:
-       * - It was manually marked as trusted.
-       * - It was marked as verified via interactive verification.
-       * - It is signed by its owner identity, and this identity has been
-       * trusted via interactive verification.
-       * - It is the current own device of the user.
-       */ onlyAllowTrustedDevices: boolean;
-      /**
-       * If `true`, and a verified user has an unsigned device, key sharing
-       * will fail with a
-       * [`SessionRecipientCollectionError::VerifiedUserHasUnsignedDevice`].
-       *
-       * If `true`, and a verified user has replaced their identity, key
-       * sharing will fail with a
-       * [`SessionRecipientCollectionError::VerifiedUserChangedIdentity`].
-       *
-       * Otherwise, keys are shared with unsigned devices as normal.
-       *
-       * Once the problematic devices are blacklisted or whitelisted the
-       * caller can retry to share a second time.
-       */ errorOnVerifiedUserProblem: boolean;
-    }): DeviceBasedStrategy_ {
-      return new DeviceBasedStrategy_(inner);
-    }
-
-    static instanceOf(obj: any): obj is DeviceBasedStrategy_ {
-      return obj.tag === CollectStrategy_Tags.DeviceBasedStrategy;
-    }
-  }
-
-  type IdentityBasedStrategy__interface = {
-    tag: CollectStrategy_Tags.IdentityBasedStrategy;
-  };
-
+  AllDevices,
+  /**
+   * Share with all devices, except errors for *verified* users cause sharing
+   * to fail with an error.
+   *
+   * In this strategy, if a verified user has an unsigned device,
+   * key sharing will fail with a
+   * [`SessionRecipientCollectionError::VerifiedUserHasUnsignedDevice`].
+   * If a verified user has replaced their identity, key
+   * sharing will fail with a
+   * [`SessionRecipientCollectionError::VerifiedUserChangedIdentity`].
+   *
+   * Otherwise, keys are shared with unsigned devices as normal.
+   *
+   * Once the problematic devices are blacklisted or whitelisted the
+   * caller can retry to share a second time.
+   */
+  ErrorOnVerifiedUserProblem,
   /**
    * Share based on identity. Only distribute to devices signed by their
    * owner. If a user has no published identity he will not receive
    * any room keys.
    */
-  class IdentityBasedStrategy_
-    extends UniffiEnum
-    implements IdentityBasedStrategy__interface
-  {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'CollectStrategy';
-    readonly tag = CollectStrategy_Tags.IdentityBasedStrategy;
-    constructor() {
-      super('CollectStrategy', 'IdentityBasedStrategy');
-    }
+  IdentityBasedStrategy,
+  /**
+   * Only share keys with devices that we "trust". A device is trusted if any
+   * of the following is true:
+   * - It was manually marked as trusted.
+   * - It was marked as verified via interactive verification.
+   * - It is signed by its owner identity, and this identity has been
+   * trusted via interactive verification.
+   * - It is the current own device of the user.
+   */
+  OnlyTrustedDevices,
+}
 
-    static new(): IdentityBasedStrategy_ {
-      return new IdentityBasedStrategy_();
-    }
-
-    static instanceOf(obj: any): obj is IdentityBasedStrategy_ {
-      return obj.tag === CollectStrategy_Tags.IdentityBasedStrategy;
-    }
-  }
-
-  function instanceOf(obj: any): obj is CollectStrategy {
-    return obj[uniffiTypeNameSymbol] === 'CollectStrategy';
-  }
-
-  return Object.freeze({
-    instanceOf,
-    DeviceBasedStrategy: DeviceBasedStrategy_,
-    IdentityBasedStrategy: IdentityBasedStrategy_,
-  });
-})();
-
-/**
- * Strategy to collect the devices that should receive room keys for the
- * current discussion.
- */
-
-export type CollectStrategy = InstanceType<
-  (typeof CollectStrategy)[keyof Omit<typeof CollectStrategy, 'instanceOf'>]
->;
-
-// FfiConverter for enum CollectStrategy
 const FfiConverterTypeCollectStrategy = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = CollectStrategy;
@@ -305,53 +197,31 @@ const FfiConverterTypeCollectStrategy = (() => {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
-          return new CollectStrategy.DeviceBasedStrategy({
-            onlyAllowTrustedDevices: FfiConverterBool.read(from),
-            errorOnVerifiedUserProblem: FfiConverterBool.read(from),
-          });
+          return CollectStrategy.AllDevices;
         case 2:
-          return new CollectStrategy.IdentityBasedStrategy();
+          return CollectStrategy.ErrorOnVerifiedUserProblem;
+        case 3:
+          return CollectStrategy.IdentityBasedStrategy;
+        case 4:
+          return CollectStrategy.OnlyTrustedDevices;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
     }
     write(value: TypeName, into: RustBuffer): void {
-      switch (value.tag) {
-        case CollectStrategy_Tags.DeviceBasedStrategy: {
-          ordinalConverter.write(1, into);
-          const inner = value.inner;
-          FfiConverterBool.write(inner.onlyAllowTrustedDevices, into);
-          FfiConverterBool.write(inner.errorOnVerifiedUserProblem, into);
-          return;
-        }
-        case CollectStrategy_Tags.IdentityBasedStrategy: {
-          ordinalConverter.write(2, into);
-          return;
-        }
-        default:
-          // Throwing from here means that CollectStrategy_Tags hasn't matched an ordinal.
-          throw new UniffiInternalError.UnexpectedEnumCase();
+      switch (value) {
+        case CollectStrategy.AllDevices:
+          return ordinalConverter.write(1, into);
+        case CollectStrategy.ErrorOnVerifiedUserProblem:
+          return ordinalConverter.write(2, into);
+        case CollectStrategy.IdentityBasedStrategy:
+          return ordinalConverter.write(3, into);
+        case CollectStrategy.OnlyTrustedDevices:
+          return ordinalConverter.write(4, into);
       }
     }
     allocationSize(value: TypeName): number {
-      switch (value.tag) {
-        case CollectStrategy_Tags.DeviceBasedStrategy: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(1);
-          size += FfiConverterBool.allocationSize(
-            inner.onlyAllowTrustedDevices
-          );
-          size += FfiConverterBool.allocationSize(
-            inner.errorOnVerifiedUserProblem
-          );
-          return size;
-        }
-        case CollectStrategy_Tags.IdentityBasedStrategy: {
-          return ordinalConverter.allocationSize(2);
-        }
-        default:
-          throw new UniffiInternalError.UnexpectedEnumCase();
-      }
+      return ordinalConverter.allocationSize(0);
     }
   }
   return new FFIConverter();

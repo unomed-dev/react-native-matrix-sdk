@@ -45,6 +45,7 @@ import {
   FfiConverterUInt64,
   RustBuffer,
   UniffiAbstractObject,
+  UniffiEnum,
   UniffiError,
   UniffiInternalError,
   UniffiRustCaller,
@@ -354,7 +355,7 @@ const FfiConverterTypePaginatorState = (() => {
 
 // Flat error type: QrCodeLoginError
 export enum QrCodeLoginError_Tags {
-  Oidc = 'Oidc',
+  OAuth = 'OAuth',
   LoginFailure = 'LoginFailure',
   UnexpectedMessage = 'UnexpectedMessage',
   SecureChannel = 'SecureChannel',
@@ -370,9 +371,10 @@ export enum QrCodeLoginError_Tags {
  */
 export const QrCodeLoginError = (() => {
   /**
-   * An error happened while we were communicating with the OIDC provider.
+   * An error happened while we were communicating with the OAuth 2.0
+   * authorization server.
    */
-  class Oidc extends UniffiError {
+  class OAuth extends UniffiError {
     /**
      * @private
      * This field is private and should not be used.
@@ -384,13 +386,13 @@ export const QrCodeLoginError = (() => {
      */
     readonly [variantOrdinalSymbol] = 1;
 
-    public readonly tag = QrCodeLoginError_Tags.Oidc;
+    public readonly tag = QrCodeLoginError_Tags.OAuth;
 
     constructor(message: string) {
-      super('QrCodeLoginError', 'Oidc', message);
+      super('QrCodeLoginError', 'OAuth', message);
     }
 
-    static instanceOf(e: any): e is Oidc {
+    static instanceOf(e: any): e is OAuth {
       return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 1;
     }
   }
@@ -496,7 +498,8 @@ export const QrCodeLoginError = (() => {
   }
   /**
    * An error happened while we were trying to discover our user and device
-   * ID, after we have acquired an access token from the OIDC provider.
+   * ID, after we have acquired an access token from the OAuth 2.0
+   * authorization server.
    */
   class UserIdDiscovery extends UniffiError {
     /**
@@ -603,7 +606,7 @@ export const QrCodeLoginError = (() => {
     return (e as any)[uniffiTypeNameSymbol] === 'QrCodeLoginError';
   }
   return {
-    Oidc,
+    OAuth,
     LoginFailure,
     UnexpectedMessage,
     SecureChannel,
@@ -634,7 +637,7 @@ const FfiConverterTypeQRCodeLoginError = (() => {
     read(from: RustBuffer): TypeName {
       switch (intConverter.read(from)) {
         case 1:
-          return new QrCodeLoginError.Oidc(FfiConverterString.read(from));
+          return new QrCodeLoginError.OAuth(FfiConverterString.read(from));
 
         case 2:
           return new QrCodeLoginError.LoginFailure(
@@ -743,10 +746,161 @@ const FfiConverterTypeRoomMemberRole = (() => {
   return new FFIConverter();
 })();
 
+// Enum: RoomPaginationStatus
+export enum RoomPaginationStatus_Tags {
+  Idle = 'Idle',
+  Paginating = 'Paginating',
+}
 /**
- * The data needed to perform authorization using OpenID Connect.
+ * Status for the back-pagination on a room event cache.
  */
-export interface OidcAuthorizationDataInterface {
+export const RoomPaginationStatus = (() => {
+  type Idle__interface = {
+    tag: RoomPaginationStatus_Tags.Idle;
+    inner: Readonly<{ hitTimelineStart: boolean }>;
+  };
+
+  /**
+   * No back-pagination is happening right now.
+   */
+  class Idle_ extends UniffiEnum implements Idle__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomPaginationStatus';
+    readonly tag = RoomPaginationStatus_Tags.Idle;
+    readonly inner: Readonly<{ hitTimelineStart: boolean }>;
+    constructor(inner: {
+      /**
+       * Have we hit the start of the timeline, i.e. back-paginating wouldn't
+       * have any effect?
+       */ hitTimelineStart: boolean;
+    }) {
+      super('RoomPaginationStatus', 'Idle');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * Have we hit the start of the timeline, i.e. back-paginating wouldn't
+       * have any effect?
+       */ hitTimelineStart: boolean;
+    }): Idle_ {
+      return new Idle_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Idle_ {
+      return obj.tag === RoomPaginationStatus_Tags.Idle;
+    }
+  }
+
+  type Paginating__interface = {
+    tag: RoomPaginationStatus_Tags.Paginating;
+  };
+
+  /**
+   * Back-pagination is already running in the background.
+   */
+  class Paginating_ extends UniffiEnum implements Paginating__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomPaginationStatus';
+    readonly tag = RoomPaginationStatus_Tags.Paginating;
+    constructor() {
+      super('RoomPaginationStatus', 'Paginating');
+    }
+
+    static new(): Paginating_ {
+      return new Paginating_();
+    }
+
+    static instanceOf(obj: any): obj is Paginating_ {
+      return obj.tag === RoomPaginationStatus_Tags.Paginating;
+    }
+  }
+
+  function instanceOf(obj: any): obj is RoomPaginationStatus {
+    return obj[uniffiTypeNameSymbol] === 'RoomPaginationStatus';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Idle: Idle_,
+    Paginating: Paginating_,
+  });
+})();
+
+/**
+ * Status for the back-pagination on a room event cache.
+ */
+
+export type RoomPaginationStatus = InstanceType<
+  (typeof RoomPaginationStatus)[keyof Omit<
+    typeof RoomPaginationStatus,
+    'instanceOf'
+  >]
+>;
+
+// FfiConverter for enum RoomPaginationStatus
+const FfiConverterTypeRoomPaginationStatus = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = RoomPaginationStatus;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new RoomPaginationStatus.Idle({
+            hitTimelineStart: FfiConverterBool.read(from),
+          });
+        case 2:
+          return new RoomPaginationStatus.Paginating();
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case RoomPaginationStatus_Tags.Idle: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterBool.write(inner.hitTimelineStart, into);
+          return;
+        }
+        case RoomPaginationStatus_Tags.Paginating: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        default:
+          // Throwing from here means that RoomPaginationStatus_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case RoomPaginationStatus_Tags.Idle: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterBool.allocationSize(inner.hitTimelineStart);
+          return size;
+        }
+        case RoomPaginationStatus_Tags.Paginating: {
+          return ordinalConverter.allocationSize(2);
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * The data needed to perform authorization using OAuth 2.0.
+ */
+export interface OAuthAuthorizationDataInterface {
   /**
    * The login URL to use for authorization.
    */
@@ -754,13 +908,13 @@ export interface OidcAuthorizationDataInterface {
 }
 
 /**
- * The data needed to perform authorization using OpenID Connect.
+ * The data needed to perform authorization using OAuth 2.0.
  */
-export class OidcAuthorizationData
+export class OAuthAuthorizationData
   extends UniffiAbstractObject
-  implements OidcAuthorizationDataInterface
+  implements OAuthAuthorizationDataInterface
 {
-  readonly [uniffiTypeNameSymbol] = 'OidcAuthorizationData';
+  readonly [uniffiTypeNameSymbol] = 'OAuthAuthorizationData';
   readonly [destructorGuardSymbol]: UniffiRustArcPtr;
   readonly [pointerLiteralSymbol]: UnsafeMutableRawPointer;
   // No primary constructor declared for this class.
@@ -768,7 +922,7 @@ export class OidcAuthorizationData
     super();
     this[pointerLiteralSymbol] = pointer;
     this[destructorGuardSymbol] =
-      uniffiTypeOidcAuthorizationDataObjectFactory.bless(pointer);
+      uniffiTypeOAuthAuthorizationDataObjectFactory.bless(pointer);
   }
 
   /**
@@ -778,8 +932,8 @@ export class OidcAuthorizationData
     return FfiConverterString.lift(
       uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_fn_method_oidcauthorizationdata_login_url(
-            uniffiTypeOidcAuthorizationDataObjectFactory.clonePointer(this),
+          return nativeModule().ubrn_uniffi_matrix_sdk_fn_method_oauthauthorizationdata_login_url(
+            uniffiTypeOAuthAuthorizationDataObjectFactory.clonePointer(this),
             callStatus
           );
         },
@@ -795,32 +949,32 @@ export class OidcAuthorizationData
     const ptr = (this as any)[destructorGuardSymbol];
     if (ptr !== undefined) {
       const pointer =
-        uniffiTypeOidcAuthorizationDataObjectFactory.pointer(this);
-      uniffiTypeOidcAuthorizationDataObjectFactory.freePointer(pointer);
-      uniffiTypeOidcAuthorizationDataObjectFactory.unbless(ptr);
+        uniffiTypeOAuthAuthorizationDataObjectFactory.pointer(this);
+      uniffiTypeOAuthAuthorizationDataObjectFactory.freePointer(pointer);
+      uniffiTypeOAuthAuthorizationDataObjectFactory.unbless(ptr);
       delete (this as any)[destructorGuardSymbol];
     }
   }
 
-  static instanceOf(obj: any): obj is OidcAuthorizationData {
-    return uniffiTypeOidcAuthorizationDataObjectFactory.isConcreteType(obj);
+  static instanceOf(obj: any): obj is OAuthAuthorizationData {
+    return uniffiTypeOAuthAuthorizationDataObjectFactory.isConcreteType(obj);
   }
 }
 
-const uniffiTypeOidcAuthorizationDataObjectFactory: UniffiObjectFactory<OidcAuthorizationDataInterface> =
+const uniffiTypeOAuthAuthorizationDataObjectFactory: UniffiObjectFactory<OAuthAuthorizationDataInterface> =
   {
-    create(pointer: UnsafeMutableRawPointer): OidcAuthorizationDataInterface {
-      const instance = Object.create(OidcAuthorizationData.prototype);
+    create(pointer: UnsafeMutableRawPointer): OAuthAuthorizationDataInterface {
+      const instance = Object.create(OAuthAuthorizationData.prototype);
       instance[pointerLiteralSymbol] = pointer;
       instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'OidcAuthorizationData';
+      instance[uniffiTypeNameSymbol] = 'OAuthAuthorizationData';
       return instance;
     },
 
     bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
       return uniffiCaller.rustCall(
         /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_oidcauthorizationdata_ffi__bless_pointer(
+          nativeModule().ubrn_uniffi_internal_fn_method_oauthauthorizationdata_ffi__bless_pointer(
             p,
             status
           ),
@@ -832,18 +986,20 @@ const uniffiTypeOidcAuthorizationDataObjectFactory: UniffiObjectFactory<OidcAuth
       ptr.markDestroyed();
     },
 
-    pointer(obj: OidcAuthorizationDataInterface): UnsafeMutableRawPointer {
+    pointer(obj: OAuthAuthorizationDataInterface): UnsafeMutableRawPointer {
       if ((obj as any)[destructorGuardSymbol] === undefined) {
         throw new UniffiInternalError.UnexpectedNullPointer();
       }
       return (obj as any)[pointerLiteralSymbol];
     },
 
-    clonePointer(obj: OidcAuthorizationDataInterface): UnsafeMutableRawPointer {
+    clonePointer(
+      obj: OAuthAuthorizationDataInterface
+    ): UnsafeMutableRawPointer {
       const pointer = this.pointer(obj);
       return uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_fn_clone_oidcauthorizationdata(
+          nativeModule().ubrn_uniffi_matrix_sdk_fn_clone_oauthauthorizationdata(
             pointer,
             callStatus
           ),
@@ -854,7 +1010,7 @@ const uniffiTypeOidcAuthorizationDataObjectFactory: UniffiObjectFactory<OidcAuth
     freePointer(pointer: UnsafeMutableRawPointer): void {
       uniffiCaller.rustCall(
         /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_fn_free_oidcauthorizationdata(
+          nativeModule().ubrn_uniffi_matrix_sdk_fn_free_oauthauthorizationdata(
             pointer,
             callStatus
           ),
@@ -862,16 +1018,16 @@ const uniffiTypeOidcAuthorizationDataObjectFactory: UniffiObjectFactory<OidcAuth
       );
     },
 
-    isConcreteType(obj: any): obj is OidcAuthorizationDataInterface {
+    isConcreteType(obj: any): obj is OAuthAuthorizationDataInterface {
       return (
         obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'OidcAuthorizationData'
+        obj[uniffiTypeNameSymbol] === 'OAuthAuthorizationData'
       );
     },
   };
-// FfiConverter for OidcAuthorizationDataInterface
-const FfiConverterTypeOidcAuthorizationData = new FfiConverterObject(
-  uniffiTypeOidcAuthorizationDataObjectFactory
+// FfiConverter for OAuthAuthorizationDataInterface
+const FfiConverterTypeOAuthAuthorizationData = new FfiConverterObject(
+  uniffiTypeOAuthAuthorizationDataObjectFactory
 );
 
 // FfiConverter for /*i64*/bigint | undefined
@@ -900,11 +1056,11 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_checksum_method_oidcauthorizationdata_login_url() !==
-    59213
+    nativeModule().ubrn_uniffi_matrix_sdk_checksum_method_oauthauthorizationdata_login_url() !==
+    25566
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_checksum_method_oidcauthorizationdata_login_url'
+      'uniffi_matrix_sdk_checksum_method_oauthauthorizationdata_login_url'
     );
   }
 }
@@ -913,9 +1069,10 @@ export default Object.freeze({
   initialize: uniffiEnsureInitialized,
   converters: {
     FfiConverterTypeBackupDownloadStrategy,
-    FfiConverterTypeOidcAuthorizationData,
+    FfiConverterTypeOAuthAuthorizationData,
     FfiConverterTypePaginatorState,
     FfiConverterTypeRoomMemberRole,
+    FfiConverterTypeRoomPaginationStatus,
     FfiConverterTypeRoomPowerLevelChanges,
   },
 });
