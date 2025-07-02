@@ -33,14 +33,11 @@ import nativeModule, {
 import {
   type UniffiByteArray,
   AbstractFfiConverterByteArray,
-  FfiConverterBool,
   FfiConverterInt32,
   RustBuffer,
-  UniffiEnum,
   UniffiInternalError,
   UniffiRustCaller,
   uniffiCreateFfiConverterString,
-  uniffiTypeNameSymbol,
 } from 'uniffi-bindgen-react-native';
 
 // Get converters from the other files, if any.
@@ -95,6 +92,10 @@ export enum EventItemOrigin {
    * The event came from pagination.
    */
   Pagination,
+  /**
+   * The event came from a cache.
+   */
+  Cache,
 }
 
 const FfiConverterTypeEventItemOrigin = (() => {
@@ -109,6 +110,8 @@ const FfiConverterTypeEventItemOrigin = (() => {
           return EventItemOrigin.Sync;
         case 3:
           return EventItemOrigin.Pagination;
+        case 4:
+          return EventItemOrigin.Cache;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -121,161 +124,12 @@ const FfiConverterTypeEventItemOrigin = (() => {
           return ordinalConverter.write(2, into);
         case EventItemOrigin.Pagination:
           return ordinalConverter.write(3, into);
+        case EventItemOrigin.Cache:
+          return ordinalConverter.write(4, into);
       }
     }
     allocationSize(value: TypeName): number {
       return ordinalConverter.allocationSize(0);
-    }
-  }
-  return new FFIConverter();
-})();
-
-// Enum: LiveBackPaginationStatus
-export enum LiveBackPaginationStatus_Tags {
-  Idle = 'Idle',
-  Paginating = 'Paginating',
-}
-/**
- * Status for the back-pagination on a live timeline.
- */
-export const LiveBackPaginationStatus = (() => {
-  type Idle__interface = {
-    tag: LiveBackPaginationStatus_Tags.Idle;
-    inner: Readonly<{ hitStartOfTimeline: boolean }>;
-  };
-
-  /**
-   * No back-pagination is happening right now.
-   */
-  class Idle_ extends UniffiEnum implements Idle__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'LiveBackPaginationStatus';
-    readonly tag = LiveBackPaginationStatus_Tags.Idle;
-    readonly inner: Readonly<{ hitStartOfTimeline: boolean }>;
-    constructor(inner: {
-      /**
-       * Have we hit the start of the timeline, i.e. back-paginating wouldn't
-       * have any effect?
-       */ hitStartOfTimeline: boolean;
-    }) {
-      super('LiveBackPaginationStatus', 'Idle');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: {
-      /**
-       * Have we hit the start of the timeline, i.e. back-paginating wouldn't
-       * have any effect?
-       */ hitStartOfTimeline: boolean;
-    }): Idle_ {
-      return new Idle_(inner);
-    }
-
-    static instanceOf(obj: any): obj is Idle_ {
-      return obj.tag === LiveBackPaginationStatus_Tags.Idle;
-    }
-  }
-
-  type Paginating__interface = {
-    tag: LiveBackPaginationStatus_Tags.Paginating;
-  };
-
-  /**
-   * Back-pagination is already running in the background.
-   */
-  class Paginating_ extends UniffiEnum implements Paginating__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'LiveBackPaginationStatus';
-    readonly tag = LiveBackPaginationStatus_Tags.Paginating;
-    constructor() {
-      super('LiveBackPaginationStatus', 'Paginating');
-    }
-
-    static new(): Paginating_ {
-      return new Paginating_();
-    }
-
-    static instanceOf(obj: any): obj is Paginating_ {
-      return obj.tag === LiveBackPaginationStatus_Tags.Paginating;
-    }
-  }
-
-  function instanceOf(obj: any): obj is LiveBackPaginationStatus {
-    return obj[uniffiTypeNameSymbol] === 'LiveBackPaginationStatus';
-  }
-
-  return Object.freeze({
-    instanceOf,
-    Idle: Idle_,
-    Paginating: Paginating_,
-  });
-})();
-
-/**
- * Status for the back-pagination on a live timeline.
- */
-
-export type LiveBackPaginationStatus = InstanceType<
-  (typeof LiveBackPaginationStatus)[keyof Omit<
-    typeof LiveBackPaginationStatus,
-    'instanceOf'
-  >]
->;
-
-// FfiConverter for enum LiveBackPaginationStatus
-const FfiConverterTypeLiveBackPaginationStatus = (() => {
-  const ordinalConverter = FfiConverterInt32;
-  type TypeName = LiveBackPaginationStatus;
-  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
-    read(from: RustBuffer): TypeName {
-      switch (ordinalConverter.read(from)) {
-        case 1:
-          return new LiveBackPaginationStatus.Idle({
-            hitStartOfTimeline: FfiConverterBool.read(from),
-          });
-        case 2:
-          return new LiveBackPaginationStatus.Paginating();
-        default:
-          throw new UniffiInternalError.UnexpectedEnumCase();
-      }
-    }
-    write(value: TypeName, into: RustBuffer): void {
-      switch (value.tag) {
-        case LiveBackPaginationStatus_Tags.Idle: {
-          ordinalConverter.write(1, into);
-          const inner = value.inner;
-          FfiConverterBool.write(inner.hitStartOfTimeline, into);
-          return;
-        }
-        case LiveBackPaginationStatus_Tags.Paginating: {
-          ordinalConverter.write(2, into);
-          return;
-        }
-        default:
-          // Throwing from here means that LiveBackPaginationStatus_Tags hasn't matched an ordinal.
-          throw new UniffiInternalError.UnexpectedEnumCase();
-      }
-    }
-    allocationSize(value: TypeName): number {
-      switch (value.tag) {
-        case LiveBackPaginationStatus_Tags.Idle: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(1);
-          size += FfiConverterBool.allocationSize(inner.hitStartOfTimeline);
-          return size;
-        }
-        case LiveBackPaginationStatus_Tags.Paginating: {
-          return ordinalConverter.allocationSize(2);
-        }
-        default:
-          throw new UniffiInternalError.UnexpectedEnumCase();
-      }
     }
   }
   return new FFIConverter();
@@ -360,7 +214,6 @@ export default Object.freeze({
   initialize: uniffiEnsureInitialized,
   converters: {
     FfiConverterTypeEventItemOrigin,
-    FfiConverterTypeLiveBackPaginationStatus,
     FfiConverterTypeRoomPinnedEventsChange,
   },
 });

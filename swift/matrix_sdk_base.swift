@@ -400,6 +400,22 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
+    typealias FfiType = UInt64
+    typealias SwiftType = UInt64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -435,6 +451,364 @@ fileprivate struct FfiConverterString: FfiConverter {
         let len = Int32(value.utf8.count)
         writeInt(&buf, len)
         writeBytes(&buf, value.utf8)
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterDuration: FfiConverterRustBuffer {
+    typealias SwiftType = TimeInterval
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TimeInterval {
+        let seconds: UInt64 = try readInt(&buf)
+        let nanoseconds: UInt32 = try readInt(&buf)
+        return Double(seconds) + (Double(nanoseconds) / 1.0e9)
+    }
+
+    public static func write(_ value: TimeInterval, into buf: inout [UInt8]) {
+        if value.rounded(.down) > Double(Int64.max) {
+            fatalError("Duration overflow, exceeds max bounds supported by Uniffi")
+        }
+
+        if value < 0 {
+            fatalError("Invalid duration, must be non-negative")
+        }
+
+        let seconds = UInt64(value)
+        let nanoseconds = UInt32((value - Double(seconds)) * 1.0e9)
+        writeInt(&buf, seconds)
+        writeInt(&buf, nanoseconds)
+    }
+}
+
+
+/**
+ * The retention policy for media content used by the [`EventCacheStore`].
+ *
+ * [`EventCacheStore`]: crate::event_cache::store::EventCacheStore
+ */
+public struct MediaRetentionPolicy {
+    /**
+     * The maximum authorized size of the overall media cache, in bytes.
+     *
+     * The cache size is defined as the sum of the sizes of all the (possibly
+     * encrypted) media contents in the cache, excluding any metadata
+     * associated with them.
+     *
+     * If this is set and the cache size is bigger than this value, the oldest
+     * media contents in the cache will be removed during a cleanup until the
+     * cache size is below this threshold.
+     *
+     * Note that it is possible for the cache size to temporarily exceed this
+     * value between two cleanups.
+     *
+     * Defaults to 400 MiB.
+     */
+    public var maxCacheSize: UInt64?
+    /**
+     * The maximum authorized size of a single media content, in bytes.
+     *
+     * The size of a media content is the size taken by the content in the
+     * database, after it was possibly encrypted, so it might differ from the
+     * initial size of the content.
+     *
+     * The maximum authorized size of a single media content is actually the
+     * lowest value between `max_cache_size` and `max_file_size`.
+     *
+     * If it is set, media content bigger than the maximum size will not be
+     * cached. If the maximum size changed after media content that exceeds the
+     * new value was cached, the corresponding content will be removed
+     * during a cleanup.
+     *
+     * Defaults to 20 MiB.
+     */
+    public var maxFileSize: UInt64?
+    /**
+     * The duration after which unaccessed media content is considered
+     * expired.
+     *
+     * If this is set, media content whose last access is older than this
+     * duration will be removed from the media cache during a cleanup.
+     *
+     * Defaults to 60 days.
+     */
+    public var lastAccessExpiry: TimeInterval?
+    /**
+     * The duration between two automatic media cache cleanups.
+     *
+     * If this is set, a cleanup will be triggered after the given duration
+     * is elapsed, at the next call to the media cache API. If this is set to
+     * zero, each call to the media cache API will trigger a cleanup. If this
+     * is `None`, cleanups will only occur if they are triggered manually.
+     *
+     * Defaults to running cleanups daily.
+     */
+    public var cleanupFrequency: TimeInterval?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The maximum authorized size of the overall media cache, in bytes.
+         *
+         * The cache size is defined as the sum of the sizes of all the (possibly
+         * encrypted) media contents in the cache, excluding any metadata
+         * associated with them.
+         *
+         * If this is set and the cache size is bigger than this value, the oldest
+         * media contents in the cache will be removed during a cleanup until the
+         * cache size is below this threshold.
+         *
+         * Note that it is possible for the cache size to temporarily exceed this
+         * value between two cleanups.
+         *
+         * Defaults to 400 MiB.
+         */maxCacheSize: UInt64?, 
+        /**
+         * The maximum authorized size of a single media content, in bytes.
+         *
+         * The size of a media content is the size taken by the content in the
+         * database, after it was possibly encrypted, so it might differ from the
+         * initial size of the content.
+         *
+         * The maximum authorized size of a single media content is actually the
+         * lowest value between `max_cache_size` and `max_file_size`.
+         *
+         * If it is set, media content bigger than the maximum size will not be
+         * cached. If the maximum size changed after media content that exceeds the
+         * new value was cached, the corresponding content will be removed
+         * during a cleanup.
+         *
+         * Defaults to 20 MiB.
+         */maxFileSize: UInt64?, 
+        /**
+         * The duration after which unaccessed media content is considered
+         * expired.
+         *
+         * If this is set, media content whose last access is older than this
+         * duration will be removed from the media cache during a cleanup.
+         *
+         * Defaults to 60 days.
+         */lastAccessExpiry: TimeInterval?, 
+        /**
+         * The duration between two automatic media cache cleanups.
+         *
+         * If this is set, a cleanup will be triggered after the given duration
+         * is elapsed, at the next call to the media cache API. If this is set to
+         * zero, each call to the media cache API will trigger a cleanup. If this
+         * is `None`, cleanups will only occur if they are triggered manually.
+         *
+         * Defaults to running cleanups daily.
+         */cleanupFrequency: TimeInterval?) {
+        self.maxCacheSize = maxCacheSize
+        self.maxFileSize = maxFileSize
+        self.lastAccessExpiry = lastAccessExpiry
+        self.cleanupFrequency = cleanupFrequency
+    }
+}
+
+#if compiler(>=6)
+extension MediaRetentionPolicy: Sendable {}
+#endif
+
+
+extension MediaRetentionPolicy: Equatable, Hashable {
+    public static func ==(lhs: MediaRetentionPolicy, rhs: MediaRetentionPolicy) -> Bool {
+        if lhs.maxCacheSize != rhs.maxCacheSize {
+            return false
+        }
+        if lhs.maxFileSize != rhs.maxFileSize {
+            return false
+        }
+        if lhs.lastAccessExpiry != rhs.lastAccessExpiry {
+            return false
+        }
+        if lhs.cleanupFrequency != rhs.cleanupFrequency {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(maxCacheSize)
+        hasher.combine(maxFileSize)
+        hasher.combine(lastAccessExpiry)
+        hasher.combine(cleanupFrequency)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeMediaRetentionPolicy: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MediaRetentionPolicy {
+        return
+            try MediaRetentionPolicy(
+                maxCacheSize: FfiConverterOptionUInt64.read(from: &buf), 
+                maxFileSize: FfiConverterOptionUInt64.read(from: &buf), 
+                lastAccessExpiry: FfiConverterOptionDuration.read(from: &buf), 
+                cleanupFrequency: FfiConverterOptionDuration.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: MediaRetentionPolicy, into buf: inout [UInt8]) {
+        FfiConverterOptionUInt64.write(value.maxCacheSize, into: &buf)
+        FfiConverterOptionUInt64.write(value.maxFileSize, into: &buf)
+        FfiConverterOptionDuration.write(value.lastAccessExpiry, into: &buf)
+        FfiConverterOptionDuration.write(value.cleanupFrequency, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeMediaRetentionPolicy_lift(_ buf: RustBuffer) throws -> MediaRetentionPolicy {
+    return try FfiConverterTypeMediaRetentionPolicy.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeMediaRetentionPolicy_lower(_ value: MediaRetentionPolicy) -> RustBuffer {
+    return FfiConverterTypeMediaRetentionPolicy.lower(value)
+}
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * Represents the state of a room encryption.
+ */
+
+public enum EncryptionState {
+    
+    /**
+     * The room is encrypted.
+     */
+    case encrypted
+    /**
+     * The room is not encrypted.
+     */
+    case notEncrypted
+    /**
+     * The state of the room encryption is unknown, probably because the
+     * `/sync` did not provide all data needed to decide.
+     */
+    case unknown
+}
+
+
+#if compiler(>=6)
+extension EncryptionState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeEncryptionState: FfiConverterRustBuffer {
+    typealias SwiftType = EncryptionState
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> EncryptionState {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .encrypted
+        
+        case 2: return .notEncrypted
+        
+        case 3: return .unknown
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: EncryptionState, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .encrypted:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .notEncrypted:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .unknown:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeEncryptionState_lift(_ buf: RustBuffer) throws -> EncryptionState {
+    return try FfiConverterTypeEncryptionState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeEncryptionState_lower(_ value: EncryptionState) -> RustBuffer {
+    return FfiConverterTypeEncryptionState.lower(value)
+}
+
+
+extension EncryptionState: Equatable, Hashable {}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionUInt64: FfiConverterRustBuffer {
+    typealias SwiftType = UInt64?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterUInt64.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt64.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionDuration: FfiConverterRustBuffer {
+    typealias SwiftType = TimeInterval?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterDuration.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterDuration.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
     }
 }
 

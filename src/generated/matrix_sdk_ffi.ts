@@ -29,6 +29,7 @@ import nativeModule, {
   type UniffiForeignFutureCompleteRustBuffer,
   type UniffiForeignFutureStructVoid,
   type UniffiForeignFutureCompleteVoid,
+  type UniffiVTableCallbackInterfaceAccountDataListener,
   type UniffiVTableCallbackInterfaceBackupStateListener,
   type UniffiVTableCallbackInterfaceBackupSteadyStateListener,
   type UniffiVTableCallbackInterfaceClientDelegate,
@@ -37,11 +38,14 @@ import nativeModule, {
   type UniffiVTableCallbackInterfaceIdentityStatusChangeListener,
   type UniffiVTableCallbackInterfaceIgnoredUsersListener,
   type UniffiVTableCallbackInterfaceKnockRequestsListener,
+  type UniffiVTableCallbackInterfaceLiveLocationShareListener,
+  type UniffiVTableCallbackInterfaceMediaPreviewConfigListener,
   type UniffiVTableCallbackInterfaceNotificationSettingsDelegate,
   type UniffiVTableCallbackInterfacePaginationStatusListener,
   type UniffiVTableCallbackInterfaceProgressWatcher,
   type UniffiVTableCallbackInterfaceQrLoginProgressListener,
   type UniffiVTableCallbackInterfaceRecoveryStateListener,
+  type UniffiVTableCallbackInterfaceRoomAccountDataListener,
   type UniffiVTableCallbackInterfaceRoomDirectorySearchEntriesListener,
   type UniffiVTableCallbackInterfaceRoomInfoListener,
   type UniffiVTableCallbackInterfaceRoomListEntriesListener,
@@ -58,11 +62,13 @@ import nativeModule, {
   type UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider,
 } from './matrix_sdk_ffi-ffi';
 import {
-  type OidcAuthorizationDataInterface,
+  type OAuthAuthorizationDataInterface,
   type RoomPowerLevelChanges,
   BackupDownloadStrategy,
   RoomMemberRole,
+  RoomPaginationStatus,
 } from './matrix_sdk';
+import { type MediaRetentionPolicy, EncryptionState } from './matrix_sdk_base';
 import { ShieldStateCode } from './matrix_sdk_common';
 import {
   CollectStrategy,
@@ -70,11 +76,7 @@ import {
   TrustRequirement,
   UtdCause,
 } from './matrix_sdk_crypto';
-import {
-  EventItemOrigin,
-  LiveBackPaginationStatus,
-  RoomPinnedEventsChange,
-} from './matrix_sdk_ui';
+import { EventItemOrigin, RoomPinnedEventsChange } from './matrix_sdk_ui';
 import {
   type FfiConverter,
   type UniffiByteArray,
@@ -121,15 +123,21 @@ import {
 
 // Get converters from the other files, if any.
 import uniffiMatrixSdkModule from './matrix_sdk';
+import uniffiMatrixSdkBaseModule from './matrix_sdk_base';
 import uniffiMatrixSdkCommonModule from './matrix_sdk_common';
 import uniffiMatrixSdkCryptoModule from './matrix_sdk_crypto';
 import uniffiMatrixSdkUiModule from './matrix_sdk_ui';
 const {
   FfiConverterTypeBackupDownloadStrategy,
-  FfiConverterTypeOidcAuthorizationData,
+  FfiConverterTypeOAuthAuthorizationData,
   FfiConverterTypeRoomMemberRole,
+  FfiConverterTypeRoomPaginationStatus,
   FfiConverterTypeRoomPowerLevelChanges,
 } = uniffiMatrixSdkModule.converters;
+const {
+  FfiConverterTypeEncryptionState,
+  FfiConverterTypeMediaRetentionPolicy,
+} = uniffiMatrixSdkBaseModule.converters;
 const { FfiConverterTypeShieldStateCode } =
   uniffiMatrixSdkCommonModule.converters;
 const {
@@ -140,7 +148,6 @@ const {
 } = uniffiMatrixSdkCryptoModule.converters;
 const {
   FfiConverterTypeEventItemOrigin,
-  FfiConverterTypeLiveBackPaginationStatus,
   FfiConverterTypeRoomPinnedEventsChange,
 } = uniffiMatrixSdkUiModule.converters;
 const uniffiCaller = new UniffiRustCaller();
@@ -183,7 +190,8 @@ export function contentWithoutRelationFromMessage(
  */
 export function createCaptionEdit(
   caption: string | undefined,
-  formattedCaption: FormattedBody | undefined
+  formattedCaption: FormattedBody | undefined,
+  mentions: Mentions | undefined
 ): EditedContent {
   return FfiConverterTypeEditedContent.lift(
     uniffiCaller.rustCall(
@@ -191,11 +199,27 @@ export function createCaptionEdit(
         return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_create_caption_edit(
           FfiConverterOptionalString.lower(caption),
           FfiConverterOptionalTypeFormattedBody.lower(formattedCaption),
+          FfiConverterOptionalTypeMentions.lower(mentions),
           callStatus
         );
       },
       /*liftString:*/ FfiConverterString.lift
     )
+  );
+}
+/**
+ * Set the global enablement level for the Sentry layer (after the logs have
+ * been set up).
+ */
+export function enableSentryLogging(enabled: boolean): void {
+  uniffiCaller.rustCall(
+    /*caller:*/ (callStatus) => {
+      nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_enable_sentry_logging(
+        FfiConverterBool.lower(enabled),
+        callStatus
+      );
+    },
+    /*liftString:*/ FfiConverterString.lift
   );
 }
 export function genTransactionId(): string {
@@ -216,7 +240,7 @@ export function genTransactionId(): string {
  *
  * # Arguments
  * * `widget_settings` - The widget settings to generate the url for.
- * * `room` - A matrix room which is used to query the logged in username
+ * * `room` - A Matrix room which is used to query the logged in username
  * * `props` - Properties from the client that can be used by a widget to adapt
  * to the client. e.g. language, font-scale...
  */
@@ -288,6 +312,32 @@ export function getElementCallRequiredPermissions(
       },
       /*liftString:*/ FfiConverterString.lift
     )
+  );
+}
+/**
+ * Sets up logs and the tokio runtime for the current application.
+ *
+ * If `use_lightweight_tokio_runtime` is set to true, this will set up a
+ * lightweight tokio runtime, for processes that have memory limitations (like
+ * the NSE process on iOS). Otherwise, this can remain false, in which case a
+ * multithreaded tokio runtime will be set up.
+ */
+export function initPlatform(
+  config: TracingConfiguration,
+  useLightweightTokioRuntime: boolean
+): void /*throws*/ {
+  uniffiCaller.rustCallWithError(
+    /*liftError:*/ FfiConverterTypeClientError.lift.bind(
+      FfiConverterTypeClientError
+    ),
+    /*caller:*/ (callStatus) => {
+      nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_init_platform(
+        FfiConverterTypeTracingConfiguration.lower(config),
+        FfiConverterBool.lower(useLightweightTokioRuntime),
+        callStatus
+      );
+    },
+    /*liftString:*/ FfiConverterString.lift
   );
 }
 /**
@@ -584,17 +634,6 @@ export function sdkGitSha(): string {
     )
   );
 }
-export function setupTracing(config: TracingConfiguration): void {
-  uniffiCaller.rustCall(
-    /*caller:*/ (callStatus) => {
-      nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_func_setup_tracing(
-        FfiConverterTypeTracingConfiguration.lower(config),
-        callStatus
-      );
-    },
-    /*liftString:*/ FfiConverterString.lift
-  );
-}
 export function suggestedPowerLevelForRole(
   role: RoomMemberRole
 ): /*i64*/ bigint {
@@ -625,6 +664,61 @@ export function suggestedRoleForPowerLevel(
     )
   );
 }
+
+/**
+ * A listener for changes of global account data events.
+ */
+export interface AccountDataListener {
+  /**
+   * Called when a global account data event has changed.
+   */
+  onChange(event: AccountDataEvent): void;
+}
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+const uniffiCallbackInterfaceAccountDataListener: {
+  vtable: UniffiVTableCallbackInterfaceAccountDataListener;
+  register: () => void;
+} = {
+  // Create the VTable using a series of closures.
+  // ts automatically converts these into C callback functions.
+  vtable: {
+    onChange: (uniffiHandle: bigint, event: Uint8Array) => {
+      const uniffiMakeCall = (): void => {
+        const jsCallback =
+          FfiConverterTypeAccountDataListener.lift(uniffiHandle);
+        return jsCallback.onChange(
+          FfiConverterTypeAccountDataEvent.lift(event)
+        );
+      };
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
+      uniffiTraitInterfaceCall(
+        /*makeCall:*/ uniffiMakeCall,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
+        /*lowerString:*/ FfiConverterString.lower
+      );
+      return uniffiResult;
+    },
+    uniffiFree: (uniffiHandle: UniffiHandle): void => {
+      // AccountDataListener: this will throw a stale handle error if the handle isn't found.
+      FfiConverterTypeAccountDataListener.drop(uniffiHandle);
+    },
+  },
+  register: () => {
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(
+      uniffiCallbackInterfaceAccountDataListener.vtable
+    );
+  },
+};
+
+// FfiConverter protocol for callback interfaces
+const FfiConverterTypeAccountDataListener =
+  new FfiConverterCallback<AccountDataListener>();
 
 export interface BackupStateListener {
   onUpdate(status: BackupState): void;
@@ -724,7 +818,6 @@ const FfiConverterTypeBackupSteadyStateListener =
 
 export interface ClientDelegate {
   didReceiveAuthError(isSoftLogout: boolean): void;
-  didRefreshTokens(): void;
 }
 
 // Put the implementation in a struct so we don't pollute the top-level namespace
@@ -741,24 +834,6 @@ const uniffiCallbackInterfaceClientDelegate: {
         return jsCallback.didReceiveAuthError(
           FfiConverterBool.lift(isSoftLogout)
         );
-      };
-      const uniffiResult = UniffiResult.ready<void>();
-      const uniffiHandleSuccess = (obj: any) => {};
-      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
-        UniffiResult.writeError(uniffiResult, code, errBuf);
-      };
-      uniffiTraitInterfaceCall(
-        /*makeCall:*/ uniffiMakeCall,
-        /*handleSuccess:*/ uniffiHandleSuccess,
-        /*handleError:*/ uniffiHandleError,
-        /*lowerString:*/ FfiConverterString.lower
-      );
-      return uniffiResult;
-    },
-    didRefreshTokens: (uniffiHandle: bigint) => {
-      const uniffiMakeCall = (): void => {
-        const jsCallback = FfiConverterTypeClientDelegate.lift(uniffiHandle);
-        return jsCallback.didRefreshTokens();
       };
       const uniffiResult = UniffiResult.ready<void>();
       const uniffiHandleSuccess = (obj: any) => {};
@@ -1067,6 +1142,107 @@ const FfiConverterTypeKnockRequestsListener =
   new FfiConverterCallback<KnockRequestsListener>();
 
 /**
+ * A listener for receiving new live location shares in a room.
+ */
+export interface LiveLocationShareListener {
+  call(liveLocationShares: Array<LiveLocationShare>): void;
+}
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+const uniffiCallbackInterfaceLiveLocationShareListener: {
+  vtable: UniffiVTableCallbackInterfaceLiveLocationShareListener;
+  register: () => void;
+} = {
+  // Create the VTable using a series of closures.
+  // ts automatically converts these into C callback functions.
+  vtable: {
+    call: (uniffiHandle: bigint, liveLocationShares: Uint8Array) => {
+      const uniffiMakeCall = (): void => {
+        const jsCallback =
+          FfiConverterTypeLiveLocationShareListener.lift(uniffiHandle);
+        return jsCallback.call(
+          FfiConverterArrayTypeLiveLocationShare.lift(liveLocationShares)
+        );
+      };
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
+      uniffiTraitInterfaceCall(
+        /*makeCall:*/ uniffiMakeCall,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
+        /*lowerString:*/ FfiConverterString.lower
+      );
+      return uniffiResult;
+    },
+    uniffiFree: (uniffiHandle: UniffiHandle): void => {
+      // LiveLocationShareListener: this will throw a stale handle error if the handle isn't found.
+      FfiConverterTypeLiveLocationShareListener.drop(uniffiHandle);
+    },
+  },
+  register: () => {
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(
+      uniffiCallbackInterfaceLiveLocationShareListener.vtable
+    );
+  },
+};
+
+// FfiConverter protocol for callback interfaces
+const FfiConverterTypeLiveLocationShareListener =
+  new FfiConverterCallback<LiveLocationShareListener>();
+
+export interface MediaPreviewConfigListener {
+  onChange(mediaPreviewConfig: MediaPreviewConfig | undefined): void;
+}
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+const uniffiCallbackInterfaceMediaPreviewConfigListener: {
+  vtable: UniffiVTableCallbackInterfaceMediaPreviewConfigListener;
+  register: () => void;
+} = {
+  // Create the VTable using a series of closures.
+  // ts automatically converts these into C callback functions.
+  vtable: {
+    onChange: (uniffiHandle: bigint, mediaPreviewConfig: Uint8Array) => {
+      const uniffiMakeCall = (): void => {
+        const jsCallback =
+          FfiConverterTypeMediaPreviewConfigListener.lift(uniffiHandle);
+        return jsCallback.onChange(
+          FfiConverterOptionalTypeMediaPreviewConfig.lift(mediaPreviewConfig)
+        );
+      };
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
+      uniffiTraitInterfaceCall(
+        /*makeCall:*/ uniffiMakeCall,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
+        /*lowerString:*/ FfiConverterString.lower
+      );
+      return uniffiResult;
+    },
+    uniffiFree: (uniffiHandle: UniffiHandle): void => {
+      // MediaPreviewConfigListener: this will throw a stale handle error if the handle isn't found.
+      FfiConverterTypeMediaPreviewConfigListener.drop(uniffiHandle);
+    },
+  },
+  register: () => {
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(
+      uniffiCallbackInterfaceMediaPreviewConfigListener.vtable
+    );
+  },
+};
+
+// FfiConverter protocol for callback interfaces
+const FfiConverterTypeMediaPreviewConfigListener =
+  new FfiConverterCallback<MediaPreviewConfigListener>();
+
+/**
  * Delegate to notify of changes in push rules
  */
 export interface NotificationSettingsDelegate {
@@ -1117,7 +1293,7 @@ const FfiConverterTypeNotificationSettingsDelegate =
   new FfiConverterCallback<NotificationSettingsDelegate>();
 
 export interface PaginationStatusListener {
-  onUpdate(status: LiveBackPaginationStatus): void;
+  onUpdate(status: RoomPaginationStatus): void;
 }
 
 // Put the implementation in a struct so we don't pollute the top-level namespace
@@ -1133,7 +1309,7 @@ const uniffiCallbackInterfacePaginationStatusListener: {
         const jsCallback =
           FfiConverterTypePaginationStatusListener.lift(uniffiHandle);
         return jsCallback.onUpdate(
-          FfiConverterTypeLiveBackPaginationStatus.lift(status)
+          FfiConverterTypeRoomPaginationStatus.lift(status)
         );
       };
       const uniffiResult = UniffiResult.ready<void>();
@@ -1306,6 +1482,62 @@ const uniffiCallbackInterfaceRecoveryStateListener: {
 // FfiConverter protocol for callback interfaces
 const FfiConverterTypeRecoveryStateListener =
   new FfiConverterCallback<RecoveryStateListener>();
+
+/**
+ * A listener for changes of room account data events.
+ */
+export interface RoomAccountDataListener {
+  /**
+   * Called when a room account data event was changed.
+   */
+  onChange(event: RoomAccountDataEvent, roomId: string): void;
+}
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+const uniffiCallbackInterfaceRoomAccountDataListener: {
+  vtable: UniffiVTableCallbackInterfaceRoomAccountDataListener;
+  register: () => void;
+} = {
+  // Create the VTable using a series of closures.
+  // ts automatically converts these into C callback functions.
+  vtable: {
+    onChange: (uniffiHandle: bigint, event: Uint8Array, roomId: Uint8Array) => {
+      const uniffiMakeCall = (): void => {
+        const jsCallback =
+          FfiConverterTypeRoomAccountDataListener.lift(uniffiHandle);
+        return jsCallback.onChange(
+          FfiConverterTypeRoomAccountDataEvent.lift(event),
+          FfiConverterString.lift(roomId)
+        );
+      };
+      const uniffiResult = UniffiResult.ready<void>();
+      const uniffiHandleSuccess = (obj: any) => {};
+      const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+        UniffiResult.writeError(uniffiResult, code, errBuf);
+      };
+      uniffiTraitInterfaceCall(
+        /*makeCall:*/ uniffiMakeCall,
+        /*handleSuccess:*/ uniffiHandleSuccess,
+        /*handleError:*/ uniffiHandleError,
+        /*lowerString:*/ FfiConverterString.lower
+      );
+      return uniffiResult;
+    },
+    uniffiFree: (uniffiHandle: UniffiHandle): void => {
+      // RoomAccountDataListener: this will throw a stale handle error if the handle isn't found.
+      FfiConverterTypeRoomAccountDataListener.drop(uniffiHandle);
+    },
+  },
+  register: () => {
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(
+      uniffiCallbackInterfaceRoomAccountDataListener.vtable
+    );
+  },
+};
+
+// FfiConverter protocol for callback interfaces
+const FfiConverterTypeRoomAccountDataListener =
+  new FfiConverterCallback<RoomAccountDataListener>();
 
 export interface RoomDirectorySearchEntriesListener {
   onUpdate(roomEntriesUpdate: Array<RoomDirectorySearchEntryUpdate>): void;
@@ -2506,6 +2738,98 @@ const FfiConverterTypeComposerDraft = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * Like [`SimplePushRule`], but with an additional `conditions` field.
+ */
+export type ConditionalPushRule = {
+  /**
+   * Actions to determine if and how a notification is delivered for events
+   * matching this rule.
+   */
+  actions: Array<Action>;
+  /**
+   * Whether this is a default rule, or has been set explicitly.
+   */
+  default_: boolean;
+  /**
+   * Whether the push rule is enabled or not.
+   */
+  enabled: boolean;
+  /**
+   * The ID of this rule.
+   */
+  ruleId: string;
+  /**
+   * The conditions that must hold true for an event in order for a rule to
+   * be applied to an event.
+   *
+   * A rule with no conditions always matches.
+   */
+  conditions: Array<PushCondition>;
+};
+
+/**
+ * Generated factory for {@link ConditionalPushRule} record objects.
+ */
+export const ConditionalPushRule = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<ConditionalPushRule, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link ConditionalPushRule}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link ConditionalPushRule}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<ConditionalPushRule>,
+  });
+})();
+
+const FfiConverterTypeConditionalPushRule = (() => {
+  type TypeName = ConditionalPushRule;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        actions: FfiConverterArrayTypeAction.read(from),
+        default_: FfiConverterBool.read(from),
+        enabled: FfiConverterBool.read(from),
+        ruleId: FfiConverterString.read(from),
+        conditions: FfiConverterArrayTypePushCondition.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterArrayTypeAction.write(value.actions, into);
+      FfiConverterBool.write(value.default_, into);
+      FfiConverterBool.write(value.enabled, into);
+      FfiConverterString.write(value.ruleId, into);
+      FfiConverterArrayTypePushCondition.write(value.conditions, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterArrayTypeAction.allocationSize(value.actions) +
+        FfiConverterBool.allocationSize(value.default_) +
+        FfiConverterBool.allocationSize(value.enabled) +
+        FfiConverterString.allocationSize(value.ruleId) +
+        FfiConverterArrayTypePushCondition.allocationSize(value.conditions)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type CreateRoomParameters = {
   name: string | undefined;
   topic: string | undefined;
@@ -2517,6 +2841,7 @@ export type CreateRoomParameters = {
   avatar: string | undefined;
   powerLevelContentOverride: PowerLevels | undefined;
   joinRuleOverride: JoinRule | undefined;
+  historyVisibilityOverride: RoomHistoryVisibility | undefined;
   canonicalAlias: string | undefined;
 };
 
@@ -2531,6 +2856,7 @@ export const CreateRoomParameters = (() => {
     avatar: undefined,
     powerLevelContentOverride: undefined,
     joinRuleOverride: undefined,
+    historyVisibilityOverride: undefined,
     canonicalAlias: undefined,
   });
   const create = (() => {
@@ -2575,6 +2901,8 @@ const FfiConverterTypeCreateRoomParameters = (() => {
         powerLevelContentOverride:
           FfiConverterOptionalTypePowerLevels.read(from),
         joinRuleOverride: FfiConverterOptionalTypeJoinRule.read(from),
+        historyVisibilityOverride:
+          FfiConverterOptionalTypeRoomHistoryVisibility.read(from),
         canonicalAlias: FfiConverterOptionalString.read(from),
       };
     }
@@ -2592,6 +2920,10 @@ const FfiConverterTypeCreateRoomParameters = (() => {
         into
       );
       FfiConverterOptionalTypeJoinRule.write(value.joinRuleOverride, into);
+      FfiConverterOptionalTypeRoomHistoryVisibility.write(
+        value.historyVisibilityOverride,
+        into
+      );
       FfiConverterOptionalString.write(value.canonicalAlias, into);
     }
     allocationSize(value: TypeName): number {
@@ -2609,6 +2941,9 @@ const FfiConverterTypeCreateRoomParameters = (() => {
         ) +
         FfiConverterOptionalTypeJoinRule.allocationSize(
           value.joinRuleOverride
+        ) +
+        FfiConverterOptionalTypeRoomHistoryVisibility.allocationSize(
+          value.historyVisibilityOverride
         ) +
         FfiConverterOptionalString.allocationSize(value.canonicalAlias)
       );
@@ -2805,9 +3140,9 @@ export type EventTimelineItem = {
   isOwn: boolean;
   isEditable: boolean;
   content: TimelineItemContent;
-  timestamp: /*u64*/ bigint;
-  reactions: Array<Reaction>;
+  timestamp: Timestamp;
   localSendState: EventSendState | undefined;
+  localCreatedAt: /*u64*/ bigint | undefined;
   readReceipts: Map<string, Receipt>;
   origin: EventItemOrigin | undefined;
   canBeRepliedTo: boolean;
@@ -2856,9 +3191,9 @@ const FfiConverterTypeEventTimelineItem = (() => {
         isOwn: FfiConverterBool.read(from),
         isEditable: FfiConverterBool.read(from),
         content: FfiConverterTypeTimelineItemContent.read(from),
-        timestamp: FfiConverterUInt64.read(from),
-        reactions: FfiConverterArrayTypeReaction.read(from),
+        timestamp: FfiConverterTypeTimestamp.read(from),
         localSendState: FfiConverterOptionalTypeEventSendState.read(from),
+        localCreatedAt: FfiConverterOptionalUInt64.read(from),
         readReceipts: FfiConverterMapStringTypeReceipt.read(from),
         origin: FfiConverterOptionalTypeEventItemOrigin.read(from),
         canBeRepliedTo: FfiConverterBool.read(from),
@@ -2876,9 +3211,9 @@ const FfiConverterTypeEventTimelineItem = (() => {
       FfiConverterBool.write(value.isOwn, into);
       FfiConverterBool.write(value.isEditable, into);
       FfiConverterTypeTimelineItemContent.write(value.content, into);
-      FfiConverterUInt64.write(value.timestamp, into);
-      FfiConverterArrayTypeReaction.write(value.reactions, into);
+      FfiConverterTypeTimestamp.write(value.timestamp, into);
       FfiConverterOptionalTypeEventSendState.write(value.localSendState, into);
+      FfiConverterOptionalUInt64.write(value.localCreatedAt, into);
       FfiConverterMapStringTypeReceipt.write(value.readReceipts, into);
       FfiConverterOptionalTypeEventItemOrigin.write(value.origin, into);
       FfiConverterBool.write(value.canBeRepliedTo, into);
@@ -2895,11 +3230,11 @@ const FfiConverterTypeEventTimelineItem = (() => {
         FfiConverterBool.allocationSize(value.isOwn) +
         FfiConverterBool.allocationSize(value.isEditable) +
         FfiConverterTypeTimelineItemContent.allocationSize(value.content) +
-        FfiConverterUInt64.allocationSize(value.timestamp) +
-        FfiConverterArrayTypeReaction.allocationSize(value.reactions) +
+        FfiConverterTypeTimestamp.allocationSize(value.timestamp) +
         FfiConverterOptionalTypeEventSendState.allocationSize(
           value.localSendState
         ) +
+        FfiConverterOptionalUInt64.allocationSize(value.localCreatedAt) +
         FfiConverterMapStringTypeReceipt.allocationSize(value.readReceipts) +
         FfiConverterOptionalTypeEventItemOrigin.allocationSize(value.origin) +
         FfiConverterBool.allocationSize(value.canBeRepliedTo) +
@@ -3177,6 +3512,153 @@ const FfiConverterTypeFormattedBody = (() => {
   return new FFIConverter();
 })();
 
+export type GalleryMessageContent = {
+  body: string;
+  formatted: FormattedBody | undefined;
+  itemtypes: Array<GalleryItemType>;
+};
+
+/**
+ * Generated factory for {@link GalleryMessageContent} record objects.
+ */
+export const GalleryMessageContent = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      GalleryMessageContent,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link GalleryMessageContent}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link GalleryMessageContent}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<GalleryMessageContent>,
+  });
+})();
+
+const FfiConverterTypeGalleryMessageContent = (() => {
+  type TypeName = GalleryMessageContent;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        body: FfiConverterString.read(from),
+        formatted: FfiConverterOptionalTypeFormattedBody.read(from),
+        itemtypes: FfiConverterArrayTypeGalleryItemType.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.body, into);
+      FfiConverterOptionalTypeFormattedBody.write(value.formatted, into);
+      FfiConverterArrayTypeGalleryItemType.write(value.itemtypes, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterString.allocationSize(value.body) +
+        FfiConverterOptionalTypeFormattedBody.allocationSize(value.formatted) +
+        FfiConverterArrayTypeGalleryItemType.allocationSize(value.itemtypes)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+export type GalleryUploadParameters = {
+  /**
+   * Optional non-formatted caption, for clients that support it.
+   */
+  caption: string | undefined;
+  /**
+   * Optional HTML-formatted caption, for clients that support it.
+   */
+  formattedCaption: FormattedBody | undefined;
+  /**
+   * Optional intentional mentions to be sent with the gallery.
+   */
+  mentions: Mentions | undefined;
+  /**
+   * Optional parameters for sending the media as (threaded) reply.
+   */
+  replyParams: ReplyParameters | undefined;
+};
+
+/**
+ * Generated factory for {@link GalleryUploadParameters} record objects.
+ */
+export const GalleryUploadParameters = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      GalleryUploadParameters,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link GalleryUploadParameters}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link GalleryUploadParameters}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () =>
+      Object.freeze(defaults()) as Partial<GalleryUploadParameters>,
+  });
+})();
+
+const FfiConverterTypeGalleryUploadParameters = (() => {
+  type TypeName = GalleryUploadParameters;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        caption: FfiConverterOptionalString.read(from),
+        formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
+        mentions: FfiConverterOptionalTypeMentions.read(from),
+        replyParams: FfiConverterOptionalTypeReplyParameters.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterOptionalString.write(value.caption, into);
+      FfiConverterOptionalTypeFormattedBody.write(value.formattedCaption, into);
+      FfiConverterOptionalTypeMentions.write(value.mentions, into);
+      FfiConverterOptionalTypeReplyParameters.write(value.replyParams, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterOptionalString.allocationSize(value.caption) +
+        FfiConverterOptionalTypeFormattedBody.allocationSize(
+          value.formattedCaption
+        ) +
+        FfiConverterOptionalTypeMentions.allocationSize(value.mentions) +
+        FfiConverterOptionalTypeReplyParameters.allocationSize(
+          value.replyParams
+        )
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type HttpPusherData = {
   url: string;
   format: PushFormat | undefined;
@@ -3304,6 +3786,57 @@ const FfiConverterTypeIdentityStatusChange = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * Details about an ignored user.
+ *
+ * This is currently empty.
+ */
+export type IgnoredUser = {};
+
+/**
+ * Generated factory for {@link IgnoredUser} record objects.
+ */
+export const IgnoredUser = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<IgnoredUser, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link IgnoredUser}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link IgnoredUser}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<IgnoredUser>,
+  });
+})();
+
+const FfiConverterTypeIgnoredUser = (() => {
+  type TypeName = IgnoredUser;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {};
+    }
+    write(value: TypeName, into: RustBuffer): void {}
+    allocationSize(value: TypeName): number {
+      return 0;
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type ImageInfo = {
   height: /*u64*/ bigint | undefined;
   width: /*u64*/ bigint | undefined;
@@ -3312,6 +3845,7 @@ export type ImageInfo = {
   thumbnailInfo: ThumbnailInfo | undefined;
   thumbnailSource: MediaSourceInterface | undefined;
   blurhash: string | undefined;
+  isAnimated: boolean | undefined;
 };
 
 /**
@@ -3354,6 +3888,7 @@ const FfiConverterTypeImageInfo = (() => {
         thumbnailInfo: FfiConverterOptionalTypeThumbnailInfo.read(from),
         thumbnailSource: FfiConverterOptionalTypeMediaSource.read(from),
         blurhash: FfiConverterOptionalString.read(from),
+        isAnimated: FfiConverterOptionalBool.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
@@ -3364,6 +3899,7 @@ const FfiConverterTypeImageInfo = (() => {
       FfiConverterOptionalTypeThumbnailInfo.write(value.thumbnailInfo, into);
       FfiConverterOptionalTypeMediaSource.write(value.thumbnailSource, into);
       FfiConverterOptionalString.write(value.blurhash, into);
+      FfiConverterOptionalBool.write(value.isAnimated, into);
     }
     allocationSize(value: TypeName): number {
       return (
@@ -3377,7 +3913,8 @@ const FfiConverterTypeImageInfo = (() => {
         FfiConverterOptionalTypeMediaSource.allocationSize(
           value.thumbnailSource
         ) +
-        FfiConverterOptionalString.allocationSize(value.blurhash)
+        FfiConverterOptionalString.allocationSize(value.blurhash) +
+        FfiConverterOptionalBool.allocationSize(value.isAnimated)
       );
     }
   }
@@ -3634,6 +4171,145 @@ const FfiConverterTypeKnockRequest = (() => {
   return new FFIConverter();
 })();
 
+export type LastLocation = {
+  /**
+   * The most recent location content of the user.
+   */
+  location: LocationContent;
+  /**
+   * A timestamp in milliseconds since Unix Epoch on that day in local
+   * time.
+   */
+  ts: /*u64*/ bigint;
+};
+
+/**
+ * Generated factory for {@link LastLocation} record objects.
+ */
+export const LastLocation = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<LastLocation, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link LastLocation}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link LastLocation}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<LastLocation>,
+  });
+})();
+
+const FfiConverterTypeLastLocation = (() => {
+  type TypeName = LastLocation;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        location: FfiConverterTypeLocationContent.read(from),
+        ts: FfiConverterUInt64.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeLocationContent.write(value.location, into);
+      FfiConverterUInt64.write(value.ts, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeLocationContent.allocationSize(value.location) +
+        FfiConverterUInt64.allocationSize(value.ts)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Details of a users live location share.
+ */
+export type LiveLocationShare = {
+  /**
+   * The user's last known location.
+   */
+  lastLocation: LastLocation;
+  /**
+   * The live status of the live location share.
+   */
+  isLive: boolean;
+  /**
+   * The user ID of the person sharing their live location.
+   */
+  userId: string;
+};
+
+/**
+ * Generated factory for {@link LiveLocationShare} record objects.
+ */
+export const LiveLocationShare = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<LiveLocationShare, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link LiveLocationShare}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link LiveLocationShare}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<LiveLocationShare>,
+  });
+})();
+
+const FfiConverterTypeLiveLocationShare = (() => {
+  type TypeName = LiveLocationShare;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        lastLocation: FfiConverterTypeLastLocation.read(from),
+        isLive: FfiConverterBool.read(from),
+        userId: FfiConverterString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeLastLocation.write(value.lastLocation, into);
+      FfiConverterBool.write(value.isLive, into);
+      FfiConverterString.write(value.userId, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeLastLocation.allocationSize(value.lastLocation) +
+        FfiConverterBool.allocationSize(value.isLive) +
+        FfiConverterString.allocationSize(value.userId)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type LocationContent = {
   body: string;
   geoUri: string;
@@ -3766,6 +4442,76 @@ const FfiConverterTypeMatrixEntity = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * The content of an `m.media_preview_config` event.
+ *
+ * Is also the content of the unstable
+ * `io.element.msc4278.media_preview_config`.
+ */
+export type MediaPreviewConfig = {
+  /**
+   * The media previews setting for the user.
+   */
+  mediaPreviews: MediaPreviews;
+  /**
+   * The invite avatars setting for the user.
+   */
+  inviteAvatars: InviteAvatars;
+};
+
+/**
+ * Generated factory for {@link MediaPreviewConfig} record objects.
+ */
+export const MediaPreviewConfig = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<MediaPreviewConfig, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link MediaPreviewConfig}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link MediaPreviewConfig}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<MediaPreviewConfig>,
+  });
+})();
+
+const FfiConverterTypeMediaPreviewConfig = (() => {
+  type TypeName = MediaPreviewConfig;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        mediaPreviews: FfiConverterTypeMediaPreviews.read(from),
+        inviteAvatars: FfiConverterTypeInviteAvatars.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeMediaPreviews.write(value.mediaPreviews, into);
+      FfiConverterTypeInviteAvatars.write(value.inviteAvatars, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeMediaPreviews.allocationSize(value.mediaPreviews) +
+        FfiConverterTypeInviteAvatars.allocationSize(value.inviteAvatars)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type Mentions = {
   userIds: Array<string>;
   room: boolean;
@@ -3825,8 +4571,6 @@ const FfiConverterTypeMentions = (() => {
 export type MessageContent = {
   msgType: MessageType;
   body: string;
-  inReplyTo: InReplyToDetailsInterface | undefined;
-  threadRoot: string | undefined;
   isEdited: boolean;
   mentions: Mentions | undefined;
 };
@@ -3868,8 +4612,6 @@ const FfiConverterTypeMessageContent = (() => {
       return {
         msgType: FfiConverterTypeMessageType.read(from),
         body: FfiConverterString.read(from),
-        inReplyTo: FfiConverterOptionalTypeInReplyToDetails.read(from),
-        threadRoot: FfiConverterOptionalString.read(from),
         isEdited: FfiConverterBool.read(from),
         mentions: FfiConverterOptionalTypeMentions.read(from),
       };
@@ -3877,8 +4619,6 @@ const FfiConverterTypeMessageContent = (() => {
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterTypeMessageType.write(value.msgType, into);
       FfiConverterString.write(value.body, into);
-      FfiConverterOptionalTypeInReplyToDetails.write(value.inReplyTo, into);
-      FfiConverterOptionalString.write(value.threadRoot, into);
       FfiConverterBool.write(value.isEdited, into);
       FfiConverterOptionalTypeMentions.write(value.mentions, into);
     }
@@ -3886,12 +4626,96 @@ const FfiConverterTypeMessageContent = (() => {
       return (
         FfiConverterTypeMessageType.allocationSize(value.msgType) +
         FfiConverterString.allocationSize(value.body) +
+        FfiConverterBool.allocationSize(value.isEdited) +
+        FfiConverterOptionalTypeMentions.allocationSize(value.mentions)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * A special kind of [`super::TimelineItemContent`] that groups together
+ * different room message types with their respective reactions and thread
+ * information.
+ */
+export type MsgLikeContent = {
+  kind: MsgLikeKind;
+  reactions: Array<Reaction>;
+  /**
+   * The event this message is replying to, if any.
+   */
+  inReplyTo: InReplyToDetailsInterface | undefined;
+  /**
+   * Event ID of the thread root, if this is a message in a thread.
+   */
+  threadRoot: string | undefined;
+  /**
+   * Details about the thread this message is the root of.
+   */
+  threadSummary: ThreadSummaryInterface | undefined;
+};
+
+/**
+ * Generated factory for {@link MsgLikeContent} record objects.
+ */
+export const MsgLikeContent = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<MsgLikeContent, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link MsgLikeContent}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link MsgLikeContent}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<MsgLikeContent>,
+  });
+})();
+
+const FfiConverterTypeMsgLikeContent = (() => {
+  type TypeName = MsgLikeContent;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        kind: FfiConverterTypeMsgLikeKind.read(from),
+        reactions: FfiConverterArrayTypeReaction.read(from),
+        inReplyTo: FfiConverterOptionalTypeInReplyToDetails.read(from),
+        threadRoot: FfiConverterOptionalString.read(from),
+        threadSummary: FfiConverterOptionalTypeThreadSummary.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeMsgLikeKind.write(value.kind, into);
+      FfiConverterArrayTypeReaction.write(value.reactions, into);
+      FfiConverterOptionalTypeInReplyToDetails.write(value.inReplyTo, into);
+      FfiConverterOptionalString.write(value.threadRoot, into);
+      FfiConverterOptionalTypeThreadSummary.write(value.threadSummary, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeMsgLikeKind.allocationSize(value.kind) +
+        FfiConverterArrayTypeReaction.allocationSize(value.reactions) +
         FfiConverterOptionalTypeInReplyToDetails.allocationSize(
           value.inReplyTo
         ) +
         FfiConverterOptionalString.allocationSize(value.threadRoot) +
-        FfiConverterBool.allocationSize(value.isEdited) +
-        FfiConverterOptionalTypeMentions.allocationSize(value.mentions)
+        FfiConverterOptionalTypeThreadSummary.allocationSize(
+          value.threadSummary
+        )
       );
     }
   }
@@ -3968,6 +4792,7 @@ export type NotificationItem = {
    */
   isNoisy: boolean | undefined;
   hasMention: boolean | undefined;
+  threadId: string | undefined;
 };
 
 /**
@@ -4010,6 +4835,7 @@ const FfiConverterTypeNotificationItem = (() => {
         roomInfo: FfiConverterTypeNotificationRoomInfo.read(from),
         isNoisy: FfiConverterOptionalBool.read(from),
         hasMention: FfiConverterOptionalBool.read(from),
+        threadId: FfiConverterOptionalString.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
@@ -4018,6 +4844,7 @@ const FfiConverterTypeNotificationItem = (() => {
       FfiConverterTypeNotificationRoomInfo.write(value.roomInfo, into);
       FfiConverterOptionalBool.write(value.isNoisy, into);
       FfiConverterOptionalBool.write(value.hasMention, into);
+      FfiConverterOptionalString.write(value.threadId, into);
     }
     allocationSize(value: TypeName): number {
       return (
@@ -4027,7 +4854,71 @@ const FfiConverterTypeNotificationItem = (() => {
         ) +
         FfiConverterTypeNotificationRoomInfo.allocationSize(value.roomInfo) +
         FfiConverterOptionalBool.allocationSize(value.isNoisy) +
-        FfiConverterOptionalBool.allocationSize(value.hasMention)
+        FfiConverterOptionalBool.allocationSize(value.hasMention) +
+        FfiConverterOptionalString.allocationSize(value.threadId)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * A request for notification items grouped by their room.
+ */
+export type NotificationItemsRequest = {
+  roomId: string;
+  eventIds: Array<string>;
+};
+
+/**
+ * Generated factory for {@link NotificationItemsRequest} record objects.
+ */
+export const NotificationItemsRequest = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      NotificationItemsRequest,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link NotificationItemsRequest}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link NotificationItemsRequest}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () =>
+      Object.freeze(defaults()) as Partial<NotificationItemsRequest>,
+  });
+})();
+
+const FfiConverterTypeNotificationItemsRequest = (() => {
+  type TypeName = NotificationItemsRequest;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        roomId: FfiConverterString.read(from),
+        eventIds: FfiConverterArrayString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.roomId, into);
+      FfiConverterArrayString.write(value.eventIds, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterString.allocationSize(value.roomId) +
+        FfiConverterArrayString.allocationSize(value.eventIds)
       );
     }
   }
@@ -4092,9 +4983,11 @@ export type NotificationRoomInfo = {
   displayName: string;
   avatarUrl: string | undefined;
   canonicalAlias: string | undefined;
+  joinRule: JoinRule | undefined;
   joinedMembersCount: /*u64*/ bigint;
   isEncrypted: boolean | undefined;
   isDirect: boolean;
+  isPublic: boolean;
 };
 
 /**
@@ -4136,27 +5029,33 @@ const FfiConverterTypeNotificationRoomInfo = (() => {
         displayName: FfiConverterString.read(from),
         avatarUrl: FfiConverterOptionalString.read(from),
         canonicalAlias: FfiConverterOptionalString.read(from),
+        joinRule: FfiConverterOptionalTypeJoinRule.read(from),
         joinedMembersCount: FfiConverterUInt64.read(from),
         isEncrypted: FfiConverterOptionalBool.read(from),
         isDirect: FfiConverterBool.read(from),
+        isPublic: FfiConverterBool.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterString.write(value.displayName, into);
       FfiConverterOptionalString.write(value.avatarUrl, into);
       FfiConverterOptionalString.write(value.canonicalAlias, into);
+      FfiConverterOptionalTypeJoinRule.write(value.joinRule, into);
       FfiConverterUInt64.write(value.joinedMembersCount, into);
       FfiConverterOptionalBool.write(value.isEncrypted, into);
       FfiConverterBool.write(value.isDirect, into);
+      FfiConverterBool.write(value.isPublic, into);
     }
     allocationSize(value: TypeName): number {
       return (
         FfiConverterString.allocationSize(value.displayName) +
         FfiConverterOptionalString.allocationSize(value.avatarUrl) +
         FfiConverterOptionalString.allocationSize(value.canonicalAlias) +
+        FfiConverterOptionalTypeJoinRule.allocationSize(value.joinRule) +
         FfiConverterUInt64.allocationSize(value.joinedMembersCount) +
         FfiConverterOptionalBool.allocationSize(value.isEncrypted) +
-        FfiConverterBool.allocationSize(value.isDirect)
+        FfiConverterBool.allocationSize(value.isDirect) +
+        FfiConverterBool.allocationSize(value.isPublic)
       );
     }
   }
@@ -4243,7 +5142,7 @@ export type OidcConfiguration = {
   /**
    * A URI that contains information about the client.
    */
-  clientUri: string | undefined;
+  clientUri: string;
   /**
    * A URI that contains the client's logo.
    */
@@ -4257,20 +5156,13 @@ export type OidcConfiguration = {
    */
   policyUri: string | undefined;
   /**
-   * An array of e-mail addresses of people responsible for this client.
-   */
-  contacts: Array<string> | undefined;
-  /**
-   * Pre-configured registrations for use with issuers that don't support
+   * Pre-configured registrations for use with homeservers that don't support
    * dynamic client registration.
+   *
+   * The keys of the map should be the URLs of the homeservers, but keys
+   * using `issuer` URLs are also supported.
    */
   staticRegistrations: Map<string, string>;
-  /**
-   * A file path where any dynamic registrations should be stored.
-   *
-   * Suggested value: `{base_path}/oidc/registrations.json`
-   */
-  dynamicRegistrationsFile: string;
 };
 
 /**
@@ -4310,37 +5202,31 @@ const FfiConverterTypeOidcConfiguration = (() => {
       return {
         clientName: FfiConverterOptionalString.read(from),
         redirectUri: FfiConverterString.read(from),
-        clientUri: FfiConverterOptionalString.read(from),
+        clientUri: FfiConverterString.read(from),
         logoUri: FfiConverterOptionalString.read(from),
         tosUri: FfiConverterOptionalString.read(from),
         policyUri: FfiConverterOptionalString.read(from),
-        contacts: FfiConverterOptionalArrayString.read(from),
         staticRegistrations: FfiConverterMapStringString.read(from),
-        dynamicRegistrationsFile: FfiConverterString.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterOptionalString.write(value.clientName, into);
       FfiConverterString.write(value.redirectUri, into);
-      FfiConverterOptionalString.write(value.clientUri, into);
+      FfiConverterString.write(value.clientUri, into);
       FfiConverterOptionalString.write(value.logoUri, into);
       FfiConverterOptionalString.write(value.tosUri, into);
       FfiConverterOptionalString.write(value.policyUri, into);
-      FfiConverterOptionalArrayString.write(value.contacts, into);
       FfiConverterMapStringString.write(value.staticRegistrations, into);
-      FfiConverterString.write(value.dynamicRegistrationsFile, into);
     }
     allocationSize(value: TypeName): number {
       return (
         FfiConverterOptionalString.allocationSize(value.clientName) +
         FfiConverterString.allocationSize(value.redirectUri) +
-        FfiConverterOptionalString.allocationSize(value.clientUri) +
+        FfiConverterString.allocationSize(value.clientUri) +
         FfiConverterOptionalString.allocationSize(value.logoUri) +
         FfiConverterOptionalString.allocationSize(value.tosUri) +
         FfiConverterOptionalString.allocationSize(value.policyUri) +
-        FfiConverterOptionalArrayString.allocationSize(value.contacts) +
-        FfiConverterMapStringString.allocationSize(value.staticRegistrations) +
-        FfiConverterString.allocationSize(value.dynamicRegistrationsFile)
+        FfiConverterMapStringString.allocationSize(value.staticRegistrations)
       );
     }
   }
@@ -4399,6 +5285,180 @@ const FfiConverterTypeOidcCrossSigningResetInfo = (() => {
     }
     allocationSize(value: TypeName): number {
       return FfiConverterString.allocationSize(value.approvalUrl);
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * A passphrase from which a key is to be derived.
+ */
+export type PassPhrase = {
+  /**
+   * The algorithm to use to generate the key from the passphrase.
+   *
+   * Must be `m.pbkdf2`.
+   */
+  algorithm: KeyDerivationAlgorithm;
+  /**
+   * The salt used in PBKDF2.
+   */
+  salt: string;
+  /**
+   * The number of iterations to use in PBKDF2.
+   */
+  iterations: /*u64*/ bigint;
+  /**
+   * The number of bits to generate for the key.
+   *
+   * Defaults to 256
+   */
+  bits: /*u64*/ bigint;
+};
+
+/**
+ * Generated factory for {@link PassPhrase} record objects.
+ */
+export const PassPhrase = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<PassPhrase, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link PassPhrase}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link PassPhrase}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<PassPhrase>,
+  });
+})();
+
+const FfiConverterTypePassPhrase = (() => {
+  type TypeName = PassPhrase;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        algorithm: FfiConverterTypeKeyDerivationAlgorithm.read(from),
+        salt: FfiConverterString.read(from),
+        iterations: FfiConverterUInt64.read(from),
+        bits: FfiConverterUInt64.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeKeyDerivationAlgorithm.write(value.algorithm, into);
+      FfiConverterString.write(value.salt, into);
+      FfiConverterUInt64.write(value.iterations, into);
+      FfiConverterUInt64.write(value.bits, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeKeyDerivationAlgorithm.allocationSize(value.algorithm) +
+        FfiConverterString.allocationSize(value.salt) +
+        FfiConverterUInt64.allocationSize(value.iterations) +
+        FfiConverterUInt64.allocationSize(value.bits)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Like [`SimplePushRule`], but with an additional `pattern`` field.
+ */
+export type PatternedPushRule = {
+  /**
+   * Actions to determine if and how a notification is delivered for events
+   * matching this rule.
+   */
+  actions: Array<Action>;
+  /**
+   * Whether this is a default rule, or has been set explicitly.
+   */
+  default_: boolean;
+  /**
+   * Whether the push rule is enabled or not.
+   */
+  enabled: boolean;
+  /**
+   * The ID of this rule.
+   */
+  ruleId: string;
+  /**
+   * The glob-style pattern to match against.
+   */
+  pattern: string;
+};
+
+/**
+ * Generated factory for {@link PatternedPushRule} record objects.
+ */
+export const PatternedPushRule = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<PatternedPushRule, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link PatternedPushRule}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link PatternedPushRule}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<PatternedPushRule>,
+  });
+})();
+
+const FfiConverterTypePatternedPushRule = (() => {
+  type TypeName = PatternedPushRule;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        actions: FfiConverterArrayTypeAction.read(from),
+        default_: FfiConverterBool.read(from),
+        enabled: FfiConverterBool.read(from),
+        ruleId: FfiConverterString.read(from),
+        pattern: FfiConverterString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterArrayTypeAction.write(value.actions, into);
+      FfiConverterBool.write(value.default_, into);
+      FfiConverterBool.write(value.enabled, into);
+      FfiConverterString.write(value.ruleId, into);
+      FfiConverterString.write(value.pattern, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterArrayTypeAction.allocationSize(value.actions) +
+        FfiConverterBool.allocationSize(value.default_) +
+        FfiConverterBool.allocationSize(value.enabled) +
+        FfiConverterString.allocationSize(value.ruleId) +
+        FfiConverterString.allocationSize(value.pattern)
+      );
     }
   }
   return new FFIConverter();
@@ -4622,6 +5682,80 @@ const FfiConverterTypePowerLevels = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * When a room A is tombstoned, it is replaced by a room B. The room A is the
+ * predecessor of B, and B is the successor of A. This type holds information
+ * about the predecessor room. See [`Room::predecessor_room`].
+ *
+ * To know the predecessor of a room, the [`m.room.create`] state event must
+ * have been received.
+ *
+ * [`m.room.create`]: https://spec.matrix.org/v1.14/client-server-api/#mroomcreate
+ */
+export type PredecessorRoom = {
+  /**
+   * The ID of the replacement room.
+   */
+  roomId: string;
+  /**
+   * The event ID of the last known event in the predecesssor room.
+   */
+  lastEventId: string;
+};
+
+/**
+ * Generated factory for {@link PredecessorRoom} record objects.
+ */
+export const PredecessorRoom = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<PredecessorRoom, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link PredecessorRoom}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link PredecessorRoom}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<PredecessorRoom>,
+  });
+})();
+
+const FfiConverterTypePredecessorRoom = (() => {
+  type TypeName = PredecessorRoom;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        roomId: FfiConverterString.read(from),
+        lastEventId: FfiConverterString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.roomId, into);
+      FfiConverterString.write(value.lastEventId, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterString.allocationSize(value.roomId) +
+        FfiConverterString.allocationSize(value.lastEventId)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type PusherIdentifiers = {
   pushkey: string;
   appId: string;
@@ -4738,7 +5872,7 @@ const FfiConverterTypeReaction = (() => {
 
 export type ReactionSenderData = {
   senderId: string;
-  timestamp: /*u64*/ bigint;
+  timestamp: Timestamp;
 };
 
 /**
@@ -4777,17 +5911,17 @@ const FfiConverterTypeReactionSenderData = (() => {
     read(from: RustBuffer): TypeName {
       return {
         senderId: FfiConverterString.read(from),
-        timestamp: FfiConverterUInt64.read(from),
+        timestamp: FfiConverterTypeTimestamp.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterString.write(value.senderId, into);
-      FfiConverterUInt64.write(value.timestamp, into);
+      FfiConverterTypeTimestamp.write(value.timestamp, into);
     }
     allocationSize(value: TypeName): number {
       return (
         FfiConverterString.allocationSize(value.senderId) +
-        FfiConverterUInt64.allocationSize(value.timestamp)
+        FfiConverterTypeTimestamp.allocationSize(value.timestamp)
       );
     }
   }
@@ -4795,7 +5929,7 @@ const FfiConverterTypeReactionSenderData = (() => {
 })();
 
 export type Receipt = {
-  timestamp: /*u64*/ bigint | undefined;
+  timestamp: Timestamp | undefined;
 };
 
 /**
@@ -4831,14 +5965,86 @@ const FfiConverterTypeReceipt = (() => {
   class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
-        timestamp: FfiConverterOptionalUInt64.read(from),
+        timestamp: FfiConverterOptionalTypeTimestamp.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
-      FfiConverterOptionalUInt64.write(value.timestamp, into);
+      FfiConverterOptionalTypeTimestamp.write(value.timestamp, into);
     }
     allocationSize(value: TypeName): number {
-      return FfiConverterOptionalUInt64.allocationSize(value.timestamp);
+      return FfiConverterOptionalTypeTimestamp.allocationSize(value.timestamp);
+    }
+  }
+  return new FFIConverter();
+})();
+
+export type ReplyParameters = {
+  /**
+   * The ID of the event to reply to.
+   */
+  eventId: string;
+  /**
+   * Whether to enforce a thread relation.
+   */
+  enforceThread: boolean;
+  /**
+   * If enforcing a threaded relation, whether the message is a reply on a
+   * thread.
+   */
+  replyWithinThread: boolean;
+};
+
+/**
+ * Generated factory for {@link ReplyParameters} record objects.
+ */
+export const ReplyParameters = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<ReplyParameters, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link ReplyParameters}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link ReplyParameters}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<ReplyParameters>,
+  });
+})();
+
+const FfiConverterTypeReplyParameters = (() => {
+  type TypeName = ReplyParameters;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        eventId: FfiConverterString.read(from),
+        enforceThread: FfiConverterBool.read(from),
+        replyWithinThread: FfiConverterBool.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.eventId, into);
+      FfiConverterBool.write(value.enforceThread, into);
+      FfiConverterBool.write(value.replyWithinThread, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterString.allocationSize(value.eventId) +
+        FfiConverterBool.allocationSize(value.enforceThread) +
+        FfiConverterBool.allocationSize(value.replyWithinThread)
+      );
     }
   }
   return new FFIConverter();
@@ -4863,7 +6069,7 @@ export type RequestConfig = {
   /**
    * Base delay between retries.
    */
-  retryTimeout: /*u64*/ bigint | undefined;
+  maxRetryTime: /*u64*/ bigint | undefined;
 };
 
 /**
@@ -4904,21 +6110,21 @@ const FfiConverterTypeRequestConfig = (() => {
         retryLimit: FfiConverterOptionalUInt64.read(from),
         timeout: FfiConverterOptionalUInt64.read(from),
         maxConcurrentRequests: FfiConverterOptionalUInt64.read(from),
-        retryTimeout: FfiConverterOptionalUInt64.read(from),
+        maxRetryTime: FfiConverterOptionalUInt64.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterOptionalUInt64.write(value.retryLimit, into);
       FfiConverterOptionalUInt64.write(value.timeout, into);
       FfiConverterOptionalUInt64.write(value.maxConcurrentRequests, into);
-      FfiConverterOptionalUInt64.write(value.retryTimeout, into);
+      FfiConverterOptionalUInt64.write(value.maxRetryTime, into);
     }
     allocationSize(value: TypeName): number {
       return (
         FfiConverterOptionalUInt64.allocationSize(value.retryLimit) +
         FfiConverterOptionalUInt64.allocationSize(value.timeout) +
         FfiConverterOptionalUInt64.allocationSize(value.maxConcurrentRequests) +
-        FfiConverterOptionalUInt64.allocationSize(value.retryTimeout)
+        FfiConverterOptionalUInt64.allocationSize(value.maxRetryTime)
       );
     }
   }
@@ -5204,6 +6410,7 @@ const FfiConverterTypeRoomHero = (() => {
 
 export type RoomInfo = {
   id: string;
+  encryptionState: EncryptionState;
   creator: string | undefined;
   /**
    * The room's name from the room state event if received from sync, or one
@@ -5219,7 +6426,10 @@ export type RoomInfo = {
   isDirect: boolean;
   isPublic: boolean;
   isSpace: boolean;
-  isTombstoned: boolean;
+  /**
+   * If present, it means the room has been archived/upgraded.
+   */
+  successorRoom: SuccessorRoom | undefined;
   isFavourite: boolean;
   canonicalAlias: string | undefined;
   alternativeAliases: Array<string>;
@@ -5269,6 +6479,10 @@ export type RoomInfo = {
    * The join rule for this room, if known.
    */
   joinRule: JoinRule | undefined;
+  /**
+   * The history visibility for this room, if known.
+   */
+  historyVisibility: RoomHistoryVisibility;
 };
 
 /**
@@ -5305,6 +6519,7 @@ const FfiConverterTypeRoomInfo = (() => {
     read(from: RustBuffer): TypeName {
       return {
         id: FfiConverterString.read(from),
+        encryptionState: FfiConverterTypeEncryptionState.read(from),
         creator: FfiConverterOptionalString.read(from),
         displayName: FfiConverterOptionalString.read(from),
         rawName: FfiConverterOptionalString.read(from),
@@ -5313,7 +6528,7 @@ const FfiConverterTypeRoomInfo = (() => {
         isDirect: FfiConverterBool.read(from),
         isPublic: FfiConverterBool.read(from),
         isSpace: FfiConverterBool.read(from),
-        isTombstoned: FfiConverterBool.read(from),
+        successorRoom: FfiConverterOptionalTypeSuccessorRoom.read(from),
         isFavourite: FfiConverterBool.read(from),
         canonicalAlias: FfiConverterOptionalString.read(from),
         alternativeAliases: FfiConverterArrayString.read(from),
@@ -5336,10 +6551,12 @@ const FfiConverterTypeRoomInfo = (() => {
         numUnreadMentions: FfiConverterUInt64.read(from),
         pinnedEventIds: FfiConverterArrayString.read(from),
         joinRule: FfiConverterOptionalTypeJoinRule.read(from),
+        historyVisibility: FfiConverterTypeRoomHistoryVisibility.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterString.write(value.id, into);
+      FfiConverterTypeEncryptionState.write(value.encryptionState, into);
       FfiConverterOptionalString.write(value.creator, into);
       FfiConverterOptionalString.write(value.displayName, into);
       FfiConverterOptionalString.write(value.rawName, into);
@@ -5348,7 +6565,7 @@ const FfiConverterTypeRoomInfo = (() => {
       FfiConverterBool.write(value.isDirect, into);
       FfiConverterBool.write(value.isPublic, into);
       FfiConverterBool.write(value.isSpace, into);
-      FfiConverterBool.write(value.isTombstoned, into);
+      FfiConverterOptionalTypeSuccessorRoom.write(value.successorRoom, into);
       FfiConverterBool.write(value.isFavourite, into);
       FfiConverterOptionalString.write(value.canonicalAlias, into);
       FfiConverterArrayString.write(value.alternativeAliases, into);
@@ -5373,10 +6590,15 @@ const FfiConverterTypeRoomInfo = (() => {
       FfiConverterUInt64.write(value.numUnreadMentions, into);
       FfiConverterArrayString.write(value.pinnedEventIds, into);
       FfiConverterOptionalTypeJoinRule.write(value.joinRule, into);
+      FfiConverterTypeRoomHistoryVisibility.write(
+        value.historyVisibility,
+        into
+      );
     }
     allocationSize(value: TypeName): number {
       return (
         FfiConverterString.allocationSize(value.id) +
+        FfiConverterTypeEncryptionState.allocationSize(value.encryptionState) +
         FfiConverterOptionalString.allocationSize(value.creator) +
         FfiConverterOptionalString.allocationSize(value.displayName) +
         FfiConverterOptionalString.allocationSize(value.rawName) +
@@ -5385,7 +6607,9 @@ const FfiConverterTypeRoomInfo = (() => {
         FfiConverterBool.allocationSize(value.isDirect) +
         FfiConverterBool.allocationSize(value.isPublic) +
         FfiConverterBool.allocationSize(value.isSpace) +
-        FfiConverterBool.allocationSize(value.isTombstoned) +
+        FfiConverterOptionalTypeSuccessorRoom.allocationSize(
+          value.successorRoom
+        ) +
         FfiConverterBool.allocationSize(value.isFavourite) +
         FfiConverterOptionalString.allocationSize(value.canonicalAlias) +
         FfiConverterArrayString.allocationSize(value.alternativeAliases) +
@@ -5410,7 +6634,10 @@ const FfiConverterTypeRoomInfo = (() => {
         FfiConverterUInt64.allocationSize(value.numUnreadNotifications) +
         FfiConverterUInt64.allocationSize(value.numUnreadMentions) +
         FfiConverterArrayString.allocationSize(value.pinnedEventIds) +
-        FfiConverterOptionalTypeJoinRule.allocationSize(value.joinRule)
+        FfiConverterOptionalTypeJoinRule.allocationSize(value.joinRule) +
+        FfiConverterTypeRoomHistoryVisibility.allocationSize(
+          value.historyVisibility
+        )
       );
     }
   }
@@ -5487,6 +6714,7 @@ export type RoomMember = {
   normalizedPowerLevel: /*i64*/ bigint;
   isIgnored: boolean;
   suggestedRoleForPowerLevel: RoomMemberRole;
+  membershipChangeReason: string | undefined;
 };
 
 /**
@@ -5533,6 +6761,7 @@ const FfiConverterTypeRoomMember = (() => {
         normalizedPowerLevel: FfiConverterInt64.read(from),
         isIgnored: FfiConverterBool.read(from),
         suggestedRoleForPowerLevel: FfiConverterTypeRoomMemberRole.read(from),
+        membershipChangeReason: FfiConverterOptionalString.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
@@ -5548,6 +6777,7 @@ const FfiConverterTypeRoomMember = (() => {
         value.suggestedRoleForPowerLevel,
         into
       );
+      FfiConverterOptionalString.write(value.membershipChangeReason, into);
     }
     allocationSize(value: TypeName): number {
       return (
@@ -5561,7 +6791,79 @@ const FfiConverterTypeRoomMember = (() => {
         FfiConverterBool.allocationSize(value.isIgnored) +
         FfiConverterTypeRoomMemberRole.allocationSize(
           value.suggestedRoleForPowerLevel
-        )
+        ) +
+        FfiConverterOptionalString.allocationSize(value.membershipChangeReason)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Contains the current user's room member info and the optional room member
+ * info of the sender of the `m.room.member` event that this info represents.
+ */
+export type RoomMemberWithSenderInfo = {
+  /**
+   * The room member.
+   */
+  roomMember: RoomMember;
+  /**
+   * The info of the sender of the event `room_member` is based on, if
+   * available.
+   */
+  senderInfo: RoomMember | undefined;
+};
+
+/**
+ * Generated factory for {@link RoomMemberWithSenderInfo} record objects.
+ */
+export const RoomMemberWithSenderInfo = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      RoomMemberWithSenderInfo,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link RoomMemberWithSenderInfo}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link RoomMemberWithSenderInfo}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () =>
+      Object.freeze(defaults()) as Partial<RoomMemberWithSenderInfo>,
+  });
+})();
+
+const FfiConverterTypeRoomMemberWithSenderInfo = (() => {
+  type TypeName = RoomMemberWithSenderInfo;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        roomMember: FfiConverterTypeRoomMember.read(from),
+        senderInfo: FfiConverterOptionalTypeRoomMember.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeRoomMember.write(value.roomMember, into);
+      FfiConverterOptionalTypeRoomMember.write(value.senderInfo, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeRoomMember.allocationSize(value.roomMember) +
+        FfiConverterOptionalTypeRoomMember.allocationSize(value.senderInfo)
       );
     }
   }
@@ -5901,6 +7203,100 @@ const FfiConverterTypeRoomPreviewInfo = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * A push ruleset scopes a set of rules according to some criteria.
+ */
+export type Ruleset = {
+  /**
+   * These rules configure behavior for (unencrypted) messages that match
+   * certain patterns.
+   */
+  content: Array<PatternedPushRule>;
+  /**
+   * These user-configured rules are given the highest priority.
+   *
+   * This field is named `override_` instead of `override` because the latter
+   * is a reserved keyword in Rust.
+   */
+  override: Array<ConditionalPushRule>;
+  /**
+   * These rules change the behavior of all messages for a given room.
+   */
+  room: Array<SimplePushRule>;
+  /**
+   * These rules configure notification behavior for messages from a specific
+   * Matrix user ID.
+   */
+  sender: Array<SimplePushRule>;
+  /**
+   * These rules are identical to override rules, but have a lower priority
+   * than `content`, `room` and `sender` rules.
+   */
+  underride: Array<ConditionalPushRule>;
+};
+
+/**
+ * Generated factory for {@link Ruleset} record objects.
+ */
+export const Ruleset = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<Ruleset, ReturnType<typeof defaults>>(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link Ruleset}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link Ruleset}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<Ruleset>,
+  });
+})();
+
+const FfiConverterTypeRuleset = (() => {
+  type TypeName = Ruleset;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        content: FfiConverterArrayTypePatternedPushRule.read(from),
+        override: FfiConverterArrayTypeConditionalPushRule.read(from),
+        room: FfiConverterArrayTypeSimplePushRule.read(from),
+        sender: FfiConverterArrayTypeSimplePushRule.read(from),
+        underride: FfiConverterArrayTypeConditionalPushRule.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterArrayTypePatternedPushRule.write(value.content, into);
+      FfiConverterArrayTypeConditionalPushRule.write(value.override, into);
+      FfiConverterArrayTypeSimplePushRule.write(value.room, into);
+      FfiConverterArrayTypeSimplePushRule.write(value.sender, into);
+      FfiConverterArrayTypeConditionalPushRule.write(value.underride, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterArrayTypePatternedPushRule.allocationSize(value.content) +
+        FfiConverterArrayTypeConditionalPushRule.allocationSize(
+          value.override
+        ) +
+        FfiConverterArrayTypeSimplePushRule.allocationSize(value.room) +
+        FfiConverterArrayTypeSimplePushRule.allocationSize(value.sender) +
+        FfiConverterArrayTypeConditionalPushRule.allocationSize(value.underride)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type SearchUsersResults = {
   results: Array<UserProfile>;
   limited: boolean;
@@ -5953,6 +7349,77 @@ const FfiConverterTypeSearchUsersResults = (() => {
       return (
         FfiConverterArrayTypeUserProfile.allocationSize(value.results) +
         FfiConverterBool.allocationSize(value.limited)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * The key properties for the `m.secret_storage.v1.aes-hmac-sha2`` algorithm.
+ */
+export type SecretStorageV1AesHmacSha2Properties = {
+  /**
+   * The 16-byte initialization vector, encoded as base64.
+   */
+  iv: string | undefined;
+  /**
+   * The MAC, encoded as base64.
+   */
+  mac: string | undefined;
+};
+
+/**
+ * Generated factory for {@link SecretStorageV1AesHmacSha2Properties} record objects.
+ */
+export const SecretStorageV1AesHmacSha2Properties = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      SecretStorageV1AesHmacSha2Properties,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link SecretStorageV1AesHmacSha2Properties}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link SecretStorageV1AesHmacSha2Properties}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () =>
+      Object.freeze(
+        defaults()
+      ) as Partial<SecretStorageV1AesHmacSha2Properties>,
+  });
+})();
+
+const FfiConverterTypeSecretStorageV1AesHmacSha2Properties = (() => {
+  type TypeName = SecretStorageV1AesHmacSha2Properties;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        iv: FfiConverterOptionalString.read(from),
+        mac: FfiConverterOptionalString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterOptionalString.write(value.iv, into);
+      FfiConverterOptionalString.write(value.mac, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterOptionalString.allocationSize(value.iv) +
+        FfiConverterOptionalString.allocationSize(value.mac)
       );
     }
   }
@@ -6065,14 +7532,14 @@ const FfiConverterTypeSession = (() => {
  * Details about the incoming verification request
  */
 export type SessionVerificationRequestDetails = {
-  senderId: string;
+  senderProfile: UserProfile;
   flowId: string;
   deviceId: string;
-  displayName: string | undefined;
+  deviceDisplayName: string | undefined;
   /**
    * First time this device was seen in milliseconds since epoch.
    */
-  firstSeenTimestamp: /*u64*/ bigint;
+  firstSeenTimestamp: Timestamp;
 };
 
 /**
@@ -6112,27 +7579,27 @@ const FfiConverterTypeSessionVerificationRequestDetails = (() => {
   class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
-        senderId: FfiConverterString.read(from),
+        senderProfile: FfiConverterTypeUserProfile.read(from),
         flowId: FfiConverterString.read(from),
         deviceId: FfiConverterString.read(from),
-        displayName: FfiConverterOptionalString.read(from),
-        firstSeenTimestamp: FfiConverterUInt64.read(from),
+        deviceDisplayName: FfiConverterOptionalString.read(from),
+        firstSeenTimestamp: FfiConverterTypeTimestamp.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
-      FfiConverterString.write(value.senderId, into);
+      FfiConverterTypeUserProfile.write(value.senderProfile, into);
       FfiConverterString.write(value.flowId, into);
       FfiConverterString.write(value.deviceId, into);
-      FfiConverterOptionalString.write(value.displayName, into);
-      FfiConverterUInt64.write(value.firstSeenTimestamp, into);
+      FfiConverterOptionalString.write(value.deviceDisplayName, into);
+      FfiConverterTypeTimestamp.write(value.firstSeenTimestamp, into);
     }
     allocationSize(value: TypeName): number {
       return (
-        FfiConverterString.allocationSize(value.senderId) +
+        FfiConverterTypeUserProfile.allocationSize(value.senderProfile) +
         FfiConverterString.allocationSize(value.flowId) +
         FfiConverterString.allocationSize(value.deviceId) +
-        FfiConverterOptionalString.allocationSize(value.displayName) +
-        FfiConverterUInt64.allocationSize(value.firstSeenTimestamp)
+        FfiConverterOptionalString.allocationSize(value.deviceDisplayName) +
+        FfiConverterTypeTimestamp.allocationSize(value.firstSeenTimestamp)
       );
     }
   }
@@ -6190,6 +7657,221 @@ const FfiConverterTypeSetData = (() => {
         FfiConverterUInt32.allocationSize(value.index) +
         FfiConverterTypeTimelineItem.allocationSize(value.item)
       );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * A push rule is a single rule that states under what conditions an event
+ * should be passed onto a push gateway and how the notification should be
+ * presented.
+ */
+export type SimplePushRule = {
+  /**
+   * Actions to determine if and how a notification is delivered for events
+   * matching this rule.
+   */
+  actions: Array<Action>;
+  /**
+   * Whether this is a default rule, or has been set explicitly.
+   */
+  default_: boolean;
+  /**
+   * Whether the push rule is enabled or not.
+   */
+  enabled: boolean;
+  /**
+   * The ID of this rule.
+   *
+   * This is generally the Matrix ID of the entity that it applies to.
+   */
+  ruleId: string;
+};
+
+/**
+ * Generated factory for {@link SimplePushRule} record objects.
+ */
+export const SimplePushRule = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<SimplePushRule, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link SimplePushRule}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link SimplePushRule}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<SimplePushRule>,
+  });
+})();
+
+const FfiConverterTypeSimplePushRule = (() => {
+  type TypeName = SimplePushRule;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        actions: FfiConverterArrayTypeAction.read(from),
+        default_: FfiConverterBool.read(from),
+        enabled: FfiConverterBool.read(from),
+        ruleId: FfiConverterString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterArrayTypeAction.write(value.actions, into);
+      FfiConverterBool.write(value.default_, into);
+      FfiConverterBool.write(value.enabled, into);
+      FfiConverterString.write(value.ruleId, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterArrayTypeAction.allocationSize(value.actions) +
+        FfiConverterBool.allocationSize(value.default_) +
+        FfiConverterBool.allocationSize(value.enabled) +
+        FfiConverterString.allocationSize(value.ruleId)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * When a room A is tombstoned, it is replaced by a room B. The room A is the
+ * predecessor of B, and B is the successor of A. This type holds information
+ * about the successor room. See [`Room::successor_room`].
+ *
+ * A room is tombstoned if it has received a [`m.room.tombstone`] state event.
+ *
+ * [`m.room.tombstone`]: https://spec.matrix.org/v1.14/client-server-api/#mroomtombstone
+ */
+export type SuccessorRoom = {
+  /**
+   * The ID of the replacement room.
+   */
+  roomId: string;
+  /**
+   * The message explaining why the room has been tombstoned.
+   */
+  reason: string | undefined;
+};
+
+/**
+ * Generated factory for {@link SuccessorRoom} record objects.
+ */
+export const SuccessorRoom = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<SuccessorRoom, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link SuccessorRoom}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link SuccessorRoom}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<SuccessorRoom>,
+  });
+})();
+
+const FfiConverterTypeSuccessorRoom = (() => {
+  type TypeName = SuccessorRoom;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        roomId: FfiConverterString.read(from),
+        reason: FfiConverterOptionalString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.roomId, into);
+      FfiConverterOptionalString.write(value.reason, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterString.allocationSize(value.roomId) +
+        FfiConverterOptionalString.allocationSize(value.reason)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Information about a tag.
+ */
+export type TagInfo = {
+  /**
+   * Value to use for lexicographically ordering rooms with this tag.
+   */
+  order: /*f64*/ number | undefined;
+};
+
+/**
+ * Generated factory for {@link TagInfo} record objects.
+ */
+export const TagInfo = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<TagInfo, ReturnType<typeof defaults>>(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link TagInfo}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link TagInfo}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<TagInfo>,
+  });
+})();
+
+const FfiConverterTypeTagInfo = (() => {
+  type TypeName = TagInfo;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        order: FfiConverterOptionalFloat64.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterOptionalFloat64.write(value.order, into);
+    }
+    allocationSize(value: TypeName): number {
+      return FfiConverterOptionalFloat64.allocationSize(value.order);
     }
   }
   return new FFIConverter();
@@ -6319,6 +8001,109 @@ const FfiConverterTypeThumbnailInfo = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * Various options used to configure the timeline's behavior.
+ */
+export type TimelineConfiguration = {
+  /**
+   * What should the timeline focus on?
+   */
+  focus: TimelineFocus;
+  /**
+   * How should we filter out events from the timeline?
+   */
+  filter: TimelineFilter;
+  /**
+   * An optional String that will be prepended to
+   * all the timeline item's internal IDs, making it possible to
+   * distinguish different timeline instances from each other.
+   */
+  internalIdPrefix: string | undefined;
+  /**
+   * How often to insert date dividers
+   */
+  dateDividerMode: DateDividerMode;
+  /**
+   * Should the read receipts and read markers be tracked for the timeline
+   * items in this instance?
+   *
+   * As this has a non negligible performance impact, make sure to enable it
+   * only when you need it.
+   */
+  trackReadReceipts: boolean;
+  /**
+   * Whether this timeline instance should report UTDs through the client's
+   * delegate.
+   */
+  reportUtds: boolean;
+};
+
+/**
+ * Generated factory for {@link TimelineConfiguration} record objects.
+ */
+export const TimelineConfiguration = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      TimelineConfiguration,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link TimelineConfiguration}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link TimelineConfiguration}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<TimelineConfiguration>,
+  });
+})();
+
+const FfiConverterTypeTimelineConfiguration = (() => {
+  type TypeName = TimelineConfiguration;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        focus: FfiConverterTypeTimelineFocus.read(from),
+        filter: FfiConverterTypeTimelineFilter.read(from),
+        internalIdPrefix: FfiConverterOptionalString.read(from),
+        dateDividerMode: FfiConverterTypeDateDividerMode.read(from),
+        trackReadReceipts: FfiConverterBool.read(from),
+        reportUtds: FfiConverterBool.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeTimelineFocus.write(value.focus, into);
+      FfiConverterTypeTimelineFilter.write(value.filter, into);
+      FfiConverterOptionalString.write(value.internalIdPrefix, into);
+      FfiConverterTypeDateDividerMode.write(value.dateDividerMode, into);
+      FfiConverterBool.write(value.trackReadReceipts, into);
+      FfiConverterBool.write(value.reportUtds, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeTimelineFocus.allocationSize(value.focus) +
+        FfiConverterTypeTimelineFilter.allocationSize(value.filter) +
+        FfiConverterOptionalString.allocationSize(value.internalIdPrefix) +
+        FfiConverterTypeDateDividerMode.allocationSize(value.dateDividerMode) +
+        FfiConverterBool.allocationSize(value.trackReadReceipts) +
+        FfiConverterBool.allocationSize(value.reportUtds)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type TimelineUniqueId = {
   id: string;
 };
@@ -6373,11 +8158,21 @@ const FfiConverterTypeTimelineUniqueId = (() => {
 
 export type TracingConfiguration = {
   /**
-   * A filter line following the [RUST_LOG format].
-   *
-   * [RUST_LOG format]: https://rust-lang-nursery.github.io/rust-cookbook/development_tools/debugging/config_log.html
+   * The desired log level.
    */
-  filter: string;
+  logLevel: LogLevel;
+  /**
+   * All the log packs, that will be set to `TRACE` when they're enabled.
+   */
+  traceLogPacks: Array<TraceLogPacks>;
+  /**
+   * Additional targets that the FFI client would like to use.
+   *
+   * This can include, for instance, the target names for created
+   * [`crate::tracing::Span`]. These targets will use the global log level by
+   * default.
+   */
+  extraTargets: Array<string>;
   /**
    * Whether to log to stdout, or in the logcat on Android.
    */
@@ -6386,6 +8181,10 @@ export type TracingConfiguration = {
    * If set, configures rotated log files where to write additional logs.
    */
   writeToFiles: TracingFileConfiguration | undefined;
+  /**
+   * If set, the Sentry DSN to use for error reporting.
+   */
+  sentryDsn: string | undefined;
 };
 
 /**
@@ -6424,27 +8223,36 @@ const FfiConverterTypeTracingConfiguration = (() => {
   class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
-        filter: FfiConverterString.read(from),
+        logLevel: FfiConverterTypeLogLevel.read(from),
+        traceLogPacks: FfiConverterArrayTypeTraceLogPacks.read(from),
+        extraTargets: FfiConverterArrayString.read(from),
         writeToStdoutOrSystem: FfiConverterBool.read(from),
         writeToFiles:
           FfiConverterOptionalTypeTracingFileConfiguration.read(from),
+        sentryDsn: FfiConverterOptionalString.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
-      FfiConverterString.write(value.filter, into);
+      FfiConverterTypeLogLevel.write(value.logLevel, into);
+      FfiConverterArrayTypeTraceLogPacks.write(value.traceLogPacks, into);
+      FfiConverterArrayString.write(value.extraTargets, into);
       FfiConverterBool.write(value.writeToStdoutOrSystem, into);
       FfiConverterOptionalTypeTracingFileConfiguration.write(
         value.writeToFiles,
         into
       );
+      FfiConverterOptionalString.write(value.sentryDsn, into);
     }
     allocationSize(value: TypeName): number {
       return (
-        FfiConverterString.allocationSize(value.filter) +
+        FfiConverterTypeLogLevel.allocationSize(value.logLevel) +
+        FfiConverterArrayTypeTraceLogPacks.allocationSize(value.traceLogPacks) +
+        FfiConverterArrayString.allocationSize(value.extraTargets) +
         FfiConverterBool.allocationSize(value.writeToStdoutOrSystem) +
         FfiConverterOptionalTypeTracingFileConfiguration.allocationSize(
           value.writeToFiles
-        )
+        ) +
+        FfiConverterOptionalString.allocationSize(value.sentryDsn)
       );
     }
   }
@@ -6812,6 +8620,104 @@ const FfiConverterTypeUnstableVoiceContent = (() => {
   return new FFIConverter();
 })();
 
+export type UploadParameters = {
+  /**
+   * Source from which to upload data
+   */
+  source: UploadSource;
+  /**
+   * Optional non-formatted caption, for clients that support it.
+   */
+  caption: string | undefined;
+  /**
+   * Optional HTML-formatted caption, for clients that support it.
+   */
+  formattedCaption: FormattedBody | undefined;
+  /**
+   * Optional intentional mentions to be sent with the media.
+   */
+  mentions: Mentions | undefined;
+  /**
+   * Optional parameters for sending the media as (threaded) reply.
+   */
+  replyParams: ReplyParameters | undefined;
+  /**
+   * Should the media be sent with the send queue, or synchronously?
+   *
+   * Watching progress only works with the synchronous method, at the moment.
+   */
+  useSendQueue: boolean;
+};
+
+/**
+ * Generated factory for {@link UploadParameters} record objects.
+ */
+export const UploadParameters = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<UploadParameters, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link UploadParameters}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link UploadParameters}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<UploadParameters>,
+  });
+})();
+
+const FfiConverterTypeUploadParameters = (() => {
+  type TypeName = UploadParameters;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        source: FfiConverterTypeUploadSource.read(from),
+        caption: FfiConverterOptionalString.read(from),
+        formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
+        mentions: FfiConverterOptionalTypeMentions.read(from),
+        replyParams: FfiConverterOptionalTypeReplyParameters.read(from),
+        useSendQueue: FfiConverterBool.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeUploadSource.write(value.source, into);
+      FfiConverterOptionalString.write(value.caption, into);
+      FfiConverterOptionalTypeFormattedBody.write(value.formattedCaption, into);
+      FfiConverterOptionalTypeMentions.write(value.mentions, into);
+      FfiConverterOptionalTypeReplyParameters.write(value.replyParams, into);
+      FfiConverterBool.write(value.useSendQueue, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeUploadSource.allocationSize(value.source) +
+        FfiConverterOptionalString.allocationSize(value.caption) +
+        FfiConverterOptionalTypeFormattedBody.allocationSize(
+          value.formattedCaption
+        ) +
+        FfiConverterOptionalTypeMentions.allocationSize(value.mentions) +
+        FfiConverterOptionalTypeReplyParameters.allocationSize(
+          value.replyParams
+        ) +
+        FfiConverterBool.allocationSize(value.useSendQueue)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 /**
  * An update for a particular user's power level within the room.
  */
@@ -6937,6 +8843,61 @@ const FfiConverterTypeUserProfile = (() => {
         FfiConverterOptionalString.allocationSize(value.displayName) +
         FfiConverterOptionalString.allocationSize(value.avatarUrl)
       );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * A user-defined tag name.
+ */
+export type UserTagName = {
+  name: string;
+};
+
+/**
+ * Generated factory for {@link UserTagName} record objects.
+ */
+export const UserTagName = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<UserTagName, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link UserTagName}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link UserTagName}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<UserTagName>,
+  });
+})();
+
+const FfiConverterTypeUserTagName = (() => {
+  type TypeName = UserTagName;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        name: FfiConverterString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.name, into);
+    }
+    allocationSize(value: TypeName): number {
+      return FfiConverterString.allocationSize(value.name);
     }
   }
   return new FFIConverter();
@@ -7106,9 +9067,9 @@ const FfiConverterTypeVideoMessageContent = (() => {
  */
 export type VirtualElementCallWidgetOptions = {
   /**
-   * The url to the app.
+   * The url to the Element Call app including any `/room` path if required.
    *
-   * E.g. <https://call.element.io>, <https://call.element.dev>
+   * E.g. <https://call.element.io>, <https://call.element.dev>, <https://call.element.dev/room>
    */
   elementCallUrl: string;
   /**
@@ -7158,12 +9119,6 @@ export type VirtualElementCallWidgetOptions = {
    */
   appPrompt: boolean | undefined;
   /**
-   * Don't show the lobby and join the call immediately.
-   *
-   * Default: `false`
-   */
-  skipLobby: boolean | undefined;
-  /**
    * Make it not possible to get to the calls list in the webview.
    *
    * Default: `true`
@@ -7174,15 +9129,55 @@ export type VirtualElementCallWidgetOptions = {
    */
   font: string | undefined;
   /**
-   * Can be used to pass a PostHog id to element call.
-   */
-  analyticsId: string | undefined;
-  /**
    * The encryption system to use.
    *
    * Use `EncryptionSystem::Unencrypted` to disable encryption.
    */
   encryption: EncryptionSystem;
+  /**
+   * The intent of showing the call.
+   * If the user wants to start a call or join an existing one.
+   * Controls if the lobby is skipped or not.
+   */
+  intent: Intent | undefined;
+  /**
+   * Do not show the screenshare button.
+   */
+  hideScreensharing: boolean;
+  /**
+   * Can be used to pass a PostHog id to element call.
+   */
+  posthogUserId: string | undefined;
+  /**
+   * The host of the posthog api.
+   * Supported since Element Call v0.9.0. Only used by the embedded package.
+   */
+  posthogApiHost: string | undefined;
+  /**
+   * The key for the posthog api.
+   * Supported since Element Call v0.9.0. Only used by the embedded package.
+   */
+  posthogApiKey: string | undefined;
+  /**
+   * The url to use for submitting rageshakes.
+   * Supported since Element Call v0.9.0. Only used by the embedded package.
+   */
+  rageshakeSubmitUrl: string | undefined;
+  /**
+   * Sentry [DSN](https://docs.sentry.io/concepts/key-terms/dsn-explainer/)
+   * Supported since Element Call v0.9.0. Only used by the embedded package.
+   */
+  sentryDsn: string | undefined;
+  /**
+   * Sentry [environment](https://docs.sentry.io/concepts/key-terms/key-terms/)
+   * Supported since Element Call v0.9.0. Only used by the embedded package.
+   */
+  sentryEnvironment: string | undefined;
+  /**
+   * - `false`: the webview shows a a list of devices injected by the
+   * client. (used on ios & android)
+   */
+  controlledMediaDevices: boolean;
 };
 
 /**
@@ -7229,11 +9224,18 @@ const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
         preload: FfiConverterOptionalBool.read(from),
         fontScale: FfiConverterOptionalFloat64.read(from),
         appPrompt: FfiConverterOptionalBool.read(from),
-        skipLobby: FfiConverterOptionalBool.read(from),
         confineToRoom: FfiConverterOptionalBool.read(from),
         font: FfiConverterOptionalString.read(from),
-        analyticsId: FfiConverterOptionalString.read(from),
         encryption: FfiConverterTypeEncryptionSystem.read(from),
+        intent: FfiConverterOptionalTypeIntent.read(from),
+        hideScreensharing: FfiConverterBool.read(from),
+        posthogUserId: FfiConverterOptionalString.read(from),
+        posthogApiHost: FfiConverterOptionalString.read(from),
+        posthogApiKey: FfiConverterOptionalString.read(from),
+        rageshakeSubmitUrl: FfiConverterOptionalString.read(from),
+        sentryDsn: FfiConverterOptionalString.read(from),
+        sentryEnvironment: FfiConverterOptionalString.read(from),
+        controlledMediaDevices: FfiConverterBool.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
@@ -7244,11 +9246,18 @@ const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
       FfiConverterOptionalBool.write(value.preload, into);
       FfiConverterOptionalFloat64.write(value.fontScale, into);
       FfiConverterOptionalBool.write(value.appPrompt, into);
-      FfiConverterOptionalBool.write(value.skipLobby, into);
       FfiConverterOptionalBool.write(value.confineToRoom, into);
       FfiConverterOptionalString.write(value.font, into);
-      FfiConverterOptionalString.write(value.analyticsId, into);
       FfiConverterTypeEncryptionSystem.write(value.encryption, into);
+      FfiConverterOptionalTypeIntent.write(value.intent, into);
+      FfiConverterBool.write(value.hideScreensharing, into);
+      FfiConverterOptionalString.write(value.posthogUserId, into);
+      FfiConverterOptionalString.write(value.posthogApiHost, into);
+      FfiConverterOptionalString.write(value.posthogApiKey, into);
+      FfiConverterOptionalString.write(value.rageshakeSubmitUrl, into);
+      FfiConverterOptionalString.write(value.sentryDsn, into);
+      FfiConverterOptionalString.write(value.sentryEnvironment, into);
+      FfiConverterBool.write(value.controlledMediaDevices, into);
     }
     allocationSize(value: TypeName): number {
       return (
@@ -7259,11 +9268,18 @@ const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
         FfiConverterOptionalBool.allocationSize(value.preload) +
         FfiConverterOptionalFloat64.allocationSize(value.fontScale) +
         FfiConverterOptionalBool.allocationSize(value.appPrompt) +
-        FfiConverterOptionalBool.allocationSize(value.skipLobby) +
         FfiConverterOptionalBool.allocationSize(value.confineToRoom) +
         FfiConverterOptionalString.allocationSize(value.font) +
-        FfiConverterOptionalString.allocationSize(value.analyticsId) +
-        FfiConverterTypeEncryptionSystem.allocationSize(value.encryption)
+        FfiConverterTypeEncryptionSystem.allocationSize(value.encryption) +
+        FfiConverterOptionalTypeIntent.allocationSize(value.intent) +
+        FfiConverterBool.allocationSize(value.hideScreensharing) +
+        FfiConverterOptionalString.allocationSize(value.posthogUserId) +
+        FfiConverterOptionalString.allocationSize(value.posthogApiHost) +
+        FfiConverterOptionalString.allocationSize(value.posthogApiKey) +
+        FfiConverterOptionalString.allocationSize(value.rageshakeSubmitUrl) +
+        FfiConverterOptionalString.allocationSize(value.sentryDsn) +
+        FfiConverterOptionalString.allocationSize(value.sentryEnvironment) +
+        FfiConverterBool.allocationSize(value.controlledMediaDevices)
       );
     }
   }
@@ -7284,7 +9300,7 @@ export type WidgetCapabilities = {
   send: Array<WidgetEventFilter>;
   /**
    * If this capability is requested by the widget, it can not operate
-   * separately from the matrix client.
+   * separately from the Matrix client.
    *
    * This means clients should not offer to open the widget in a separate
    * browser/tab/webview that is not connected to the postmessage widget-api.
@@ -7529,6 +9545,775 @@ const stringConverter = {
     ),
 };
 const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
+
+/**
+ * Typealias from the type name used in the UDL file to the builtin type.  This
+ * is needed because the UDL type name is used in function/method signatures.
+ */
+export type Timestamp = /*u64*/ bigint;
+// FfiConverter for Timestamp, a type alias for /*u64*/bigint.
+const FfiConverterTypeTimestamp = FfiConverterUInt64;
+
+// Enum: AccountDataEvent
+export enum AccountDataEvent_Tags {
+  Direct = 'Direct',
+  IdentityServer = 'IdentityServer',
+  IgnoredUserList = 'IgnoredUserList',
+  PushRules = 'PushRules',
+  SecretStorageDefaultKey = 'SecretStorageDefaultKey',
+  SecretStorageKey = 'SecretStorageKey',
+}
+/**
+ * Global account data events.
+ */
+export const AccountDataEvent = (() => {
+  type Direct__interface = {
+    tag: AccountDataEvent_Tags.Direct;
+    inner: Readonly<{ map: Map<string, Array<string>> }>;
+  };
+
+  /**
+   * m.direct
+   */
+  class Direct_ extends UniffiEnum implements Direct__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEvent';
+    readonly tag = AccountDataEvent_Tags.Direct;
+    readonly inner: Readonly<{ map: Map<string, Array<string>> }>;
+    constructor(inner: {
+      /**
+       * The mapping of user ID to a list of room IDs of the ‘direct’ rooms
+       * for that user ID.
+       */ map: Map<string, Array<string>>;
+    }) {
+      super('AccountDataEvent', 'Direct');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The mapping of user ID to a list of room IDs of the ‘direct’ rooms
+       * for that user ID.
+       */ map: Map<string, Array<string>>;
+    }): Direct_ {
+      return new Direct_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Direct_ {
+      return obj.tag === AccountDataEvent_Tags.Direct;
+    }
+  }
+
+  type IdentityServer__interface = {
+    tag: AccountDataEvent_Tags.IdentityServer;
+    inner: Readonly<{ baseUrl: string | undefined }>;
+  };
+
+  /**
+   * m.identity_server
+   */
+  class IdentityServer_
+    extends UniffiEnum
+    implements IdentityServer__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEvent';
+    readonly tag = AccountDataEvent_Tags.IdentityServer;
+    readonly inner: Readonly<{ baseUrl: string | undefined }>;
+    constructor(inner: {
+      /**
+       * The base URL for the identity server for client-server connections.
+       */ baseUrl: string | undefined;
+    }) {
+      super('AccountDataEvent', 'IdentityServer');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The base URL for the identity server for client-server connections.
+       */ baseUrl: string | undefined;
+    }): IdentityServer_ {
+      return new IdentityServer_(inner);
+    }
+
+    static instanceOf(obj: any): obj is IdentityServer_ {
+      return obj.tag === AccountDataEvent_Tags.IdentityServer;
+    }
+  }
+
+  type IgnoredUserList__interface = {
+    tag: AccountDataEvent_Tags.IgnoredUserList;
+    inner: Readonly<{ ignoredUsers: Map<string, IgnoredUser> }>;
+  };
+
+  /**
+   * m.ignored_user_list
+   */
+  class IgnoredUserList_
+    extends UniffiEnum
+    implements IgnoredUserList__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEvent';
+    readonly tag = AccountDataEvent_Tags.IgnoredUserList;
+    readonly inner: Readonly<{ ignoredUsers: Map<string, IgnoredUser> }>;
+    constructor(inner: {
+      /**
+       * The map of users to ignore. This is a mapping of user ID to empty
+       * object.
+       */ ignoredUsers: Map<string, IgnoredUser>;
+    }) {
+      super('AccountDataEvent', 'IgnoredUserList');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The map of users to ignore. This is a mapping of user ID to empty
+       * object.
+       */ ignoredUsers: Map<string, IgnoredUser>;
+    }): IgnoredUserList_ {
+      return new IgnoredUserList_(inner);
+    }
+
+    static instanceOf(obj: any): obj is IgnoredUserList_ {
+      return obj.tag === AccountDataEvent_Tags.IgnoredUserList;
+    }
+  }
+
+  type PushRules__interface = {
+    tag: AccountDataEvent_Tags.PushRules;
+    inner: Readonly<{ global: Ruleset }>;
+  };
+
+  /**
+   * m.push_rules
+   */
+  class PushRules_ extends UniffiEnum implements PushRules__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEvent';
+    readonly tag = AccountDataEvent_Tags.PushRules;
+    readonly inner: Readonly<{ global: Ruleset }>;
+    constructor(inner: {
+      /**
+       * The global ruleset.
+       */ global: Ruleset;
+    }) {
+      super('AccountDataEvent', 'PushRules');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The global ruleset.
+       */ global: Ruleset;
+    }): PushRules_ {
+      return new PushRules_(inner);
+    }
+
+    static instanceOf(obj: any): obj is PushRules_ {
+      return obj.tag === AccountDataEvent_Tags.PushRules;
+    }
+  }
+
+  type SecretStorageDefaultKey__interface = {
+    tag: AccountDataEvent_Tags.SecretStorageDefaultKey;
+    inner: Readonly<{ keyId: string }>;
+  };
+
+  /**
+   * m.secret_storage.default_key
+   */
+  class SecretStorageDefaultKey_
+    extends UniffiEnum
+    implements SecretStorageDefaultKey__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEvent';
+    readonly tag = AccountDataEvent_Tags.SecretStorageDefaultKey;
+    readonly inner: Readonly<{ keyId: string }>;
+    constructor(inner: {
+      /**
+       * The ID of the default key.
+       */ keyId: string;
+    }) {
+      super('AccountDataEvent', 'SecretStorageDefaultKey');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The ID of the default key.
+       */ keyId: string;
+    }): SecretStorageDefaultKey_ {
+      return new SecretStorageDefaultKey_(inner);
+    }
+
+    static instanceOf(obj: any): obj is SecretStorageDefaultKey_ {
+      return obj.tag === AccountDataEvent_Tags.SecretStorageDefaultKey;
+    }
+  }
+
+  type SecretStorageKey__interface = {
+    tag: AccountDataEvent_Tags.SecretStorageKey;
+    inner: Readonly<{
+      keyId: string;
+      name: string | undefined;
+      algorithm: SecretStorageEncryptionAlgorithm;
+      passphrase: PassPhrase | undefined;
+    }>;
+  };
+
+  /**
+   * m.secret_storage.key.*
+   */
+  class SecretStorageKey_
+    extends UniffiEnum
+    implements SecretStorageKey__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEvent';
+    readonly tag = AccountDataEvent_Tags.SecretStorageKey;
+    readonly inner: Readonly<{
+      keyId: string;
+      name: string | undefined;
+      algorithm: SecretStorageEncryptionAlgorithm;
+      passphrase: PassPhrase | undefined;
+    }>;
+    constructor(inner: {
+      /**
+       * The ID of the key.
+       */ keyId: string;
+      /**
+       * The name of the key.
+       */ name: string | undefined;
+      /**
+       * The encryption algorithm used for this key.
+       *
+       * Currently, only `m.secret_storage.v1.aes-hmac-sha2` is supported.
+       */ algorithm: SecretStorageEncryptionAlgorithm;
+      /**
+       * The passphrase from which to generate the key.
+       */ passphrase: PassPhrase | undefined;
+    }) {
+      super('AccountDataEvent', 'SecretStorageKey');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The ID of the key.
+       */ keyId: string;
+      /**
+       * The name of the key.
+       */ name: string | undefined;
+      /**
+       * The encryption algorithm used for this key.
+       *
+       * Currently, only `m.secret_storage.v1.aes-hmac-sha2` is supported.
+       */ algorithm: SecretStorageEncryptionAlgorithm;
+      /**
+       * The passphrase from which to generate the key.
+       */ passphrase: PassPhrase | undefined;
+    }): SecretStorageKey_ {
+      return new SecretStorageKey_(inner);
+    }
+
+    static instanceOf(obj: any): obj is SecretStorageKey_ {
+      return obj.tag === AccountDataEvent_Tags.SecretStorageKey;
+    }
+  }
+
+  function instanceOf(obj: any): obj is AccountDataEvent {
+    return obj[uniffiTypeNameSymbol] === 'AccountDataEvent';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Direct: Direct_,
+    IdentityServer: IdentityServer_,
+    IgnoredUserList: IgnoredUserList_,
+    PushRules: PushRules_,
+    SecretStorageDefaultKey: SecretStorageDefaultKey_,
+    SecretStorageKey: SecretStorageKey_,
+  });
+})();
+
+/**
+ * Global account data events.
+ */
+
+export type AccountDataEvent = InstanceType<
+  (typeof AccountDataEvent)[keyof Omit<typeof AccountDataEvent, 'instanceOf'>]
+>;
+
+// FfiConverter for enum AccountDataEvent
+const FfiConverterTypeAccountDataEvent = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = AccountDataEvent;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new AccountDataEvent.Direct({
+            map: FfiConverterMapStringArrayString.read(from),
+          });
+        case 2:
+          return new AccountDataEvent.IdentityServer({
+            baseUrl: FfiConverterOptionalString.read(from),
+          });
+        case 3:
+          return new AccountDataEvent.IgnoredUserList({
+            ignoredUsers: FfiConverterMapStringTypeIgnoredUser.read(from),
+          });
+        case 4:
+          return new AccountDataEvent.PushRules({
+            global: FfiConverterTypeRuleset.read(from),
+          });
+        case 5:
+          return new AccountDataEvent.SecretStorageDefaultKey({
+            keyId: FfiConverterString.read(from),
+          });
+        case 6:
+          return new AccountDataEvent.SecretStorageKey({
+            keyId: FfiConverterString.read(from),
+            name: FfiConverterOptionalString.read(from),
+            algorithm:
+              FfiConverterTypeSecretStorageEncryptionAlgorithm.read(from),
+            passphrase: FfiConverterOptionalTypePassPhrase.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case AccountDataEvent_Tags.Direct: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterMapStringArrayString.write(inner.map, into);
+          return;
+        }
+        case AccountDataEvent_Tags.IdentityServer: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterOptionalString.write(inner.baseUrl, into);
+          return;
+        }
+        case AccountDataEvent_Tags.IgnoredUserList: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterMapStringTypeIgnoredUser.write(inner.ignoredUsers, into);
+          return;
+        }
+        case AccountDataEvent_Tags.PushRules: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterTypeRuleset.write(inner.global, into);
+          return;
+        }
+        case AccountDataEvent_Tags.SecretStorageDefaultKey: {
+          ordinalConverter.write(5, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.keyId, into);
+          return;
+        }
+        case AccountDataEvent_Tags.SecretStorageKey: {
+          ordinalConverter.write(6, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.keyId, into);
+          FfiConverterOptionalString.write(inner.name, into);
+          FfiConverterTypeSecretStorageEncryptionAlgorithm.write(
+            inner.algorithm,
+            into
+          );
+          FfiConverterOptionalTypePassPhrase.write(inner.passphrase, into);
+          return;
+        }
+        default:
+          // Throwing from here means that AccountDataEvent_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case AccountDataEvent_Tags.Direct: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterMapStringArrayString.allocationSize(inner.map);
+          return size;
+        }
+        case AccountDataEvent_Tags.IdentityServer: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterOptionalString.allocationSize(inner.baseUrl);
+          return size;
+        }
+        case AccountDataEvent_Tags.IgnoredUserList: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterMapStringTypeIgnoredUser.allocationSize(
+            inner.ignoredUsers
+          );
+          return size;
+        }
+        case AccountDataEvent_Tags.PushRules: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterTypeRuleset.allocationSize(inner.global);
+          return size;
+        }
+        case AccountDataEvent_Tags.SecretStorageDefaultKey: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(5);
+          size += FfiConverterString.allocationSize(inner.keyId);
+          return size;
+        }
+        case AccountDataEvent_Tags.SecretStorageKey: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(6);
+          size += FfiConverterString.allocationSize(inner.keyId);
+          size += FfiConverterOptionalString.allocationSize(inner.name);
+          size +=
+            FfiConverterTypeSecretStorageEncryptionAlgorithm.allocationSize(
+              inner.algorithm
+            );
+          size += FfiConverterOptionalTypePassPhrase.allocationSize(
+            inner.passphrase
+          );
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: AccountDataEventType
+export enum AccountDataEventType_Tags {
+  Direct = 'Direct',
+  IdentityServer = 'IdentityServer',
+  IgnoredUserList = 'IgnoredUserList',
+  PushRules = 'PushRules',
+  SecretStorageDefaultKey = 'SecretStorageDefaultKey',
+  SecretStorageKey = 'SecretStorageKey',
+}
+/**
+ * Types of global account data events.
+ */
+export const AccountDataEventType = (() => {
+  type Direct__interface = {
+    tag: AccountDataEventType_Tags.Direct;
+  };
+
+  /**
+   * m.direct
+   */
+  class Direct_ extends UniffiEnum implements Direct__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEventType';
+    readonly tag = AccountDataEventType_Tags.Direct;
+    constructor() {
+      super('AccountDataEventType', 'Direct');
+    }
+
+    static new(): Direct_ {
+      return new Direct_();
+    }
+
+    static instanceOf(obj: any): obj is Direct_ {
+      return obj.tag === AccountDataEventType_Tags.Direct;
+    }
+  }
+
+  type IdentityServer__interface = {
+    tag: AccountDataEventType_Tags.IdentityServer;
+  };
+
+  /**
+   * m.identity_server
+   */
+  class IdentityServer_
+    extends UniffiEnum
+    implements IdentityServer__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEventType';
+    readonly tag = AccountDataEventType_Tags.IdentityServer;
+    constructor() {
+      super('AccountDataEventType', 'IdentityServer');
+    }
+
+    static new(): IdentityServer_ {
+      return new IdentityServer_();
+    }
+
+    static instanceOf(obj: any): obj is IdentityServer_ {
+      return obj.tag === AccountDataEventType_Tags.IdentityServer;
+    }
+  }
+
+  type IgnoredUserList__interface = {
+    tag: AccountDataEventType_Tags.IgnoredUserList;
+  };
+
+  /**
+   * m.ignored_user_list
+   */
+  class IgnoredUserList_
+    extends UniffiEnum
+    implements IgnoredUserList__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEventType';
+    readonly tag = AccountDataEventType_Tags.IgnoredUserList;
+    constructor() {
+      super('AccountDataEventType', 'IgnoredUserList');
+    }
+
+    static new(): IgnoredUserList_ {
+      return new IgnoredUserList_();
+    }
+
+    static instanceOf(obj: any): obj is IgnoredUserList_ {
+      return obj.tag === AccountDataEventType_Tags.IgnoredUserList;
+    }
+  }
+
+  type PushRules__interface = {
+    tag: AccountDataEventType_Tags.PushRules;
+  };
+
+  /**
+   * m.push_rules
+   */
+  class PushRules_ extends UniffiEnum implements PushRules__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEventType';
+    readonly tag = AccountDataEventType_Tags.PushRules;
+    constructor() {
+      super('AccountDataEventType', 'PushRules');
+    }
+
+    static new(): PushRules_ {
+      return new PushRules_();
+    }
+
+    static instanceOf(obj: any): obj is PushRules_ {
+      return obj.tag === AccountDataEventType_Tags.PushRules;
+    }
+  }
+
+  type SecretStorageDefaultKey__interface = {
+    tag: AccountDataEventType_Tags.SecretStorageDefaultKey;
+  };
+
+  /**
+   * m.secret_storage.default_key
+   */
+  class SecretStorageDefaultKey_
+    extends UniffiEnum
+    implements SecretStorageDefaultKey__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEventType';
+    readonly tag = AccountDataEventType_Tags.SecretStorageDefaultKey;
+    constructor() {
+      super('AccountDataEventType', 'SecretStorageDefaultKey');
+    }
+
+    static new(): SecretStorageDefaultKey_ {
+      return new SecretStorageDefaultKey_();
+    }
+
+    static instanceOf(obj: any): obj is SecretStorageDefaultKey_ {
+      return obj.tag === AccountDataEventType_Tags.SecretStorageDefaultKey;
+    }
+  }
+
+  type SecretStorageKey__interface = {
+    tag: AccountDataEventType_Tags.SecretStorageKey;
+    inner: Readonly<{ keyId: string }>;
+  };
+
+  /**
+   * m.secret_storage.key.*
+   */
+  class SecretStorageKey_
+    extends UniffiEnum
+    implements SecretStorageKey__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AccountDataEventType';
+    readonly tag = AccountDataEventType_Tags.SecretStorageKey;
+    readonly inner: Readonly<{ keyId: string }>;
+    constructor(inner: { keyId: string }) {
+      super('AccountDataEventType', 'SecretStorageKey');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { keyId: string }): SecretStorageKey_ {
+      return new SecretStorageKey_(inner);
+    }
+
+    static instanceOf(obj: any): obj is SecretStorageKey_ {
+      return obj.tag === AccountDataEventType_Tags.SecretStorageKey;
+    }
+  }
+
+  function instanceOf(obj: any): obj is AccountDataEventType {
+    return obj[uniffiTypeNameSymbol] === 'AccountDataEventType';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Direct: Direct_,
+    IdentityServer: IdentityServer_,
+    IgnoredUserList: IgnoredUserList_,
+    PushRules: PushRules_,
+    SecretStorageDefaultKey: SecretStorageDefaultKey_,
+    SecretStorageKey: SecretStorageKey_,
+  });
+})();
+
+/**
+ * Types of global account data events.
+ */
+
+export type AccountDataEventType = InstanceType<
+  (typeof AccountDataEventType)[keyof Omit<
+    typeof AccountDataEventType,
+    'instanceOf'
+  >]
+>;
+
+// FfiConverter for enum AccountDataEventType
+const FfiConverterTypeAccountDataEventType = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = AccountDataEventType;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new AccountDataEventType.Direct();
+        case 2:
+          return new AccountDataEventType.IdentityServer();
+        case 3:
+          return new AccountDataEventType.IgnoredUserList();
+        case 4:
+          return new AccountDataEventType.PushRules();
+        case 5:
+          return new AccountDataEventType.SecretStorageDefaultKey();
+        case 6:
+          return new AccountDataEventType.SecretStorageKey({
+            keyId: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case AccountDataEventType_Tags.Direct: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case AccountDataEventType_Tags.IdentityServer: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case AccountDataEventType_Tags.IgnoredUserList: {
+          ordinalConverter.write(3, into);
+          return;
+        }
+        case AccountDataEventType_Tags.PushRules: {
+          ordinalConverter.write(4, into);
+          return;
+        }
+        case AccountDataEventType_Tags.SecretStorageDefaultKey: {
+          ordinalConverter.write(5, into);
+          return;
+        }
+        case AccountDataEventType_Tags.SecretStorageKey: {
+          ordinalConverter.write(6, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.keyId, into);
+          return;
+        }
+        default:
+          // Throwing from here means that AccountDataEventType_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case AccountDataEventType_Tags.Direct: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case AccountDataEventType_Tags.IdentityServer: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case AccountDataEventType_Tags.IgnoredUserList: {
+          return ordinalConverter.allocationSize(3);
+        }
+        case AccountDataEventType_Tags.PushRules: {
+          return ordinalConverter.allocationSize(4);
+        }
+        case AccountDataEventType_Tags.SecretStorageDefaultKey: {
+          return ordinalConverter.allocationSize(5);
+        }
+        case AccountDataEventType_Tags.SecretStorageKey: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(6);
+          size += FfiConverterString.allocationSize(inner.keyId);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
 
 // Enum: AccountManagementAction
 export enum AccountManagementAction_Tags {
@@ -7805,6 +10590,144 @@ const FfiConverterTypeAccountManagementAction = (() => {
         }
         case AccountManagementAction_Tags.CrossSigningReset: {
           return ordinalConverter.allocationSize(6);
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: Action
+export enum Action_Tags {
+  Notify = 'Notify',
+  SetTweak = 'SetTweak',
+}
+/**
+ * Enum representing the push notification actions for a rule.
+ */
+export const Action = (() => {
+  type Notify__interface = {
+    tag: Action_Tags.Notify;
+  };
+
+  /**
+   * Causes matching events to generate a notification.
+   */
+  class Notify_ extends UniffiEnum implements Notify__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'Action';
+    readonly tag = Action_Tags.Notify;
+    constructor() {
+      super('Action', 'Notify');
+    }
+
+    static new(): Notify_ {
+      return new Notify_();
+    }
+
+    static instanceOf(obj: any): obj is Notify_ {
+      return obj.tag === Action_Tags.Notify;
+    }
+  }
+
+  type SetTweak__interface = {
+    tag: Action_Tags.SetTweak;
+    inner: Readonly<{ value: Tweak }>;
+  };
+
+  /**
+   * Sets an entry in the 'tweaks' dictionary sent to the push gateway.
+   */
+  class SetTweak_ extends UniffiEnum implements SetTweak__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'Action';
+    readonly tag = Action_Tags.SetTweak;
+    readonly inner: Readonly<{ value: Tweak }>;
+    constructor(inner: { value: Tweak }) {
+      super('Action', 'SetTweak');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: Tweak }): SetTweak_ {
+      return new SetTweak_(inner);
+    }
+
+    static instanceOf(obj: any): obj is SetTweak_ {
+      return obj.tag === Action_Tags.SetTweak;
+    }
+  }
+
+  function instanceOf(obj: any): obj is Action {
+    return obj[uniffiTypeNameSymbol] === 'Action';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Notify: Notify_,
+    SetTweak: SetTweak_,
+  });
+})();
+
+/**
+ * Enum representing the push notification actions for a rule.
+ */
+
+export type Action = InstanceType<
+  (typeof Action)[keyof Omit<typeof Action, 'instanceOf'>]
+>;
+
+// FfiConverter for enum Action
+const FfiConverterTypeAction = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = Action;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new Action.Notify();
+        case 2:
+          return new Action.SetTweak({
+            value: FfiConverterTypeTweak.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case Action_Tags.Notify: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case Action_Tags.SetTweak: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterTypeTweak.write(inner.value, into);
+          return;
+        }
+        default:
+          // Throwing from here means that Action_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case Action_Tags.Notify: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case Action_Tags.SetTweak: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterTypeTweak.allocationSize(inner.value);
+          return size;
         }
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -8668,11 +11591,12 @@ const FfiConverterTypeClientBuildError = (() => {
 // Enum: ClientError
 export enum ClientError_Tags {
   Generic = 'Generic',
+  MatrixApi = 'MatrixApi',
 }
 export const ClientError = (() => {
   type Generic__interface = {
     tag: ClientError_Tags.Generic;
-    inner: Readonly<{ msg: string }>;
+    inner: Readonly<{ msg: string; details: string | undefined }>;
   };
 
   class Generic_ extends UniffiError implements Generic__interface {
@@ -8682,13 +11606,13 @@ export const ClientError = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'ClientError';
     readonly tag = ClientError_Tags.Generic;
-    readonly inner: Readonly<{ msg: string }>;
-    constructor(inner: { msg: string }) {
+    readonly inner: Readonly<{ msg: string; details: string | undefined }>;
+    constructor(inner: { msg: string; details: string | undefined }) {
       super('ClientError', 'Generic');
       this.inner = Object.freeze(inner);
     }
 
-    static new(inner: { msg: string }): Generic_ {
+    static new(inner: { msg: string; details: string | undefined }): Generic_ {
       return new Generic_(inner);
     }
 
@@ -8700,7 +11624,71 @@ export const ClientError = (() => {
       return Generic_.instanceOf(obj);
     }
 
-    static getInner(obj: Generic_): Readonly<{ msg: string }> {
+    static getInner(
+      obj: Generic_
+    ): Readonly<{ msg: string; details: string | undefined }> {
+      return obj.inner;
+    }
+  }
+
+  type MatrixApi__interface = {
+    tag: ClientError_Tags.MatrixApi;
+    inner: Readonly<{
+      kind: ErrorKind;
+      code: string;
+      msg: string;
+      details: string | undefined;
+    }>;
+  };
+
+  class MatrixApi_ extends UniffiError implements MatrixApi__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ClientError';
+    readonly tag = ClientError_Tags.MatrixApi;
+    readonly inner: Readonly<{
+      kind: ErrorKind;
+      code: string;
+      msg: string;
+      details: string | undefined;
+    }>;
+    constructor(inner: {
+      kind: ErrorKind;
+      code: string;
+      msg: string;
+      details: string | undefined;
+    }) {
+      super('ClientError', 'MatrixApi');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      kind: ErrorKind;
+      code: string;
+      msg: string;
+      details: string | undefined;
+    }): MatrixApi_ {
+      return new MatrixApi_(inner);
+    }
+
+    static instanceOf(obj: any): obj is MatrixApi_ {
+      return obj.tag === ClientError_Tags.MatrixApi;
+    }
+
+    static hasInner(obj: any): obj is MatrixApi_ {
+      return MatrixApi_.instanceOf(obj);
+    }
+
+    static getInner(
+      obj: MatrixApi_
+    ): Readonly<{
+      kind: ErrorKind;
+      code: string;
+      msg: string;
+      details: string | undefined;
+    }> {
       return obj.inner;
     }
   }
@@ -8712,6 +11700,7 @@ export const ClientError = (() => {
   return Object.freeze({
     instanceOf,
     Generic: Generic_,
+    MatrixApi: MatrixApi_,
   });
 })();
 
@@ -8729,6 +11718,14 @@ const FfiConverterTypeClientError = (() => {
         case 1:
           return new ClientError.Generic({
             msg: FfiConverterString.read(from),
+            details: FfiConverterOptionalString.read(from),
+          });
+        case 2:
+          return new ClientError.MatrixApi({
+            kind: FfiConverterTypeErrorKind.read(from),
+            code: FfiConverterString.read(from),
+            msg: FfiConverterString.read(from),
+            details: FfiConverterOptionalString.read(from),
           });
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -8740,6 +11737,16 @@ const FfiConverterTypeClientError = (() => {
           ordinalConverter.write(1, into);
           const inner = value.inner;
           FfiConverterString.write(inner.msg, into);
+          FfiConverterOptionalString.write(inner.details, into);
+          return;
+        }
+        case ClientError_Tags.MatrixApi: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterTypeErrorKind.write(inner.kind, into);
+          FfiConverterString.write(inner.code, into);
+          FfiConverterString.write(inner.msg, into);
+          FfiConverterOptionalString.write(inner.details, into);
           return;
         }
         default:
@@ -8753,11 +11760,85 @@ const FfiConverterTypeClientError = (() => {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(1);
           size += FfiConverterString.allocationSize(inner.msg);
+          size += FfiConverterOptionalString.allocationSize(inner.details);
+          return size;
+        }
+        case ClientError_Tags.MatrixApi: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterTypeErrorKind.allocationSize(inner.kind);
+          size += FfiConverterString.allocationSize(inner.code);
+          size += FfiConverterString.allocationSize(inner.msg);
+          size += FfiConverterOptionalString.allocationSize(inner.details);
           return size;
         }
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
+    }
+  }
+  return new FFIConverter();
+})();
+
+export enum ComparisonOperator {
+  /**
+   * Equals
+   */
+  Eq,
+  /**
+   * Less than
+   */
+  Lt,
+  /**
+   * Greater than
+   */
+  Gt,
+  /**
+   * Greater or equal
+   */
+  Ge,
+  /**
+   * Less or equal
+   */
+  Le,
+}
+
+const FfiConverterTypeComparisonOperator = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = ComparisonOperator;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return ComparisonOperator.Eq;
+        case 2:
+          return ComparisonOperator.Lt;
+        case 3:
+          return ComparisonOperator.Gt;
+        case 4:
+          return ComparisonOperator.Ge;
+        case 5:
+          return ComparisonOperator.Le;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case ComparisonOperator.Eq:
+          return ordinalConverter.write(1, into);
+        case ComparisonOperator.Lt:
+          return ordinalConverter.write(2, into);
+        case ComparisonOperator.Gt:
+          return ordinalConverter.write(3, into);
+        case ComparisonOperator.Ge:
+          return ordinalConverter.write(4, into);
+        case ComparisonOperator.Le:
+          return ordinalConverter.write(5, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
     }
   }
   return new FFIConverter();
@@ -9183,6 +12264,7 @@ export const EditedContent = (() => {
     inner: Readonly<{
       caption: string | undefined;
       formattedCaption: FormattedBody | undefined;
+      mentions: Mentions | undefined;
     }>;
   };
 
@@ -9196,10 +12278,12 @@ export const EditedContent = (() => {
     readonly inner: Readonly<{
       caption: string | undefined;
       formattedCaption: FormattedBody | undefined;
+      mentions: Mentions | undefined;
     }>;
     constructor(inner: {
       caption: string | undefined;
       formattedCaption: FormattedBody | undefined;
+      mentions: Mentions | undefined;
     }) {
       super('EditedContent', 'MediaCaption');
       this.inner = Object.freeze(inner);
@@ -9208,6 +12292,7 @@ export const EditedContent = (() => {
     static new(inner: {
       caption: string | undefined;
       formattedCaption: FormattedBody | undefined;
+      mentions: Mentions | undefined;
     }): MediaCaption_ {
       return new MediaCaption_(inner);
     }
@@ -9276,6 +12361,7 @@ const FfiConverterTypeEditedContent = (() => {
           return new EditedContent.MediaCaption({
             caption: FfiConverterOptionalString.read(from),
             formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
+            mentions: FfiConverterOptionalTypeMentions.read(from),
           });
         case 3:
           return new EditedContent.PollStart({
@@ -9304,6 +12390,7 @@ const FfiConverterTypeEditedContent = (() => {
             inner.formattedCaption,
             into
           );
+          FfiConverterOptionalTypeMentions.write(inner.mentions, into);
           return;
         }
         case EditedContent_Tags.PollStart: {
@@ -9335,12 +12422,249 @@ const FfiConverterTypeEditedContent = (() => {
           size += FfiConverterOptionalTypeFormattedBody.allocationSize(
             inner.formattedCaption
           );
+          size += FfiConverterOptionalTypeMentions.allocationSize(
+            inner.mentions
+          );
           return size;
         }
         case EditedContent_Tags.PollStart: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(3);
           size += FfiConverterTypePollData.allocationSize(inner.pollData);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: EmbeddedEventDetails
+export enum EmbeddedEventDetails_Tags {
+  Unavailable = 'Unavailable',
+  Pending = 'Pending',
+  Ready = 'Ready',
+  Error = 'Error',
+}
+export const EmbeddedEventDetails = (() => {
+  type Unavailable__interface = {
+    tag: EmbeddedEventDetails_Tags.Unavailable;
+  };
+
+  class Unavailable_ extends UniffiEnum implements Unavailable__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'EmbeddedEventDetails';
+    readonly tag = EmbeddedEventDetails_Tags.Unavailable;
+    constructor() {
+      super('EmbeddedEventDetails', 'Unavailable');
+    }
+
+    static new(): Unavailable_ {
+      return new Unavailable_();
+    }
+
+    static instanceOf(obj: any): obj is Unavailable_ {
+      return obj.tag === EmbeddedEventDetails_Tags.Unavailable;
+    }
+  }
+
+  type Pending__interface = {
+    tag: EmbeddedEventDetails_Tags.Pending;
+  };
+
+  class Pending_ extends UniffiEnum implements Pending__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'EmbeddedEventDetails';
+    readonly tag = EmbeddedEventDetails_Tags.Pending;
+    constructor() {
+      super('EmbeddedEventDetails', 'Pending');
+    }
+
+    static new(): Pending_ {
+      return new Pending_();
+    }
+
+    static instanceOf(obj: any): obj is Pending_ {
+      return obj.tag === EmbeddedEventDetails_Tags.Pending;
+    }
+  }
+
+  type Ready__interface = {
+    tag: EmbeddedEventDetails_Tags.Ready;
+    inner: Readonly<{
+      content: TimelineItemContent;
+      sender: string;
+      senderProfile: ProfileDetails;
+    }>;
+  };
+
+  class Ready_ extends UniffiEnum implements Ready__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'EmbeddedEventDetails';
+    readonly tag = EmbeddedEventDetails_Tags.Ready;
+    readonly inner: Readonly<{
+      content: TimelineItemContent;
+      sender: string;
+      senderProfile: ProfileDetails;
+    }>;
+    constructor(inner: {
+      content: TimelineItemContent;
+      sender: string;
+      senderProfile: ProfileDetails;
+    }) {
+      super('EmbeddedEventDetails', 'Ready');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      content: TimelineItemContent;
+      sender: string;
+      senderProfile: ProfileDetails;
+    }): Ready_ {
+      return new Ready_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Ready_ {
+      return obj.tag === EmbeddedEventDetails_Tags.Ready;
+    }
+  }
+
+  type Error__interface = {
+    tag: EmbeddedEventDetails_Tags.Error;
+    inner: Readonly<{ message: string }>;
+  };
+
+  class Error_ extends UniffiEnum implements Error__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'EmbeddedEventDetails';
+    readonly tag = EmbeddedEventDetails_Tags.Error;
+    readonly inner: Readonly<{ message: string }>;
+    constructor(inner: { message: string }) {
+      super('EmbeddedEventDetails', 'Error');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { message: string }): Error_ {
+      return new Error_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Error_ {
+      return obj.tag === EmbeddedEventDetails_Tags.Error;
+    }
+  }
+
+  function instanceOf(obj: any): obj is EmbeddedEventDetails {
+    return obj[uniffiTypeNameSymbol] === 'EmbeddedEventDetails';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Unavailable: Unavailable_,
+    Pending: Pending_,
+    Ready: Ready_,
+    Error: Error_,
+  });
+})();
+
+export type EmbeddedEventDetails = InstanceType<
+  (typeof EmbeddedEventDetails)[keyof Omit<
+    typeof EmbeddedEventDetails,
+    'instanceOf'
+  >]
+>;
+
+// FfiConverter for enum EmbeddedEventDetails
+const FfiConverterTypeEmbeddedEventDetails = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = EmbeddedEventDetails;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new EmbeddedEventDetails.Unavailable();
+        case 2:
+          return new EmbeddedEventDetails.Pending();
+        case 3:
+          return new EmbeddedEventDetails.Ready({
+            content: FfiConverterTypeTimelineItemContent.read(from),
+            sender: FfiConverterString.read(from),
+            senderProfile: FfiConverterTypeProfileDetails.read(from),
+          });
+        case 4:
+          return new EmbeddedEventDetails.Error({
+            message: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case EmbeddedEventDetails_Tags.Unavailable: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case EmbeddedEventDetails_Tags.Pending: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case EmbeddedEventDetails_Tags.Ready: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterTypeTimelineItemContent.write(inner.content, into);
+          FfiConverterString.write(inner.sender, into);
+          FfiConverterTypeProfileDetails.write(inner.senderProfile, into);
+          return;
+        }
+        case EmbeddedEventDetails_Tags.Error: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.message, into);
+          return;
+        }
+        default:
+          // Throwing from here means that EmbeddedEventDetails_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case EmbeddedEventDetails_Tags.Unavailable: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case EmbeddedEventDetails_Tags.Pending: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case EmbeddedEventDetails_Tags.Ready: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterTypeTimelineItemContent.allocationSize(
+            inner.content
+          );
+          size += FfiConverterString.allocationSize(inner.sender);
+          size += FfiConverterTypeProfileDetails.allocationSize(
+            inner.senderProfile
+          );
+          return size;
+        }
+        case EmbeddedEventDetails_Tags.Error: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterString.allocationSize(inner.message);
           return size;
         }
         default:
@@ -10039,6 +13363,2261 @@ const FfiConverterTypeEncryptionSystem = (() => {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(3);
           size += FfiConverterString.allocationSize(inner.secret);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: ErrorKind
+export enum ErrorKind_Tags {
+  BadAlias = 'BadAlias',
+  BadJson = 'BadJson',
+  BadState = 'BadState',
+  BadStatus = 'BadStatus',
+  CannotLeaveServerNoticeRoom = 'CannotLeaveServerNoticeRoom',
+  CannotOverwriteMedia = 'CannotOverwriteMedia',
+  CaptchaInvalid = 'CaptchaInvalid',
+  CaptchaNeeded = 'CaptchaNeeded',
+  ConnectionFailed = 'ConnectionFailed',
+  ConnectionTimeout = 'ConnectionTimeout',
+  DuplicateAnnotation = 'DuplicateAnnotation',
+  Exclusive = 'Exclusive',
+  Forbidden = 'Forbidden',
+  GuestAccessForbidden = 'GuestAccessForbidden',
+  IncompatibleRoomVersion = 'IncompatibleRoomVersion',
+  InvalidParam = 'InvalidParam',
+  InvalidRoomState = 'InvalidRoomState',
+  InvalidUsername = 'InvalidUsername',
+  LimitExceeded = 'LimitExceeded',
+  MissingParam = 'MissingParam',
+  MissingToken = 'MissingToken',
+  NotFound = 'NotFound',
+  NotJson = 'NotJson',
+  NotYetUploaded = 'NotYetUploaded',
+  ResourceLimitExceeded = 'ResourceLimitExceeded',
+  RoomInUse = 'RoomInUse',
+  ServerNotTrusted = 'ServerNotTrusted',
+  ThreepidAuthFailed = 'ThreepidAuthFailed',
+  ThreepidDenied = 'ThreepidDenied',
+  ThreepidInUse = 'ThreepidInUse',
+  ThreepidMediumNotSupported = 'ThreepidMediumNotSupported',
+  ThreepidNotFound = 'ThreepidNotFound',
+  TooLarge = 'TooLarge',
+  UnableToAuthorizeJoin = 'UnableToAuthorizeJoin',
+  UnableToGrantJoin = 'UnableToGrantJoin',
+  Unauthorized = 'Unauthorized',
+  Unknown = 'Unknown',
+  UnknownToken = 'UnknownToken',
+  Unrecognized = 'Unrecognized',
+  UnsupportedRoomVersion = 'UnsupportedRoomVersion',
+  UrlNotSet = 'UrlNotSet',
+  UserDeactivated = 'UserDeactivated',
+  UserInUse = 'UserInUse',
+  UserLocked = 'UserLocked',
+  UserSuspended = 'UserSuspended',
+  WeakPassword = 'WeakPassword',
+  WrongRoomKeysVersion = 'WrongRoomKeysVersion',
+  Custom = 'Custom',
+}
+export const ErrorKind = (() => {
+  type BadAlias__interface = {
+    tag: ErrorKind_Tags.BadAlias;
+  };
+
+  /**
+   * `M_BAD_ALIAS`
+   *
+   * One or more [room aliases] within the `m.room.canonical_alias` event do
+   * not point to the room ID for which the state event is to be sent to.
+   *
+   * [room aliases]: https://spec.matrix.org/latest/client-server-api/#room-aliases
+   */
+  class BadAlias_ extends UniffiEnum implements BadAlias__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.BadAlias;
+    constructor() {
+      super('ErrorKind', 'BadAlias');
+    }
+
+    static new(): BadAlias_ {
+      return new BadAlias_();
+    }
+
+    static instanceOf(obj: any): obj is BadAlias_ {
+      return obj.tag === ErrorKind_Tags.BadAlias;
+    }
+  }
+
+  type BadJson__interface = {
+    tag: ErrorKind_Tags.BadJson;
+  };
+
+  /**
+   * `M_BAD_JSON`
+   *
+   * The request contained valid JSON, but it was malformed in some way, e.g.
+   * missing required keys, invalid values for keys.
+   */
+  class BadJson_ extends UniffiEnum implements BadJson__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.BadJson;
+    constructor() {
+      super('ErrorKind', 'BadJson');
+    }
+
+    static new(): BadJson_ {
+      return new BadJson_();
+    }
+
+    static instanceOf(obj: any): obj is BadJson_ {
+      return obj.tag === ErrorKind_Tags.BadJson;
+    }
+  }
+
+  type BadState__interface = {
+    tag: ErrorKind_Tags.BadState;
+  };
+
+  /**
+   * `M_BAD_STATE`
+   *
+   * The state change requested cannot be performed, such as attempting to
+   * unban a user who is not banned.
+   */
+  class BadState_ extends UniffiEnum implements BadState__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.BadState;
+    constructor() {
+      super('ErrorKind', 'BadState');
+    }
+
+    static new(): BadState_ {
+      return new BadState_();
+    }
+
+    static instanceOf(obj: any): obj is BadState_ {
+      return obj.tag === ErrorKind_Tags.BadState;
+    }
+  }
+
+  type BadStatus__interface = {
+    tag: ErrorKind_Tags.BadStatus;
+    inner: Readonly<{
+      status: /*u16*/ number | undefined;
+      body: string | undefined;
+    }>;
+  };
+
+  /**
+   * `M_BAD_STATUS`
+   *
+   * The application service returned a bad status.
+   */
+  class BadStatus_ extends UniffiEnum implements BadStatus__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.BadStatus;
+    readonly inner: Readonly<{
+      status: /*u16*/ number | undefined;
+      body: string | undefined;
+    }>;
+    constructor(inner: {
+      /**
+       * The HTTP status code of the response.
+       */ status: /*u16*/ number | undefined;
+      /**
+       * The body of the response.
+       */ body: string | undefined;
+    }) {
+      super('ErrorKind', 'BadStatus');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The HTTP status code of the response.
+       */ status: /*u16*/ number | undefined;
+      /**
+       * The body of the response.
+       */ body: string | undefined;
+    }): BadStatus_ {
+      return new BadStatus_(inner);
+    }
+
+    static instanceOf(obj: any): obj is BadStatus_ {
+      return obj.tag === ErrorKind_Tags.BadStatus;
+    }
+  }
+
+  type CannotLeaveServerNoticeRoom__interface = {
+    tag: ErrorKind_Tags.CannotLeaveServerNoticeRoom;
+  };
+
+  /**
+   * `M_CANNOT_LEAVE_SERVER_NOTICE_ROOM`
+   *
+   * The user is unable to reject an invite to join the [server notices]
+   * room.
+   *
+   * [server notices]: https://spec.matrix.org/latest/client-server-api/#server-notices
+   */
+  class CannotLeaveServerNoticeRoom_
+    extends UniffiEnum
+    implements CannotLeaveServerNoticeRoom__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.CannotLeaveServerNoticeRoom;
+    constructor() {
+      super('ErrorKind', 'CannotLeaveServerNoticeRoom');
+    }
+
+    static new(): CannotLeaveServerNoticeRoom_ {
+      return new CannotLeaveServerNoticeRoom_();
+    }
+
+    static instanceOf(obj: any): obj is CannotLeaveServerNoticeRoom_ {
+      return obj.tag === ErrorKind_Tags.CannotLeaveServerNoticeRoom;
+    }
+  }
+
+  type CannotOverwriteMedia__interface = {
+    tag: ErrorKind_Tags.CannotOverwriteMedia;
+  };
+
+  /**
+   * `M_CANNOT_OVERWRITE_MEDIA`
+   *
+   * The [`create_content_async`] endpoint was called with a media ID that
+   * already has content.
+   *
+   * [`create_content_async`]: crate::media::create_content_async
+   */
+  class CannotOverwriteMedia_
+    extends UniffiEnum
+    implements CannotOverwriteMedia__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.CannotOverwriteMedia;
+    constructor() {
+      super('ErrorKind', 'CannotOverwriteMedia');
+    }
+
+    static new(): CannotOverwriteMedia_ {
+      return new CannotOverwriteMedia_();
+    }
+
+    static instanceOf(obj: any): obj is CannotOverwriteMedia_ {
+      return obj.tag === ErrorKind_Tags.CannotOverwriteMedia;
+    }
+  }
+
+  type CaptchaInvalid__interface = {
+    tag: ErrorKind_Tags.CaptchaInvalid;
+  };
+
+  /**
+   * `M_CAPTCHA_INVALID`
+   *
+   * The Captcha provided did not match what was expected.
+   */
+  class CaptchaInvalid_
+    extends UniffiEnum
+    implements CaptchaInvalid__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.CaptchaInvalid;
+    constructor() {
+      super('ErrorKind', 'CaptchaInvalid');
+    }
+
+    static new(): CaptchaInvalid_ {
+      return new CaptchaInvalid_();
+    }
+
+    static instanceOf(obj: any): obj is CaptchaInvalid_ {
+      return obj.tag === ErrorKind_Tags.CaptchaInvalid;
+    }
+  }
+
+  type CaptchaNeeded__interface = {
+    tag: ErrorKind_Tags.CaptchaNeeded;
+  };
+
+  /**
+   * `M_CAPTCHA_NEEDED`
+   *
+   * A Captcha is required to complete the request.
+   */
+  class CaptchaNeeded_ extends UniffiEnum implements CaptchaNeeded__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.CaptchaNeeded;
+    constructor() {
+      super('ErrorKind', 'CaptchaNeeded');
+    }
+
+    static new(): CaptchaNeeded_ {
+      return new CaptchaNeeded_();
+    }
+
+    static instanceOf(obj: any): obj is CaptchaNeeded_ {
+      return obj.tag === ErrorKind_Tags.CaptchaNeeded;
+    }
+  }
+
+  type ConnectionFailed__interface = {
+    tag: ErrorKind_Tags.ConnectionFailed;
+  };
+
+  /**
+   * `M_CONNECTION_FAILED`
+   *
+   * The connection to the application service failed.
+   */
+  class ConnectionFailed_
+    extends UniffiEnum
+    implements ConnectionFailed__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ConnectionFailed;
+    constructor() {
+      super('ErrorKind', 'ConnectionFailed');
+    }
+
+    static new(): ConnectionFailed_ {
+      return new ConnectionFailed_();
+    }
+
+    static instanceOf(obj: any): obj is ConnectionFailed_ {
+      return obj.tag === ErrorKind_Tags.ConnectionFailed;
+    }
+  }
+
+  type ConnectionTimeout__interface = {
+    tag: ErrorKind_Tags.ConnectionTimeout;
+  };
+
+  /**
+   * `M_CONNECTION_TIMEOUT`
+   *
+   * The connection to the application service timed out.
+   */
+  class ConnectionTimeout_
+    extends UniffiEnum
+    implements ConnectionTimeout__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ConnectionTimeout;
+    constructor() {
+      super('ErrorKind', 'ConnectionTimeout');
+    }
+
+    static new(): ConnectionTimeout_ {
+      return new ConnectionTimeout_();
+    }
+
+    static instanceOf(obj: any): obj is ConnectionTimeout_ {
+      return obj.tag === ErrorKind_Tags.ConnectionTimeout;
+    }
+  }
+
+  type DuplicateAnnotation__interface = {
+    tag: ErrorKind_Tags.DuplicateAnnotation;
+  };
+
+  /**
+   * `M_DUPLICATE_ANNOTATION`
+   *
+   * The request is an attempt to send a [duplicate annotation].
+   *
+   * [duplicate annotation]: https://spec.matrix.org/latest/client-server-api/#avoiding-duplicate-annotations
+   */
+  class DuplicateAnnotation_
+    extends UniffiEnum
+    implements DuplicateAnnotation__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.DuplicateAnnotation;
+    constructor() {
+      super('ErrorKind', 'DuplicateAnnotation');
+    }
+
+    static new(): DuplicateAnnotation_ {
+      return new DuplicateAnnotation_();
+    }
+
+    static instanceOf(obj: any): obj is DuplicateAnnotation_ {
+      return obj.tag === ErrorKind_Tags.DuplicateAnnotation;
+    }
+  }
+
+  type Exclusive__interface = {
+    tag: ErrorKind_Tags.Exclusive;
+  };
+
+  /**
+   * `M_EXCLUSIVE`
+   *
+   * The resource being requested is reserved by an application service, or
+   * the application service making the request has not created the
+   * resource.
+   */
+  class Exclusive_ extends UniffiEnum implements Exclusive__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.Exclusive;
+    constructor() {
+      super('ErrorKind', 'Exclusive');
+    }
+
+    static new(): Exclusive_ {
+      return new Exclusive_();
+    }
+
+    static instanceOf(obj: any): obj is Exclusive_ {
+      return obj.tag === ErrorKind_Tags.Exclusive;
+    }
+  }
+
+  type Forbidden__interface = {
+    tag: ErrorKind_Tags.Forbidden;
+  };
+
+  /**
+   * `M_FORBIDDEN`
+   *
+   * Forbidden access, e.g. joining a room without permission, failed login.
+   */
+  class Forbidden_ extends UniffiEnum implements Forbidden__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.Forbidden;
+    constructor() {
+      super('ErrorKind', 'Forbidden');
+    }
+
+    static new(): Forbidden_ {
+      return new Forbidden_();
+    }
+
+    static instanceOf(obj: any): obj is Forbidden_ {
+      return obj.tag === ErrorKind_Tags.Forbidden;
+    }
+  }
+
+  type GuestAccessForbidden__interface = {
+    tag: ErrorKind_Tags.GuestAccessForbidden;
+  };
+
+  /**
+   * `M_GUEST_ACCESS_FORBIDDEN`
+   *
+   * The room or resource does not permit [guests] to access it.
+   *
+   * [guests]: https://spec.matrix.org/latest/client-server-api/#guest-access
+   */
+  class GuestAccessForbidden_
+    extends UniffiEnum
+    implements GuestAccessForbidden__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.GuestAccessForbidden;
+    constructor() {
+      super('ErrorKind', 'GuestAccessForbidden');
+    }
+
+    static new(): GuestAccessForbidden_ {
+      return new GuestAccessForbidden_();
+    }
+
+    static instanceOf(obj: any): obj is GuestAccessForbidden_ {
+      return obj.tag === ErrorKind_Tags.GuestAccessForbidden;
+    }
+  }
+
+  type IncompatibleRoomVersion__interface = {
+    tag: ErrorKind_Tags.IncompatibleRoomVersion;
+    inner: Readonly<{ roomVersion: string }>;
+  };
+
+  /**
+   * `M_INCOMPATIBLE_ROOM_VERSION`
+   *
+   * The client attempted to join a room that has a version the server does
+   * not support.
+   */
+  class IncompatibleRoomVersion_
+    extends UniffiEnum
+    implements IncompatibleRoomVersion__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.IncompatibleRoomVersion;
+    readonly inner: Readonly<{ roomVersion: string }>;
+    constructor(inner: {
+      /**
+       * The room's version.
+       */ roomVersion: string;
+    }) {
+      super('ErrorKind', 'IncompatibleRoomVersion');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The room's version.
+       */ roomVersion: string;
+    }): IncompatibleRoomVersion_ {
+      return new IncompatibleRoomVersion_(inner);
+    }
+
+    static instanceOf(obj: any): obj is IncompatibleRoomVersion_ {
+      return obj.tag === ErrorKind_Tags.IncompatibleRoomVersion;
+    }
+  }
+
+  type InvalidParam__interface = {
+    tag: ErrorKind_Tags.InvalidParam;
+  };
+
+  /**
+   * `M_INVALID_PARAM`
+   *
+   * A parameter that was specified has the wrong value. For example, the
+   * server expected an integer and instead received a string.
+   */
+  class InvalidParam_ extends UniffiEnum implements InvalidParam__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.InvalidParam;
+    constructor() {
+      super('ErrorKind', 'InvalidParam');
+    }
+
+    static new(): InvalidParam_ {
+      return new InvalidParam_();
+    }
+
+    static instanceOf(obj: any): obj is InvalidParam_ {
+      return obj.tag === ErrorKind_Tags.InvalidParam;
+    }
+  }
+
+  type InvalidRoomState__interface = {
+    tag: ErrorKind_Tags.InvalidRoomState;
+  };
+
+  /**
+   * `M_INVALID_ROOM_STATE`
+   *
+   * The initial state implied by the parameters to the [`create_room`]
+   * request is invalid, e.g. the user's `power_level` is set below that
+   * necessary to set the room name.
+   *
+   * [`create_room`]: crate::room::create_room
+   */
+  class InvalidRoomState_
+    extends UniffiEnum
+    implements InvalidRoomState__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.InvalidRoomState;
+    constructor() {
+      super('ErrorKind', 'InvalidRoomState');
+    }
+
+    static new(): InvalidRoomState_ {
+      return new InvalidRoomState_();
+    }
+
+    static instanceOf(obj: any): obj is InvalidRoomState_ {
+      return obj.tag === ErrorKind_Tags.InvalidRoomState;
+    }
+  }
+
+  type InvalidUsername__interface = {
+    tag: ErrorKind_Tags.InvalidUsername;
+  };
+
+  /**
+   * `M_INVALID_USERNAME`
+   *
+   * The desired user name is not valid.
+   */
+  class InvalidUsername_
+    extends UniffiEnum
+    implements InvalidUsername__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.InvalidUsername;
+    constructor() {
+      super('ErrorKind', 'InvalidUsername');
+    }
+
+    static new(): InvalidUsername_ {
+      return new InvalidUsername_();
+    }
+
+    static instanceOf(obj: any): obj is InvalidUsername_ {
+      return obj.tag === ErrorKind_Tags.InvalidUsername;
+    }
+  }
+
+  type LimitExceeded__interface = {
+    tag: ErrorKind_Tags.LimitExceeded;
+    inner: Readonly<{ retryAfterMs: /*u64*/ bigint | undefined }>;
+  };
+
+  /**
+   * `M_LIMIT_EXCEEDED`
+   *
+   * The request has been refused due to [rate limiting]: too many requests
+   * have been sent in a short period of time.
+   *
+   * [rate limiting]: https://spec.matrix.org/latest/client-server-api/#rate-limiting
+   */
+  class LimitExceeded_ extends UniffiEnum implements LimitExceeded__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.LimitExceeded;
+    readonly inner: Readonly<{ retryAfterMs: /*u64*/ bigint | undefined }>;
+    constructor(inner: {
+      /**
+       * How long a client should wait before they can try again.
+       */ retryAfterMs: /*u64*/ bigint | undefined;
+    }) {
+      super('ErrorKind', 'LimitExceeded');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * How long a client should wait before they can try again.
+       */ retryAfterMs: /*u64*/ bigint | undefined;
+    }): LimitExceeded_ {
+      return new LimitExceeded_(inner);
+    }
+
+    static instanceOf(obj: any): obj is LimitExceeded_ {
+      return obj.tag === ErrorKind_Tags.LimitExceeded;
+    }
+  }
+
+  type MissingParam__interface = {
+    tag: ErrorKind_Tags.MissingParam;
+  };
+
+  /**
+   * `M_MISSING_PARAM`
+   *
+   * A required parameter was missing from the request.
+   */
+  class MissingParam_ extends UniffiEnum implements MissingParam__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.MissingParam;
+    constructor() {
+      super('ErrorKind', 'MissingParam');
+    }
+
+    static new(): MissingParam_ {
+      return new MissingParam_();
+    }
+
+    static instanceOf(obj: any): obj is MissingParam_ {
+      return obj.tag === ErrorKind_Tags.MissingParam;
+    }
+  }
+
+  type MissingToken__interface = {
+    tag: ErrorKind_Tags.MissingToken;
+  };
+
+  /**
+   * `M_MISSING_TOKEN`
+   *
+   * No [access token] was specified for the request, but one is required.
+   *
+   * [access token]: https://spec.matrix.org/latest/client-server-api/#client-authentication
+   */
+  class MissingToken_ extends UniffiEnum implements MissingToken__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.MissingToken;
+    constructor() {
+      super('ErrorKind', 'MissingToken');
+    }
+
+    static new(): MissingToken_ {
+      return new MissingToken_();
+    }
+
+    static instanceOf(obj: any): obj is MissingToken_ {
+      return obj.tag === ErrorKind_Tags.MissingToken;
+    }
+  }
+
+  type NotFound__interface = {
+    tag: ErrorKind_Tags.NotFound;
+  };
+
+  /**
+   * `M_NOT_FOUND`
+   *
+   * No resource was found for this request.
+   */
+  class NotFound_ extends UniffiEnum implements NotFound__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.NotFound;
+    constructor() {
+      super('ErrorKind', 'NotFound');
+    }
+
+    static new(): NotFound_ {
+      return new NotFound_();
+    }
+
+    static instanceOf(obj: any): obj is NotFound_ {
+      return obj.tag === ErrorKind_Tags.NotFound;
+    }
+  }
+
+  type NotJson__interface = {
+    tag: ErrorKind_Tags.NotJson;
+  };
+
+  /**
+   * `M_NOT_JSON`
+   *
+   * The request did not contain valid JSON.
+   */
+  class NotJson_ extends UniffiEnum implements NotJson__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.NotJson;
+    constructor() {
+      super('ErrorKind', 'NotJson');
+    }
+
+    static new(): NotJson_ {
+      return new NotJson_();
+    }
+
+    static instanceOf(obj: any): obj is NotJson_ {
+      return obj.tag === ErrorKind_Tags.NotJson;
+    }
+  }
+
+  type NotYetUploaded__interface = {
+    tag: ErrorKind_Tags.NotYetUploaded;
+  };
+
+  /**
+   * `M_NOT_YET_UPLOADED`
+   *
+   * An `mxc:` URI generated with the [`create_mxc_uri`] endpoint was used
+   * and the content is not yet available.
+   *
+   * [`create_mxc_uri`]: crate::media::create_mxc_uri
+   */
+  class NotYetUploaded_
+    extends UniffiEnum
+    implements NotYetUploaded__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.NotYetUploaded;
+    constructor() {
+      super('ErrorKind', 'NotYetUploaded');
+    }
+
+    static new(): NotYetUploaded_ {
+      return new NotYetUploaded_();
+    }
+
+    static instanceOf(obj: any): obj is NotYetUploaded_ {
+      return obj.tag === ErrorKind_Tags.NotYetUploaded;
+    }
+  }
+
+  type ResourceLimitExceeded__interface = {
+    tag: ErrorKind_Tags.ResourceLimitExceeded;
+    inner: Readonly<{ adminContact: string }>;
+  };
+
+  /**
+   * `M_RESOURCE_LIMIT_EXCEEDED`
+   *
+   * The request cannot be completed because the homeserver has reached a
+   * resource limit imposed on it. For example, a homeserver held in a
+   * shared hosting environment may reach a resource limit if it starts
+   * using too much memory or disk space.
+   */
+  class ResourceLimitExceeded_
+    extends UniffiEnum
+    implements ResourceLimitExceeded__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ResourceLimitExceeded;
+    readonly inner: Readonly<{ adminContact: string }>;
+    constructor(inner: {
+      /**
+       * A URI giving a contact method for the server administrator.
+       */ adminContact: string;
+    }) {
+      super('ErrorKind', 'ResourceLimitExceeded');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * A URI giving a contact method for the server administrator.
+       */ adminContact: string;
+    }): ResourceLimitExceeded_ {
+      return new ResourceLimitExceeded_(inner);
+    }
+
+    static instanceOf(obj: any): obj is ResourceLimitExceeded_ {
+      return obj.tag === ErrorKind_Tags.ResourceLimitExceeded;
+    }
+  }
+
+  type RoomInUse__interface = {
+    tag: ErrorKind_Tags.RoomInUse;
+  };
+
+  /**
+   * `M_ROOM_IN_USE`
+   *
+   * The [room alias] specified in the [`create_room`] request is already
+   * taken.
+   *
+   * [`create_room`]: crate::room::create_room
+   * [room alias]: https://spec.matrix.org/latest/client-server-api/#room-aliases
+   */
+  class RoomInUse_ extends UniffiEnum implements RoomInUse__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.RoomInUse;
+    constructor() {
+      super('ErrorKind', 'RoomInUse');
+    }
+
+    static new(): RoomInUse_ {
+      return new RoomInUse_();
+    }
+
+    static instanceOf(obj: any): obj is RoomInUse_ {
+      return obj.tag === ErrorKind_Tags.RoomInUse;
+    }
+  }
+
+  type ServerNotTrusted__interface = {
+    tag: ErrorKind_Tags.ServerNotTrusted;
+  };
+
+  /**
+   * `M_SERVER_NOT_TRUSTED`
+   *
+   * The client's request used a third-party server, e.g. identity server,
+   * that this server does not trust.
+   */
+  class ServerNotTrusted_
+    extends UniffiEnum
+    implements ServerNotTrusted__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ServerNotTrusted;
+    constructor() {
+      super('ErrorKind', 'ServerNotTrusted');
+    }
+
+    static new(): ServerNotTrusted_ {
+      return new ServerNotTrusted_();
+    }
+
+    static instanceOf(obj: any): obj is ServerNotTrusted_ {
+      return obj.tag === ErrorKind_Tags.ServerNotTrusted;
+    }
+  }
+
+  type ThreepidAuthFailed__interface = {
+    tag: ErrorKind_Tags.ThreepidAuthFailed;
+  };
+
+  /**
+   * `M_THREEPID_AUTH_FAILED`
+   *
+   * Authentication could not be performed on the [third-party identifier].
+   *
+   * [third-party identifier]: https://spec.matrix.org/latest/client-server-api/#adding-account-administrative-contact-information
+   */
+  class ThreepidAuthFailed_
+    extends UniffiEnum
+    implements ThreepidAuthFailed__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ThreepidAuthFailed;
+    constructor() {
+      super('ErrorKind', 'ThreepidAuthFailed');
+    }
+
+    static new(): ThreepidAuthFailed_ {
+      return new ThreepidAuthFailed_();
+    }
+
+    static instanceOf(obj: any): obj is ThreepidAuthFailed_ {
+      return obj.tag === ErrorKind_Tags.ThreepidAuthFailed;
+    }
+  }
+
+  type ThreepidDenied__interface = {
+    tag: ErrorKind_Tags.ThreepidDenied;
+  };
+
+  /**
+   * `M_THREEPID_DENIED`
+   *
+   * The server does not permit this [third-party identifier]. This may
+   * happen if the server only permits, for example, email addresses from
+   * a particular domain.
+   *
+   * [third-party identifier]: https://spec.matrix.org/latest/client-server-api/#adding-account-administrative-contact-information
+   */
+  class ThreepidDenied_
+    extends UniffiEnum
+    implements ThreepidDenied__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ThreepidDenied;
+    constructor() {
+      super('ErrorKind', 'ThreepidDenied');
+    }
+
+    static new(): ThreepidDenied_ {
+      return new ThreepidDenied_();
+    }
+
+    static instanceOf(obj: any): obj is ThreepidDenied_ {
+      return obj.tag === ErrorKind_Tags.ThreepidDenied;
+    }
+  }
+
+  type ThreepidInUse__interface = {
+    tag: ErrorKind_Tags.ThreepidInUse;
+  };
+
+  /**
+   * `M_THREEPID_IN_USE`
+   *
+   * The [third-party identifier] is already in use by another user.
+   *
+   * [third-party identifier]: https://spec.matrix.org/latest/client-server-api/#adding-account-administrative-contact-information
+   */
+  class ThreepidInUse_ extends UniffiEnum implements ThreepidInUse__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ThreepidInUse;
+    constructor() {
+      super('ErrorKind', 'ThreepidInUse');
+    }
+
+    static new(): ThreepidInUse_ {
+      return new ThreepidInUse_();
+    }
+
+    static instanceOf(obj: any): obj is ThreepidInUse_ {
+      return obj.tag === ErrorKind_Tags.ThreepidInUse;
+    }
+  }
+
+  type ThreepidMediumNotSupported__interface = {
+    tag: ErrorKind_Tags.ThreepidMediumNotSupported;
+  };
+
+  /**
+   * `M_THREEPID_MEDIUM_NOT_SUPPORTED`
+   *
+   * The homeserver does not support adding a [third-party identifier] of the
+   * given medium.
+   *
+   * [third-party identifier]: https://spec.matrix.org/latest/client-server-api/#adding-account-administrative-contact-information
+   */
+  class ThreepidMediumNotSupported_
+    extends UniffiEnum
+    implements ThreepidMediumNotSupported__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ThreepidMediumNotSupported;
+    constructor() {
+      super('ErrorKind', 'ThreepidMediumNotSupported');
+    }
+
+    static new(): ThreepidMediumNotSupported_ {
+      return new ThreepidMediumNotSupported_();
+    }
+
+    static instanceOf(obj: any): obj is ThreepidMediumNotSupported_ {
+      return obj.tag === ErrorKind_Tags.ThreepidMediumNotSupported;
+    }
+  }
+
+  type ThreepidNotFound__interface = {
+    tag: ErrorKind_Tags.ThreepidNotFound;
+  };
+
+  /**
+   * `M_THREEPID_NOT_FOUND`
+   *
+   * No account matching the given [third-party identifier] could be found.
+   *
+   * [third-party identifier]: https://spec.matrix.org/latest/client-server-api/#adding-account-administrative-contact-information
+   */
+  class ThreepidNotFound_
+    extends UniffiEnum
+    implements ThreepidNotFound__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.ThreepidNotFound;
+    constructor() {
+      super('ErrorKind', 'ThreepidNotFound');
+    }
+
+    static new(): ThreepidNotFound_ {
+      return new ThreepidNotFound_();
+    }
+
+    static instanceOf(obj: any): obj is ThreepidNotFound_ {
+      return obj.tag === ErrorKind_Tags.ThreepidNotFound;
+    }
+  }
+
+  type TooLarge__interface = {
+    tag: ErrorKind_Tags.TooLarge;
+  };
+
+  /**
+   * `M_TOO_LARGE`
+   *
+   * The request or entity was too large.
+   */
+  class TooLarge_ extends UniffiEnum implements TooLarge__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.TooLarge;
+    constructor() {
+      super('ErrorKind', 'TooLarge');
+    }
+
+    static new(): TooLarge_ {
+      return new TooLarge_();
+    }
+
+    static instanceOf(obj: any): obj is TooLarge_ {
+      return obj.tag === ErrorKind_Tags.TooLarge;
+    }
+  }
+
+  type UnableToAuthorizeJoin__interface = {
+    tag: ErrorKind_Tags.UnableToAuthorizeJoin;
+  };
+
+  /**
+   * `M_UNABLE_TO_AUTHORISE_JOIN`
+   *
+   * The room is [restricted] and none of the conditions can be validated by
+   * the homeserver. This can happen if the homeserver does not know
+   * about any of the rooms listed as conditions, for example.
+   *
+   * [restricted]: https://spec.matrix.org/latest/client-server-api/#restricted-rooms
+   */
+  class UnableToAuthorizeJoin_
+    extends UniffiEnum
+    implements UnableToAuthorizeJoin__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UnableToAuthorizeJoin;
+    constructor() {
+      super('ErrorKind', 'UnableToAuthorizeJoin');
+    }
+
+    static new(): UnableToAuthorizeJoin_ {
+      return new UnableToAuthorizeJoin_();
+    }
+
+    static instanceOf(obj: any): obj is UnableToAuthorizeJoin_ {
+      return obj.tag === ErrorKind_Tags.UnableToAuthorizeJoin;
+    }
+  }
+
+  type UnableToGrantJoin__interface = {
+    tag: ErrorKind_Tags.UnableToGrantJoin;
+  };
+
+  /**
+   * `M_UNABLE_TO_GRANT_JOIN`
+   *
+   * A different server should be attempted for the join. This is typically
+   * because the resident server can see that the joining user satisfies
+   * one or more conditions, such as in the case of [restricted rooms],
+   * but the resident server would be unable to meet the authorization
+   * rules.
+   *
+   * [restricted rooms]: https://spec.matrix.org/latest/client-server-api/#restricted-rooms
+   */
+  class UnableToGrantJoin_
+    extends UniffiEnum
+    implements UnableToGrantJoin__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UnableToGrantJoin;
+    constructor() {
+      super('ErrorKind', 'UnableToGrantJoin');
+    }
+
+    static new(): UnableToGrantJoin_ {
+      return new UnableToGrantJoin_();
+    }
+
+    static instanceOf(obj: any): obj is UnableToGrantJoin_ {
+      return obj.tag === ErrorKind_Tags.UnableToGrantJoin;
+    }
+  }
+
+  type Unauthorized__interface = {
+    tag: ErrorKind_Tags.Unauthorized;
+  };
+
+  /**
+   * `M_UNAUTHORIZED`
+   *
+   * The request was not correctly authorized. Usually due to login failures.
+   */
+  class Unauthorized_ extends UniffiEnum implements Unauthorized__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.Unauthorized;
+    constructor() {
+      super('ErrorKind', 'Unauthorized');
+    }
+
+    static new(): Unauthorized_ {
+      return new Unauthorized_();
+    }
+
+    static instanceOf(obj: any): obj is Unauthorized_ {
+      return obj.tag === ErrorKind_Tags.Unauthorized;
+    }
+  }
+
+  type Unknown__interface = {
+    tag: ErrorKind_Tags.Unknown;
+  };
+
+  /**
+   * `M_UNKNOWN`
+   *
+   * An unknown error has occurred.
+   */
+  class Unknown_ extends UniffiEnum implements Unknown__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.Unknown;
+    constructor() {
+      super('ErrorKind', 'Unknown');
+    }
+
+    static new(): Unknown_ {
+      return new Unknown_();
+    }
+
+    static instanceOf(obj: any): obj is Unknown_ {
+      return obj.tag === ErrorKind_Tags.Unknown;
+    }
+  }
+
+  type UnknownToken__interface = {
+    tag: ErrorKind_Tags.UnknownToken;
+    inner: Readonly<{ softLogout: boolean }>;
+  };
+
+  /**
+   * `M_UNKNOWN_TOKEN`
+   *
+   * The [access or refresh token] specified was not recognized.
+   *
+   * [access or refresh token]: https://spec.matrix.org/latest/client-server-api/#client-authentication
+   */
+  class UnknownToken_ extends UniffiEnum implements UnknownToken__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UnknownToken;
+    readonly inner: Readonly<{ softLogout: boolean }>;
+    constructor(inner: {
+      /**
+       * If this is `true`, the client is in a "[soft logout]" state, i.e.
+       * the server requires re-authentication but the session is not
+       * invalidated. The client can acquire a new access token by
+       * specifying the device ID it is already using to the login API.
+       *
+       * [soft logout]: https://spec.matrix.org/latest/client-server-api/#soft-logout
+       */ softLogout: boolean;
+    }) {
+      super('ErrorKind', 'UnknownToken');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * If this is `true`, the client is in a "[soft logout]" state, i.e.
+       * the server requires re-authentication but the session is not
+       * invalidated. The client can acquire a new access token by
+       * specifying the device ID it is already using to the login API.
+       *
+       * [soft logout]: https://spec.matrix.org/latest/client-server-api/#soft-logout
+       */ softLogout: boolean;
+    }): UnknownToken_ {
+      return new UnknownToken_(inner);
+    }
+
+    static instanceOf(obj: any): obj is UnknownToken_ {
+      return obj.tag === ErrorKind_Tags.UnknownToken;
+    }
+  }
+
+  type Unrecognized__interface = {
+    tag: ErrorKind_Tags.Unrecognized;
+  };
+
+  /**
+   * `M_UNRECOGNIZED`
+   *
+   * The server did not understand the request.
+   *
+   * This is expected to be returned with a 404 HTTP status code if the
+   * endpoint is not implemented or a 405 HTTP status code if the
+   * endpoint is implemented, but the incorrect HTTP method is used.
+   */
+  class Unrecognized_ extends UniffiEnum implements Unrecognized__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.Unrecognized;
+    constructor() {
+      super('ErrorKind', 'Unrecognized');
+    }
+
+    static new(): Unrecognized_ {
+      return new Unrecognized_();
+    }
+
+    static instanceOf(obj: any): obj is Unrecognized_ {
+      return obj.tag === ErrorKind_Tags.Unrecognized;
+    }
+  }
+
+  type UnsupportedRoomVersion__interface = {
+    tag: ErrorKind_Tags.UnsupportedRoomVersion;
+  };
+
+  /**
+   * `M_UNSUPPORTED_ROOM_VERSION`
+   *
+   * The request to [`create_room`] used a room version that the server does
+   * not support.
+   *
+   * [`create_room`]: crate::room::create_room
+   */
+  class UnsupportedRoomVersion_
+    extends UniffiEnum
+    implements UnsupportedRoomVersion__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UnsupportedRoomVersion;
+    constructor() {
+      super('ErrorKind', 'UnsupportedRoomVersion');
+    }
+
+    static new(): UnsupportedRoomVersion_ {
+      return new UnsupportedRoomVersion_();
+    }
+
+    static instanceOf(obj: any): obj is UnsupportedRoomVersion_ {
+      return obj.tag === ErrorKind_Tags.UnsupportedRoomVersion;
+    }
+  }
+
+  type UrlNotSet__interface = {
+    tag: ErrorKind_Tags.UrlNotSet;
+  };
+
+  /**
+   * `M_URL_NOT_SET`
+   *
+   * The application service doesn't have a URL configured.
+   */
+  class UrlNotSet_ extends UniffiEnum implements UrlNotSet__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UrlNotSet;
+    constructor() {
+      super('ErrorKind', 'UrlNotSet');
+    }
+
+    static new(): UrlNotSet_ {
+      return new UrlNotSet_();
+    }
+
+    static instanceOf(obj: any): obj is UrlNotSet_ {
+      return obj.tag === ErrorKind_Tags.UrlNotSet;
+    }
+  }
+
+  type UserDeactivated__interface = {
+    tag: ErrorKind_Tags.UserDeactivated;
+  };
+
+  /**
+   * `M_USER_DEACTIVATED`
+   *
+   * The user ID associated with the request has been deactivated.
+   */
+  class UserDeactivated_
+    extends UniffiEnum
+    implements UserDeactivated__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UserDeactivated;
+    constructor() {
+      super('ErrorKind', 'UserDeactivated');
+    }
+
+    static new(): UserDeactivated_ {
+      return new UserDeactivated_();
+    }
+
+    static instanceOf(obj: any): obj is UserDeactivated_ {
+      return obj.tag === ErrorKind_Tags.UserDeactivated;
+    }
+  }
+
+  type UserInUse__interface = {
+    tag: ErrorKind_Tags.UserInUse;
+  };
+
+  /**
+   * `M_USER_IN_USE`
+   *
+   * The desired user ID is already taken.
+   */
+  class UserInUse_ extends UniffiEnum implements UserInUse__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UserInUse;
+    constructor() {
+      super('ErrorKind', 'UserInUse');
+    }
+
+    static new(): UserInUse_ {
+      return new UserInUse_();
+    }
+
+    static instanceOf(obj: any): obj is UserInUse_ {
+      return obj.tag === ErrorKind_Tags.UserInUse;
+    }
+  }
+
+  type UserLocked__interface = {
+    tag: ErrorKind_Tags.UserLocked;
+  };
+
+  /**
+   * `M_USER_LOCKED`
+   *
+   * The account has been [locked] and cannot be used at this time.
+   *
+   * [locked]: https://spec.matrix.org/latest/client-server-api/#account-locking
+   */
+  class UserLocked_ extends UniffiEnum implements UserLocked__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UserLocked;
+    constructor() {
+      super('ErrorKind', 'UserLocked');
+    }
+
+    static new(): UserLocked_ {
+      return new UserLocked_();
+    }
+
+    static instanceOf(obj: any): obj is UserLocked_ {
+      return obj.tag === ErrorKind_Tags.UserLocked;
+    }
+  }
+
+  type UserSuspended__interface = {
+    tag: ErrorKind_Tags.UserSuspended;
+  };
+
+  /**
+   * `M_USER_SUSPENDED`
+   *
+   * The account has been [suspended] and can only be used for limited
+   * actions at this time.
+   *
+   * [suspended]: https://spec.matrix.org/latest/client-server-api/#account-suspension
+   */
+  class UserSuspended_ extends UniffiEnum implements UserSuspended__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.UserSuspended;
+    constructor() {
+      super('ErrorKind', 'UserSuspended');
+    }
+
+    static new(): UserSuspended_ {
+      return new UserSuspended_();
+    }
+
+    static instanceOf(obj: any): obj is UserSuspended_ {
+      return obj.tag === ErrorKind_Tags.UserSuspended;
+    }
+  }
+
+  type WeakPassword__interface = {
+    tag: ErrorKind_Tags.WeakPassword;
+  };
+
+  /**
+   * `M_WEAK_PASSWORD`
+   *
+   * The password was [rejected] by the server for being too weak.
+   *
+   * [rejected]: https://spec.matrix.org/latest/client-server-api/#notes-on-password-management
+   */
+  class WeakPassword_ extends UniffiEnum implements WeakPassword__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.WeakPassword;
+    constructor() {
+      super('ErrorKind', 'WeakPassword');
+    }
+
+    static new(): WeakPassword_ {
+      return new WeakPassword_();
+    }
+
+    static instanceOf(obj: any): obj is WeakPassword_ {
+      return obj.tag === ErrorKind_Tags.WeakPassword;
+    }
+  }
+
+  type WrongRoomKeysVersion__interface = {
+    tag: ErrorKind_Tags.WrongRoomKeysVersion;
+    inner: Readonly<{ currentVersion: string | undefined }>;
+  };
+
+  /**
+   * `M_WRONG_ROOM_KEYS_VERSION`
+   *
+   * The version of the [room keys backup] provided in the request does not
+   * match the current backup version.
+   *
+   * [room keys backup]: https://spec.matrix.org/latest/client-server-api/#server-side-key-backups
+   */
+  class WrongRoomKeysVersion_
+    extends UniffiEnum
+    implements WrongRoomKeysVersion__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.WrongRoomKeysVersion;
+    readonly inner: Readonly<{ currentVersion: string | undefined }>;
+    constructor(inner: {
+      /**
+       * The currently active backup version.
+       */ currentVersion: string | undefined;
+    }) {
+      super('ErrorKind', 'WrongRoomKeysVersion');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The currently active backup version.
+       */ currentVersion: string | undefined;
+    }): WrongRoomKeysVersion_ {
+      return new WrongRoomKeysVersion_(inner);
+    }
+
+    static instanceOf(obj: any): obj is WrongRoomKeysVersion_ {
+      return obj.tag === ErrorKind_Tags.WrongRoomKeysVersion;
+    }
+  }
+
+  type Custom__interface = {
+    tag: ErrorKind_Tags.Custom;
+    inner: Readonly<{ errcode: string }>;
+  };
+
+  /**
+   * A custom API error.
+   */
+  class Custom_ extends UniffiEnum implements Custom__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'ErrorKind';
+    readonly tag = ErrorKind_Tags.Custom;
+    readonly inner: Readonly<{ errcode: string }>;
+    constructor(inner: { errcode: string }) {
+      super('ErrorKind', 'Custom');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { errcode: string }): Custom_ {
+      return new Custom_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Custom_ {
+      return obj.tag === ErrorKind_Tags.Custom;
+    }
+  }
+
+  function instanceOf(obj: any): obj is ErrorKind {
+    return obj[uniffiTypeNameSymbol] === 'ErrorKind';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    BadAlias: BadAlias_,
+    BadJson: BadJson_,
+    BadState: BadState_,
+    BadStatus: BadStatus_,
+    CannotLeaveServerNoticeRoom: CannotLeaveServerNoticeRoom_,
+    CannotOverwriteMedia: CannotOverwriteMedia_,
+    CaptchaInvalid: CaptchaInvalid_,
+    CaptchaNeeded: CaptchaNeeded_,
+    ConnectionFailed: ConnectionFailed_,
+    ConnectionTimeout: ConnectionTimeout_,
+    DuplicateAnnotation: DuplicateAnnotation_,
+    Exclusive: Exclusive_,
+    Forbidden: Forbidden_,
+    GuestAccessForbidden: GuestAccessForbidden_,
+    IncompatibleRoomVersion: IncompatibleRoomVersion_,
+    InvalidParam: InvalidParam_,
+    InvalidRoomState: InvalidRoomState_,
+    InvalidUsername: InvalidUsername_,
+    LimitExceeded: LimitExceeded_,
+    MissingParam: MissingParam_,
+    MissingToken: MissingToken_,
+    NotFound: NotFound_,
+    NotJson: NotJson_,
+    NotYetUploaded: NotYetUploaded_,
+    ResourceLimitExceeded: ResourceLimitExceeded_,
+    RoomInUse: RoomInUse_,
+    ServerNotTrusted: ServerNotTrusted_,
+    ThreepidAuthFailed: ThreepidAuthFailed_,
+    ThreepidDenied: ThreepidDenied_,
+    ThreepidInUse: ThreepidInUse_,
+    ThreepidMediumNotSupported: ThreepidMediumNotSupported_,
+    ThreepidNotFound: ThreepidNotFound_,
+    TooLarge: TooLarge_,
+    UnableToAuthorizeJoin: UnableToAuthorizeJoin_,
+    UnableToGrantJoin: UnableToGrantJoin_,
+    Unauthorized: Unauthorized_,
+    Unknown: Unknown_,
+    UnknownToken: UnknownToken_,
+    Unrecognized: Unrecognized_,
+    UnsupportedRoomVersion: UnsupportedRoomVersion_,
+    UrlNotSet: UrlNotSet_,
+    UserDeactivated: UserDeactivated_,
+    UserInUse: UserInUse_,
+    UserLocked: UserLocked_,
+    UserSuspended: UserSuspended_,
+    WeakPassword: WeakPassword_,
+    WrongRoomKeysVersion: WrongRoomKeysVersion_,
+    Custom: Custom_,
+  });
+})();
+
+export type ErrorKind = InstanceType<
+  (typeof ErrorKind)[keyof Omit<typeof ErrorKind, 'instanceOf'>]
+>;
+
+// FfiConverter for enum ErrorKind
+const FfiConverterTypeErrorKind = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = ErrorKind;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new ErrorKind.BadAlias();
+        case 2:
+          return new ErrorKind.BadJson();
+        case 3:
+          return new ErrorKind.BadState();
+        case 4:
+          return new ErrorKind.BadStatus({
+            status: FfiConverterOptionalUInt16.read(from),
+            body: FfiConverterOptionalString.read(from),
+          });
+        case 5:
+          return new ErrorKind.CannotLeaveServerNoticeRoom();
+        case 6:
+          return new ErrorKind.CannotOverwriteMedia();
+        case 7:
+          return new ErrorKind.CaptchaInvalid();
+        case 8:
+          return new ErrorKind.CaptchaNeeded();
+        case 9:
+          return new ErrorKind.ConnectionFailed();
+        case 10:
+          return new ErrorKind.ConnectionTimeout();
+        case 11:
+          return new ErrorKind.DuplicateAnnotation();
+        case 12:
+          return new ErrorKind.Exclusive();
+        case 13:
+          return new ErrorKind.Forbidden();
+        case 14:
+          return new ErrorKind.GuestAccessForbidden();
+        case 15:
+          return new ErrorKind.IncompatibleRoomVersion({
+            roomVersion: FfiConverterString.read(from),
+          });
+        case 16:
+          return new ErrorKind.InvalidParam();
+        case 17:
+          return new ErrorKind.InvalidRoomState();
+        case 18:
+          return new ErrorKind.InvalidUsername();
+        case 19:
+          return new ErrorKind.LimitExceeded({
+            retryAfterMs: FfiConverterOptionalUInt64.read(from),
+          });
+        case 20:
+          return new ErrorKind.MissingParam();
+        case 21:
+          return new ErrorKind.MissingToken();
+        case 22:
+          return new ErrorKind.NotFound();
+        case 23:
+          return new ErrorKind.NotJson();
+        case 24:
+          return new ErrorKind.NotYetUploaded();
+        case 25:
+          return new ErrorKind.ResourceLimitExceeded({
+            adminContact: FfiConverterString.read(from),
+          });
+        case 26:
+          return new ErrorKind.RoomInUse();
+        case 27:
+          return new ErrorKind.ServerNotTrusted();
+        case 28:
+          return new ErrorKind.ThreepidAuthFailed();
+        case 29:
+          return new ErrorKind.ThreepidDenied();
+        case 30:
+          return new ErrorKind.ThreepidInUse();
+        case 31:
+          return new ErrorKind.ThreepidMediumNotSupported();
+        case 32:
+          return new ErrorKind.ThreepidNotFound();
+        case 33:
+          return new ErrorKind.TooLarge();
+        case 34:
+          return new ErrorKind.UnableToAuthorizeJoin();
+        case 35:
+          return new ErrorKind.UnableToGrantJoin();
+        case 36:
+          return new ErrorKind.Unauthorized();
+        case 37:
+          return new ErrorKind.Unknown();
+        case 38:
+          return new ErrorKind.UnknownToken({
+            softLogout: FfiConverterBool.read(from),
+          });
+        case 39:
+          return new ErrorKind.Unrecognized();
+        case 40:
+          return new ErrorKind.UnsupportedRoomVersion();
+        case 41:
+          return new ErrorKind.UrlNotSet();
+        case 42:
+          return new ErrorKind.UserDeactivated();
+        case 43:
+          return new ErrorKind.UserInUse();
+        case 44:
+          return new ErrorKind.UserLocked();
+        case 45:
+          return new ErrorKind.UserSuspended();
+        case 46:
+          return new ErrorKind.WeakPassword();
+        case 47:
+          return new ErrorKind.WrongRoomKeysVersion({
+            currentVersion: FfiConverterOptionalString.read(from),
+          });
+        case 48:
+          return new ErrorKind.Custom({
+            errcode: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case ErrorKind_Tags.BadAlias: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case ErrorKind_Tags.BadJson: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case ErrorKind_Tags.BadState: {
+          ordinalConverter.write(3, into);
+          return;
+        }
+        case ErrorKind_Tags.BadStatus: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterOptionalUInt16.write(inner.status, into);
+          FfiConverterOptionalString.write(inner.body, into);
+          return;
+        }
+        case ErrorKind_Tags.CannotLeaveServerNoticeRoom: {
+          ordinalConverter.write(5, into);
+          return;
+        }
+        case ErrorKind_Tags.CannotOverwriteMedia: {
+          ordinalConverter.write(6, into);
+          return;
+        }
+        case ErrorKind_Tags.CaptchaInvalid: {
+          ordinalConverter.write(7, into);
+          return;
+        }
+        case ErrorKind_Tags.CaptchaNeeded: {
+          ordinalConverter.write(8, into);
+          return;
+        }
+        case ErrorKind_Tags.ConnectionFailed: {
+          ordinalConverter.write(9, into);
+          return;
+        }
+        case ErrorKind_Tags.ConnectionTimeout: {
+          ordinalConverter.write(10, into);
+          return;
+        }
+        case ErrorKind_Tags.DuplicateAnnotation: {
+          ordinalConverter.write(11, into);
+          return;
+        }
+        case ErrorKind_Tags.Exclusive: {
+          ordinalConverter.write(12, into);
+          return;
+        }
+        case ErrorKind_Tags.Forbidden: {
+          ordinalConverter.write(13, into);
+          return;
+        }
+        case ErrorKind_Tags.GuestAccessForbidden: {
+          ordinalConverter.write(14, into);
+          return;
+        }
+        case ErrorKind_Tags.IncompatibleRoomVersion: {
+          ordinalConverter.write(15, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.roomVersion, into);
+          return;
+        }
+        case ErrorKind_Tags.InvalidParam: {
+          ordinalConverter.write(16, into);
+          return;
+        }
+        case ErrorKind_Tags.InvalidRoomState: {
+          ordinalConverter.write(17, into);
+          return;
+        }
+        case ErrorKind_Tags.InvalidUsername: {
+          ordinalConverter.write(18, into);
+          return;
+        }
+        case ErrorKind_Tags.LimitExceeded: {
+          ordinalConverter.write(19, into);
+          const inner = value.inner;
+          FfiConverterOptionalUInt64.write(inner.retryAfterMs, into);
+          return;
+        }
+        case ErrorKind_Tags.MissingParam: {
+          ordinalConverter.write(20, into);
+          return;
+        }
+        case ErrorKind_Tags.MissingToken: {
+          ordinalConverter.write(21, into);
+          return;
+        }
+        case ErrorKind_Tags.NotFound: {
+          ordinalConverter.write(22, into);
+          return;
+        }
+        case ErrorKind_Tags.NotJson: {
+          ordinalConverter.write(23, into);
+          return;
+        }
+        case ErrorKind_Tags.NotYetUploaded: {
+          ordinalConverter.write(24, into);
+          return;
+        }
+        case ErrorKind_Tags.ResourceLimitExceeded: {
+          ordinalConverter.write(25, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.adminContact, into);
+          return;
+        }
+        case ErrorKind_Tags.RoomInUse: {
+          ordinalConverter.write(26, into);
+          return;
+        }
+        case ErrorKind_Tags.ServerNotTrusted: {
+          ordinalConverter.write(27, into);
+          return;
+        }
+        case ErrorKind_Tags.ThreepidAuthFailed: {
+          ordinalConverter.write(28, into);
+          return;
+        }
+        case ErrorKind_Tags.ThreepidDenied: {
+          ordinalConverter.write(29, into);
+          return;
+        }
+        case ErrorKind_Tags.ThreepidInUse: {
+          ordinalConverter.write(30, into);
+          return;
+        }
+        case ErrorKind_Tags.ThreepidMediumNotSupported: {
+          ordinalConverter.write(31, into);
+          return;
+        }
+        case ErrorKind_Tags.ThreepidNotFound: {
+          ordinalConverter.write(32, into);
+          return;
+        }
+        case ErrorKind_Tags.TooLarge: {
+          ordinalConverter.write(33, into);
+          return;
+        }
+        case ErrorKind_Tags.UnableToAuthorizeJoin: {
+          ordinalConverter.write(34, into);
+          return;
+        }
+        case ErrorKind_Tags.UnableToGrantJoin: {
+          ordinalConverter.write(35, into);
+          return;
+        }
+        case ErrorKind_Tags.Unauthorized: {
+          ordinalConverter.write(36, into);
+          return;
+        }
+        case ErrorKind_Tags.Unknown: {
+          ordinalConverter.write(37, into);
+          return;
+        }
+        case ErrorKind_Tags.UnknownToken: {
+          ordinalConverter.write(38, into);
+          const inner = value.inner;
+          FfiConverterBool.write(inner.softLogout, into);
+          return;
+        }
+        case ErrorKind_Tags.Unrecognized: {
+          ordinalConverter.write(39, into);
+          return;
+        }
+        case ErrorKind_Tags.UnsupportedRoomVersion: {
+          ordinalConverter.write(40, into);
+          return;
+        }
+        case ErrorKind_Tags.UrlNotSet: {
+          ordinalConverter.write(41, into);
+          return;
+        }
+        case ErrorKind_Tags.UserDeactivated: {
+          ordinalConverter.write(42, into);
+          return;
+        }
+        case ErrorKind_Tags.UserInUse: {
+          ordinalConverter.write(43, into);
+          return;
+        }
+        case ErrorKind_Tags.UserLocked: {
+          ordinalConverter.write(44, into);
+          return;
+        }
+        case ErrorKind_Tags.UserSuspended: {
+          ordinalConverter.write(45, into);
+          return;
+        }
+        case ErrorKind_Tags.WeakPassword: {
+          ordinalConverter.write(46, into);
+          return;
+        }
+        case ErrorKind_Tags.WrongRoomKeysVersion: {
+          ordinalConverter.write(47, into);
+          const inner = value.inner;
+          FfiConverterOptionalString.write(inner.currentVersion, into);
+          return;
+        }
+        case ErrorKind_Tags.Custom: {
+          ordinalConverter.write(48, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.errcode, into);
+          return;
+        }
+        default:
+          // Throwing from here means that ErrorKind_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case ErrorKind_Tags.BadAlias: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case ErrorKind_Tags.BadJson: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case ErrorKind_Tags.BadState: {
+          return ordinalConverter.allocationSize(3);
+        }
+        case ErrorKind_Tags.BadStatus: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterOptionalUInt16.allocationSize(inner.status);
+          size += FfiConverterOptionalString.allocationSize(inner.body);
+          return size;
+        }
+        case ErrorKind_Tags.CannotLeaveServerNoticeRoom: {
+          return ordinalConverter.allocationSize(5);
+        }
+        case ErrorKind_Tags.CannotOverwriteMedia: {
+          return ordinalConverter.allocationSize(6);
+        }
+        case ErrorKind_Tags.CaptchaInvalid: {
+          return ordinalConverter.allocationSize(7);
+        }
+        case ErrorKind_Tags.CaptchaNeeded: {
+          return ordinalConverter.allocationSize(8);
+        }
+        case ErrorKind_Tags.ConnectionFailed: {
+          return ordinalConverter.allocationSize(9);
+        }
+        case ErrorKind_Tags.ConnectionTimeout: {
+          return ordinalConverter.allocationSize(10);
+        }
+        case ErrorKind_Tags.DuplicateAnnotation: {
+          return ordinalConverter.allocationSize(11);
+        }
+        case ErrorKind_Tags.Exclusive: {
+          return ordinalConverter.allocationSize(12);
+        }
+        case ErrorKind_Tags.Forbidden: {
+          return ordinalConverter.allocationSize(13);
+        }
+        case ErrorKind_Tags.GuestAccessForbidden: {
+          return ordinalConverter.allocationSize(14);
+        }
+        case ErrorKind_Tags.IncompatibleRoomVersion: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(15);
+          size += FfiConverterString.allocationSize(inner.roomVersion);
+          return size;
+        }
+        case ErrorKind_Tags.InvalidParam: {
+          return ordinalConverter.allocationSize(16);
+        }
+        case ErrorKind_Tags.InvalidRoomState: {
+          return ordinalConverter.allocationSize(17);
+        }
+        case ErrorKind_Tags.InvalidUsername: {
+          return ordinalConverter.allocationSize(18);
+        }
+        case ErrorKind_Tags.LimitExceeded: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(19);
+          size += FfiConverterOptionalUInt64.allocationSize(inner.retryAfterMs);
+          return size;
+        }
+        case ErrorKind_Tags.MissingParam: {
+          return ordinalConverter.allocationSize(20);
+        }
+        case ErrorKind_Tags.MissingToken: {
+          return ordinalConverter.allocationSize(21);
+        }
+        case ErrorKind_Tags.NotFound: {
+          return ordinalConverter.allocationSize(22);
+        }
+        case ErrorKind_Tags.NotJson: {
+          return ordinalConverter.allocationSize(23);
+        }
+        case ErrorKind_Tags.NotYetUploaded: {
+          return ordinalConverter.allocationSize(24);
+        }
+        case ErrorKind_Tags.ResourceLimitExceeded: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(25);
+          size += FfiConverterString.allocationSize(inner.adminContact);
+          return size;
+        }
+        case ErrorKind_Tags.RoomInUse: {
+          return ordinalConverter.allocationSize(26);
+        }
+        case ErrorKind_Tags.ServerNotTrusted: {
+          return ordinalConverter.allocationSize(27);
+        }
+        case ErrorKind_Tags.ThreepidAuthFailed: {
+          return ordinalConverter.allocationSize(28);
+        }
+        case ErrorKind_Tags.ThreepidDenied: {
+          return ordinalConverter.allocationSize(29);
+        }
+        case ErrorKind_Tags.ThreepidInUse: {
+          return ordinalConverter.allocationSize(30);
+        }
+        case ErrorKind_Tags.ThreepidMediumNotSupported: {
+          return ordinalConverter.allocationSize(31);
+        }
+        case ErrorKind_Tags.ThreepidNotFound: {
+          return ordinalConverter.allocationSize(32);
+        }
+        case ErrorKind_Tags.TooLarge: {
+          return ordinalConverter.allocationSize(33);
+        }
+        case ErrorKind_Tags.UnableToAuthorizeJoin: {
+          return ordinalConverter.allocationSize(34);
+        }
+        case ErrorKind_Tags.UnableToGrantJoin: {
+          return ordinalConverter.allocationSize(35);
+        }
+        case ErrorKind_Tags.Unauthorized: {
+          return ordinalConverter.allocationSize(36);
+        }
+        case ErrorKind_Tags.Unknown: {
+          return ordinalConverter.allocationSize(37);
+        }
+        case ErrorKind_Tags.UnknownToken: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(38);
+          size += FfiConverterBool.allocationSize(inner.softLogout);
+          return size;
+        }
+        case ErrorKind_Tags.Unrecognized: {
+          return ordinalConverter.allocationSize(39);
+        }
+        case ErrorKind_Tags.UnsupportedRoomVersion: {
+          return ordinalConverter.allocationSize(40);
+        }
+        case ErrorKind_Tags.UrlNotSet: {
+          return ordinalConverter.allocationSize(41);
+        }
+        case ErrorKind_Tags.UserDeactivated: {
+          return ordinalConverter.allocationSize(42);
+        }
+        case ErrorKind_Tags.UserInUse: {
+          return ordinalConverter.allocationSize(43);
+        }
+        case ErrorKind_Tags.UserLocked: {
+          return ordinalConverter.allocationSize(44);
+        }
+        case ErrorKind_Tags.UserSuspended: {
+          return ordinalConverter.allocationSize(45);
+        }
+        case ErrorKind_Tags.WeakPassword: {
+          return ordinalConverter.allocationSize(46);
+        }
+        case ErrorKind_Tags.WrongRoomKeysVersion: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(47);
+          size += FfiConverterOptionalString.allocationSize(
+            inner.currentVersion
+          );
+          return size;
+        }
+        case ErrorKind_Tags.Custom: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(48);
+          size += FfiConverterString.allocationSize(inner.errcode);
           return size;
         }
         default:
@@ -10767,6 +16346,666 @@ const FfiConverterTypeFocusEventError = (() => {
   return new FFIConverter();
 })();
 
+// Enum: GalleryItemInfo
+export enum GalleryItemInfo_Tags {
+  Audio = 'Audio',
+  File = 'File',
+  Image = 'Image',
+  Video = 'Video',
+}
+export const GalleryItemInfo = (() => {
+  type Audio__interface = {
+    tag: GalleryItemInfo_Tags.Audio;
+    inner: Readonly<{
+      audioInfo: AudioInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }>;
+  };
+
+  class Audio_ extends UniffiEnum implements Audio__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemInfo';
+    readonly tag = GalleryItemInfo_Tags.Audio;
+    readonly inner: Readonly<{
+      audioInfo: AudioInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }>;
+    constructor(inner: {
+      audioInfo: AudioInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }) {
+      super('GalleryItemInfo', 'Audio');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      audioInfo: AudioInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }): Audio_ {
+      return new Audio_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Audio_ {
+      return obj.tag === GalleryItemInfo_Tags.Audio;
+    }
+  }
+
+  type File__interface = {
+    tag: GalleryItemInfo_Tags.File;
+    inner: Readonly<{
+      fileInfo: FileInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }>;
+  };
+
+  class File_ extends UniffiEnum implements File__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemInfo';
+    readonly tag = GalleryItemInfo_Tags.File;
+    readonly inner: Readonly<{
+      fileInfo: FileInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }>;
+    constructor(inner: {
+      fileInfo: FileInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }) {
+      super('GalleryItemInfo', 'File');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      fileInfo: FileInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+    }): File_ {
+      return new File_(inner);
+    }
+
+    static instanceOf(obj: any): obj is File_ {
+      return obj.tag === GalleryItemInfo_Tags.File;
+    }
+  }
+
+  type Image__interface = {
+    tag: GalleryItemInfo_Tags.Image;
+    inner: Readonly<{
+      imageInfo: ImageInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+      thumbnailPath: string | undefined;
+    }>;
+  };
+
+  class Image_ extends UniffiEnum implements Image__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemInfo';
+    readonly tag = GalleryItemInfo_Tags.Image;
+    readonly inner: Readonly<{
+      imageInfo: ImageInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+      thumbnailPath: string | undefined;
+    }>;
+    constructor(inner: {
+      imageInfo: ImageInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+      thumbnailPath: string | undefined;
+    }) {
+      super('GalleryItemInfo', 'Image');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      imageInfo: ImageInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+      thumbnailPath: string | undefined;
+    }): Image_ {
+      return new Image_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Image_ {
+      return obj.tag === GalleryItemInfo_Tags.Image;
+    }
+  }
+
+  type Video__interface = {
+    tag: GalleryItemInfo_Tags.Video;
+    inner: Readonly<{
+      videoInfo: VideoInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+      thumbnailPath: string | undefined;
+    }>;
+  };
+
+  class Video_ extends UniffiEnum implements Video__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemInfo';
+    readonly tag = GalleryItemInfo_Tags.Video;
+    readonly inner: Readonly<{
+      videoInfo: VideoInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+      thumbnailPath: string | undefined;
+    }>;
+    constructor(inner: {
+      videoInfo: VideoInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+      thumbnailPath: string | undefined;
+    }) {
+      super('GalleryItemInfo', 'Video');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      videoInfo: VideoInfo;
+      filename: string;
+      caption: string | undefined;
+      formattedCaption: FormattedBody | undefined;
+      thumbnailPath: string | undefined;
+    }): Video_ {
+      return new Video_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Video_ {
+      return obj.tag === GalleryItemInfo_Tags.Video;
+    }
+  }
+
+  function instanceOf(obj: any): obj is GalleryItemInfo {
+    return obj[uniffiTypeNameSymbol] === 'GalleryItemInfo';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Audio: Audio_,
+    File: File_,
+    Image: Image_,
+    Video: Video_,
+  });
+})();
+
+export type GalleryItemInfo = InstanceType<
+  (typeof GalleryItemInfo)[keyof Omit<typeof GalleryItemInfo, 'instanceOf'>]
+>;
+
+// FfiConverter for enum GalleryItemInfo
+const FfiConverterTypeGalleryItemInfo = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = GalleryItemInfo;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new GalleryItemInfo.Audio({
+            audioInfo: FfiConverterTypeAudioInfo.read(from),
+            filename: FfiConverterString.read(from),
+            caption: FfiConverterOptionalString.read(from),
+            formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
+          });
+        case 2:
+          return new GalleryItemInfo.File({
+            fileInfo: FfiConverterTypeFileInfo.read(from),
+            filename: FfiConverterString.read(from),
+            caption: FfiConverterOptionalString.read(from),
+            formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
+          });
+        case 3:
+          return new GalleryItemInfo.Image({
+            imageInfo: FfiConverterTypeImageInfo.read(from),
+            filename: FfiConverterString.read(from),
+            caption: FfiConverterOptionalString.read(from),
+            formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
+            thumbnailPath: FfiConverterOptionalString.read(from),
+          });
+        case 4:
+          return new GalleryItemInfo.Video({
+            videoInfo: FfiConverterTypeVideoInfo.read(from),
+            filename: FfiConverterString.read(from),
+            caption: FfiConverterOptionalString.read(from),
+            formattedCaption: FfiConverterOptionalTypeFormattedBody.read(from),
+            thumbnailPath: FfiConverterOptionalString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case GalleryItemInfo_Tags.Audio: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterTypeAudioInfo.write(inner.audioInfo, into);
+          FfiConverterString.write(inner.filename, into);
+          FfiConverterOptionalString.write(inner.caption, into);
+          FfiConverterOptionalTypeFormattedBody.write(
+            inner.formattedCaption,
+            into
+          );
+          return;
+        }
+        case GalleryItemInfo_Tags.File: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterTypeFileInfo.write(inner.fileInfo, into);
+          FfiConverterString.write(inner.filename, into);
+          FfiConverterOptionalString.write(inner.caption, into);
+          FfiConverterOptionalTypeFormattedBody.write(
+            inner.formattedCaption,
+            into
+          );
+          return;
+        }
+        case GalleryItemInfo_Tags.Image: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterTypeImageInfo.write(inner.imageInfo, into);
+          FfiConverterString.write(inner.filename, into);
+          FfiConverterOptionalString.write(inner.caption, into);
+          FfiConverterOptionalTypeFormattedBody.write(
+            inner.formattedCaption,
+            into
+          );
+          FfiConverterOptionalString.write(inner.thumbnailPath, into);
+          return;
+        }
+        case GalleryItemInfo_Tags.Video: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterTypeVideoInfo.write(inner.videoInfo, into);
+          FfiConverterString.write(inner.filename, into);
+          FfiConverterOptionalString.write(inner.caption, into);
+          FfiConverterOptionalTypeFormattedBody.write(
+            inner.formattedCaption,
+            into
+          );
+          FfiConverterOptionalString.write(inner.thumbnailPath, into);
+          return;
+        }
+        default:
+          // Throwing from here means that GalleryItemInfo_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case GalleryItemInfo_Tags.Audio: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterTypeAudioInfo.allocationSize(inner.audioInfo);
+          size += FfiConverterString.allocationSize(inner.filename);
+          size += FfiConverterOptionalString.allocationSize(inner.caption);
+          size += FfiConverterOptionalTypeFormattedBody.allocationSize(
+            inner.formattedCaption
+          );
+          return size;
+        }
+        case GalleryItemInfo_Tags.File: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterTypeFileInfo.allocationSize(inner.fileInfo);
+          size += FfiConverterString.allocationSize(inner.filename);
+          size += FfiConverterOptionalString.allocationSize(inner.caption);
+          size += FfiConverterOptionalTypeFormattedBody.allocationSize(
+            inner.formattedCaption
+          );
+          return size;
+        }
+        case GalleryItemInfo_Tags.Image: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterTypeImageInfo.allocationSize(inner.imageInfo);
+          size += FfiConverterString.allocationSize(inner.filename);
+          size += FfiConverterOptionalString.allocationSize(inner.caption);
+          size += FfiConverterOptionalTypeFormattedBody.allocationSize(
+            inner.formattedCaption
+          );
+          size += FfiConverterOptionalString.allocationSize(
+            inner.thumbnailPath
+          );
+          return size;
+        }
+        case GalleryItemInfo_Tags.Video: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterTypeVideoInfo.allocationSize(inner.videoInfo);
+          size += FfiConverterString.allocationSize(inner.filename);
+          size += FfiConverterOptionalString.allocationSize(inner.caption);
+          size += FfiConverterOptionalTypeFormattedBody.allocationSize(
+            inner.formattedCaption
+          );
+          size += FfiConverterOptionalString.allocationSize(
+            inner.thumbnailPath
+          );
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: GalleryItemType
+export enum GalleryItemType_Tags {
+  Image = 'Image',
+  Audio = 'Audio',
+  Video = 'Video',
+  File = 'File',
+  Other = 'Other',
+}
+export const GalleryItemType = (() => {
+  type Image__interface = {
+    tag: GalleryItemType_Tags.Image;
+    inner: Readonly<{ content: ImageMessageContent }>;
+  };
+
+  class Image_ extends UniffiEnum implements Image__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemType';
+    readonly tag = GalleryItemType_Tags.Image;
+    readonly inner: Readonly<{ content: ImageMessageContent }>;
+    constructor(inner: { content: ImageMessageContent }) {
+      super('GalleryItemType', 'Image');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { content: ImageMessageContent }): Image_ {
+      return new Image_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Image_ {
+      return obj.tag === GalleryItemType_Tags.Image;
+    }
+  }
+
+  type Audio__interface = {
+    tag: GalleryItemType_Tags.Audio;
+    inner: Readonly<{ content: AudioMessageContent }>;
+  };
+
+  class Audio_ extends UniffiEnum implements Audio__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemType';
+    readonly tag = GalleryItemType_Tags.Audio;
+    readonly inner: Readonly<{ content: AudioMessageContent }>;
+    constructor(inner: { content: AudioMessageContent }) {
+      super('GalleryItemType', 'Audio');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { content: AudioMessageContent }): Audio_ {
+      return new Audio_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Audio_ {
+      return obj.tag === GalleryItemType_Tags.Audio;
+    }
+  }
+
+  type Video__interface = {
+    tag: GalleryItemType_Tags.Video;
+    inner: Readonly<{ content: VideoMessageContent }>;
+  };
+
+  class Video_ extends UniffiEnum implements Video__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemType';
+    readonly tag = GalleryItemType_Tags.Video;
+    readonly inner: Readonly<{ content: VideoMessageContent }>;
+    constructor(inner: { content: VideoMessageContent }) {
+      super('GalleryItemType', 'Video');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { content: VideoMessageContent }): Video_ {
+      return new Video_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Video_ {
+      return obj.tag === GalleryItemType_Tags.Video;
+    }
+  }
+
+  type File__interface = {
+    tag: GalleryItemType_Tags.File;
+    inner: Readonly<{ content: FileMessageContent }>;
+  };
+
+  class File_ extends UniffiEnum implements File__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemType';
+    readonly tag = GalleryItemType_Tags.File;
+    readonly inner: Readonly<{ content: FileMessageContent }>;
+    constructor(inner: { content: FileMessageContent }) {
+      super('GalleryItemType', 'File');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { content: FileMessageContent }): File_ {
+      return new File_(inner);
+    }
+
+    static instanceOf(obj: any): obj is File_ {
+      return obj.tag === GalleryItemType_Tags.File;
+    }
+  }
+
+  type Other__interface = {
+    tag: GalleryItemType_Tags.Other;
+    inner: Readonly<{ itemtype: string; body: string }>;
+  };
+
+  class Other_ extends UniffiEnum implements Other__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'GalleryItemType';
+    readonly tag = GalleryItemType_Tags.Other;
+    readonly inner: Readonly<{ itemtype: string; body: string }>;
+    constructor(inner: { itemtype: string; body: string }) {
+      super('GalleryItemType', 'Other');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { itemtype: string; body: string }): Other_ {
+      return new Other_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Other_ {
+      return obj.tag === GalleryItemType_Tags.Other;
+    }
+  }
+
+  function instanceOf(obj: any): obj is GalleryItemType {
+    return obj[uniffiTypeNameSymbol] === 'GalleryItemType';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Image: Image_,
+    Audio: Audio_,
+    Video: Video_,
+    File: File_,
+    Other: Other_,
+  });
+})();
+
+export type GalleryItemType = InstanceType<
+  (typeof GalleryItemType)[keyof Omit<typeof GalleryItemType, 'instanceOf'>]
+>;
+
+// FfiConverter for enum GalleryItemType
+const FfiConverterTypeGalleryItemType = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = GalleryItemType;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new GalleryItemType.Image({
+            content: FfiConverterTypeImageMessageContent.read(from),
+          });
+        case 2:
+          return new GalleryItemType.Audio({
+            content: FfiConverterTypeAudioMessageContent.read(from),
+          });
+        case 3:
+          return new GalleryItemType.Video({
+            content: FfiConverterTypeVideoMessageContent.read(from),
+          });
+        case 4:
+          return new GalleryItemType.File({
+            content: FfiConverterTypeFileMessageContent.read(from),
+          });
+        case 5:
+          return new GalleryItemType.Other({
+            itemtype: FfiConverterString.read(from),
+            body: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case GalleryItemType_Tags.Image: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterTypeImageMessageContent.write(inner.content, into);
+          return;
+        }
+        case GalleryItemType_Tags.Audio: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterTypeAudioMessageContent.write(inner.content, into);
+          return;
+        }
+        case GalleryItemType_Tags.Video: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterTypeVideoMessageContent.write(inner.content, into);
+          return;
+        }
+        case GalleryItemType_Tags.File: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterTypeFileMessageContent.write(inner.content, into);
+          return;
+        }
+        case GalleryItemType_Tags.Other: {
+          ordinalConverter.write(5, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.itemtype, into);
+          FfiConverterString.write(inner.body, into);
+          return;
+        }
+        default:
+          // Throwing from here means that GalleryItemType_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case GalleryItemType_Tags.Image: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterTypeImageMessageContent.allocationSize(
+            inner.content
+          );
+          return size;
+        }
+        case GalleryItemType_Tags.Audio: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterTypeAudioMessageContent.allocationSize(
+            inner.content
+          );
+          return size;
+        }
+        case GalleryItemType_Tags.Video: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterTypeVideoMessageContent.allocationSize(
+            inner.content
+          );
+          return size;
+        }
+        case GalleryItemType_Tags.File: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterTypeFileMessageContent.allocationSize(
+            inner.content
+          );
+          return size;
+        }
+        case GalleryItemType_Tags.Other: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(5);
+          size += FfiConverterString.allocationSize(inner.itemtype);
+          size += FfiConverterString.allocationSize(inner.body);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
 // Error type: HumanQrLoginError
 
 // Enum: HumanQrLoginError
@@ -11180,6 +17419,94 @@ const FfiConverterTypeHumanQrLoginError = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * Defines the intent of showing the call.
+ *
+ * This controls whether to show or skip the lobby.
+ */
+export enum Intent {
+  /**
+   * The user wants to start a call.
+   */
+  StartCall,
+  /**
+   * The user wants to join an existing call.
+   */
+  JoinExisting,
+}
+
+const FfiConverterTypeIntent = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = Intent;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return Intent.StartCall;
+        case 2:
+          return Intent.JoinExisting;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case Intent.StartCall:
+          return ordinalConverter.write(1, into);
+        case Intent.JoinExisting:
+          return ordinalConverter.write(2, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * The policy that decides if avatars should be shown in invite requests.
+ */
+export enum InviteAvatars {
+  /**
+   * Always show avatars in invite requests.
+   */
+  On,
+  /**
+   * Never show avatars in invite requests.
+   */
+  Off,
+}
+
+const FfiConverterTypeInviteAvatars = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = InviteAvatars;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return InviteAvatars.On;
+        case 2:
+          return InviteAvatars.Off;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case InviteAvatars.On:
+          return ordinalConverter.write(1, into);
+        case InviteAvatars.Off:
+          return ordinalConverter.write(2, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
 // Enum: JoinRule
 export enum JoinRule_Tags {
   Public = 'Public',
@@ -11539,6 +17866,262 @@ const FfiConverterTypeJoinRule = (() => {
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: JsonValue
+export enum JsonValue_Tags {
+  Null = 'Null',
+  Bool = 'Bool',
+  Integer = 'Integer',
+  String = 'String',
+}
+export const JsonValue = (() => {
+  type Null__interface = {
+    tag: JsonValue_Tags.Null;
+  };
+
+  /**
+   * Represents a `null` value.
+   */
+  class Null_ extends UniffiEnum implements Null__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'JsonValue';
+    readonly tag = JsonValue_Tags.Null;
+    constructor() {
+      super('JsonValue', 'Null');
+    }
+
+    static new(): Null_ {
+      return new Null_();
+    }
+
+    static instanceOf(obj: any): obj is Null_ {
+      return obj.tag === JsonValue_Tags.Null;
+    }
+  }
+
+  type Bool__interface = {
+    tag: JsonValue_Tags.Bool;
+    inner: Readonly<{ value: boolean }>;
+  };
+
+  /**
+   * Represents a boolean.
+   */
+  class Bool_ extends UniffiEnum implements Bool__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'JsonValue';
+    readonly tag = JsonValue_Tags.Bool;
+    readonly inner: Readonly<{ value: boolean }>;
+    constructor(inner: { value: boolean }) {
+      super('JsonValue', 'Bool');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: boolean }): Bool_ {
+      return new Bool_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Bool_ {
+      return obj.tag === JsonValue_Tags.Bool;
+    }
+  }
+
+  type Integer__interface = {
+    tag: JsonValue_Tags.Integer;
+    inner: Readonly<{ value: /*i64*/ bigint }>;
+  };
+
+  /**
+   * Represents an integer.
+   */
+  class Integer_ extends UniffiEnum implements Integer__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'JsonValue';
+    readonly tag = JsonValue_Tags.Integer;
+    readonly inner: Readonly<{ value: /*i64*/ bigint }>;
+    constructor(inner: { value: /*i64*/ bigint }) {
+      super('JsonValue', 'Integer');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: /*i64*/ bigint }): Integer_ {
+      return new Integer_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Integer_ {
+      return obj.tag === JsonValue_Tags.Integer;
+    }
+  }
+
+  type String__interface = {
+    tag: JsonValue_Tags.String;
+    inner: Readonly<{ value: string }>;
+  };
+
+  /**
+   * Represents a string.
+   */
+  class String_ extends UniffiEnum implements String__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'JsonValue';
+    readonly tag = JsonValue_Tags.String;
+    readonly inner: Readonly<{ value: string }>;
+    constructor(inner: { value: string }) {
+      super('JsonValue', 'String');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: string }): String_ {
+      return new String_(inner);
+    }
+
+    static instanceOf(obj: any): obj is String_ {
+      return obj.tag === JsonValue_Tags.String;
+    }
+  }
+
+  function instanceOf(obj: any): obj is JsonValue {
+    return obj[uniffiTypeNameSymbol] === 'JsonValue';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Null: Null_,
+    Bool: Bool_,
+    Integer: Integer_,
+    String: String_,
+  });
+})();
+
+export type JsonValue = InstanceType<
+  (typeof JsonValue)[keyof Omit<typeof JsonValue, 'instanceOf'>]
+>;
+
+// FfiConverter for enum JsonValue
+const FfiConverterTypeJsonValue = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = JsonValue;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new JsonValue.Null();
+        case 2:
+          return new JsonValue.Bool({ value: FfiConverterBool.read(from) });
+        case 3:
+          return new JsonValue.Integer({ value: FfiConverterInt64.read(from) });
+        case 4:
+          return new JsonValue.String({ value: FfiConverterString.read(from) });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case JsonValue_Tags.Null: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case JsonValue_Tags.Bool: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterBool.write(inner.value, into);
+          return;
+        }
+        case JsonValue_Tags.Integer: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterInt64.write(inner.value, into);
+          return;
+        }
+        case JsonValue_Tags.String: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.value, into);
+          return;
+        }
+        default:
+          // Throwing from here means that JsonValue_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case JsonValue_Tags.Null: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case JsonValue_Tags.Bool: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterBool.allocationSize(inner.value);
+          return size;
+        }
+        case JsonValue_Tags.Integer: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterInt64.allocationSize(inner.value);
+          return size;
+        }
+        case JsonValue_Tags.String: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterString.allocationSize(inner.value);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * A key algorithm to be used to generate a key from a passphrase.
+ */
+export enum KeyDerivationAlgorithm {
+  /**
+   * PBKDF2
+   */
+  Pbkfd2,
+}
+
+const FfiConverterTypeKeyDerivationAlgorithm = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = KeyDerivationAlgorithm;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return KeyDerivationAlgorithm.Pbkfd2;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case KeyDerivationAlgorithm.Pbkfd2:
+          return ordinalConverter.write(1, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
     }
   }
   return new FFIConverter();
@@ -11969,6 +18552,57 @@ const FfiConverterTypeMediaInfoError = (() => {
     }
   }
   return new FfiConverter();
+})();
+
+/**
+ * The policy that decides if media previews should be shown in the timeline.
+ */
+export enum MediaPreviews {
+  /**
+   * Always show media previews in the timeline.
+   */
+  On,
+  /**
+   * Show media previews in the timeline only if the room is private.
+   */
+  Private,
+  /**
+   * Never show media previews in the timeline.
+   */
+  Off,
+}
+
+const FfiConverterTypeMediaPreviews = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = MediaPreviews;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return MediaPreviews.On;
+        case 2:
+          return MediaPreviews.Private;
+        case 3:
+          return MediaPreviews.Off;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case MediaPreviews.On:
+          return ordinalConverter.write(1, into);
+        case MediaPreviews.Private:
+          return ordinalConverter.write(2, into);
+        case MediaPreviews.Off:
+          return ordinalConverter.write(3, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
 })();
 
 export enum Membership {
@@ -13472,6 +20106,7 @@ export enum MessageType_Tags {
   Audio = 'Audio',
   Video = 'Video',
   File = 'File',
+  Gallery = 'Gallery',
   Notice = 'Notice',
   Text = 'Text',
   Location = 'Location',
@@ -13613,6 +20248,33 @@ export const MessageType = (() => {
     }
   }
 
+  type Gallery__interface = {
+    tag: MessageType_Tags.Gallery;
+    inner: Readonly<{ content: GalleryMessageContent }>;
+  };
+
+  class Gallery_ extends UniffiEnum implements Gallery__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'MessageType';
+    readonly tag = MessageType_Tags.Gallery;
+    readonly inner: Readonly<{ content: GalleryMessageContent }>;
+    constructor(inner: { content: GalleryMessageContent }) {
+      super('MessageType', 'Gallery');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { content: GalleryMessageContent }): Gallery_ {
+      return new Gallery_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Gallery_ {
+      return obj.tag === MessageType_Tags.Gallery;
+    }
+  }
+
   type Notice__interface = {
     tag: MessageType_Tags.Notice;
     inner: Readonly<{ content: NoticeMessageContent }>;
@@ -13732,6 +20394,7 @@ export const MessageType = (() => {
     Audio: Audio_,
     Video: Video_,
     File: File_,
+    Gallery: Gallery_,
     Notice: Notice_,
     Text: Text_,
     Location: Location_,
@@ -13771,18 +20434,22 @@ const FfiConverterTypeMessageType = (() => {
             content: FfiConverterTypeFileMessageContent.read(from),
           });
         case 6:
+          return new MessageType.Gallery({
+            content: FfiConverterTypeGalleryMessageContent.read(from),
+          });
+        case 7:
           return new MessageType.Notice({
             content: FfiConverterTypeNoticeMessageContent.read(from),
           });
-        case 7:
+        case 8:
           return new MessageType.Text({
             content: FfiConverterTypeTextMessageContent.read(from),
           });
-        case 8:
+        case 9:
           return new MessageType.Location({
             content: FfiConverterTypeLocationContent.read(from),
           });
-        case 9:
+        case 10:
           return new MessageType.Other({
             msgtype: FfiConverterString.read(from),
             body: FfiConverterString.read(from),
@@ -13823,26 +20490,32 @@ const FfiConverterTypeMessageType = (() => {
           FfiConverterTypeFileMessageContent.write(inner.content, into);
           return;
         }
-        case MessageType_Tags.Notice: {
+        case MessageType_Tags.Gallery: {
           ordinalConverter.write(6, into);
+          const inner = value.inner;
+          FfiConverterTypeGalleryMessageContent.write(inner.content, into);
+          return;
+        }
+        case MessageType_Tags.Notice: {
+          ordinalConverter.write(7, into);
           const inner = value.inner;
           FfiConverterTypeNoticeMessageContent.write(inner.content, into);
           return;
         }
         case MessageType_Tags.Text: {
-          ordinalConverter.write(7, into);
+          ordinalConverter.write(8, into);
           const inner = value.inner;
           FfiConverterTypeTextMessageContent.write(inner.content, into);
           return;
         }
         case MessageType_Tags.Location: {
-          ordinalConverter.write(8, into);
+          ordinalConverter.write(9, into);
           const inner = value.inner;
           FfiConverterTypeLocationContent.write(inner.content, into);
           return;
         }
         case MessageType_Tags.Other: {
-          ordinalConverter.write(9, into);
+          ordinalConverter.write(10, into);
           const inner = value.inner;
           FfiConverterString.write(inner.msgtype, into);
           FfiConverterString.write(inner.body, into);
@@ -13895,9 +20568,17 @@ const FfiConverterTypeMessageType = (() => {
           );
           return size;
         }
-        case MessageType_Tags.Notice: {
+        case MessageType_Tags.Gallery: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(6);
+          size += FfiConverterTypeGalleryMessageContent.allocationSize(
+            inner.content
+          );
+          return size;
+        }
+        case MessageType_Tags.Notice: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(7);
           size += FfiConverterTypeNoticeMessageContent.allocationSize(
             inner.content
           );
@@ -13905,7 +20586,7 @@ const FfiConverterTypeMessageType = (() => {
         }
         case MessageType_Tags.Text: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(7);
+          let size = ordinalConverter.allocationSize(8);
           size += FfiConverterTypeTextMessageContent.allocationSize(
             inner.content
           );
@@ -13913,15 +20594,367 @@ const FfiConverterTypeMessageType = (() => {
         }
         case MessageType_Tags.Location: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(8);
+          let size = ordinalConverter.allocationSize(9);
           size += FfiConverterTypeLocationContent.allocationSize(inner.content);
           return size;
         }
         case MessageType_Tags.Other: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(9);
+          let size = ordinalConverter.allocationSize(10);
           size += FfiConverterString.allocationSize(inner.msgtype);
           size += FfiConverterString.allocationSize(inner.body);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: MsgLikeKind
+export enum MsgLikeKind_Tags {
+  Message = 'Message',
+  Sticker = 'Sticker',
+  Poll = 'Poll',
+  Redacted = 'Redacted',
+  UnableToDecrypt = 'UnableToDecrypt',
+}
+export const MsgLikeKind = (() => {
+  type Message__interface = {
+    tag: MsgLikeKind_Tags.Message;
+    inner: Readonly<{ content: MessageContent }>;
+  };
+
+  /**
+   * An `m.room.message` event or extensible event, including edits.
+   */
+  class Message_ extends UniffiEnum implements Message__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'MsgLikeKind';
+    readonly tag = MsgLikeKind_Tags.Message;
+    readonly inner: Readonly<{ content: MessageContent }>;
+    constructor(inner: { content: MessageContent }) {
+      super('MsgLikeKind', 'Message');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { content: MessageContent }): Message_ {
+      return new Message_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Message_ {
+      return obj.tag === MsgLikeKind_Tags.Message;
+    }
+  }
+
+  type Sticker__interface = {
+    tag: MsgLikeKind_Tags.Sticker;
+    inner: Readonly<{
+      body: string;
+      info: ImageInfo;
+      source: MediaSourceInterface;
+    }>;
+  };
+
+  /**
+   * An `m.sticker` event.
+   */
+  class Sticker_ extends UniffiEnum implements Sticker__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'MsgLikeKind';
+    readonly tag = MsgLikeKind_Tags.Sticker;
+    readonly inner: Readonly<{
+      body: string;
+      info: ImageInfo;
+      source: MediaSourceInterface;
+    }>;
+    constructor(inner: {
+      body: string;
+      info: ImageInfo;
+      source: MediaSourceInterface;
+    }) {
+      super('MsgLikeKind', 'Sticker');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      body: string;
+      info: ImageInfo;
+      source: MediaSourceInterface;
+    }): Sticker_ {
+      return new Sticker_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Sticker_ {
+      return obj.tag === MsgLikeKind_Tags.Sticker;
+    }
+  }
+
+  type Poll__interface = {
+    tag: MsgLikeKind_Tags.Poll;
+    inner: Readonly<{
+      question: string;
+      kind: PollKind;
+      maxSelections: /*u64*/ bigint;
+      answers: Array<PollAnswer>;
+      votes: Map<string, Array<string>>;
+      endTime: Timestamp | undefined;
+      hasBeenEdited: boolean;
+    }>;
+  };
+
+  /**
+   * An `m.poll.start` event.
+   */
+  class Poll_ extends UniffiEnum implements Poll__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'MsgLikeKind';
+    readonly tag = MsgLikeKind_Tags.Poll;
+    readonly inner: Readonly<{
+      question: string;
+      kind: PollKind;
+      maxSelections: /*u64*/ bigint;
+      answers: Array<PollAnswer>;
+      votes: Map<string, Array<string>>;
+      endTime: Timestamp | undefined;
+      hasBeenEdited: boolean;
+    }>;
+    constructor(inner: {
+      question: string;
+      kind: PollKind;
+      maxSelections: /*u64*/ bigint;
+      answers: Array<PollAnswer>;
+      votes: Map<string, Array<string>>;
+      endTime: Timestamp | undefined;
+      hasBeenEdited: boolean;
+    }) {
+      super('MsgLikeKind', 'Poll');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      question: string;
+      kind: PollKind;
+      maxSelections: /*u64*/ bigint;
+      answers: Array<PollAnswer>;
+      votes: Map<string, Array<string>>;
+      endTime: Timestamp | undefined;
+      hasBeenEdited: boolean;
+    }): Poll_ {
+      return new Poll_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Poll_ {
+      return obj.tag === MsgLikeKind_Tags.Poll;
+    }
+  }
+
+  type Redacted__interface = {
+    tag: MsgLikeKind_Tags.Redacted;
+  };
+
+  /**
+   * A redacted message.
+   */
+  class Redacted_ extends UniffiEnum implements Redacted__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'MsgLikeKind';
+    readonly tag = MsgLikeKind_Tags.Redacted;
+    constructor() {
+      super('MsgLikeKind', 'Redacted');
+    }
+
+    static new(): Redacted_ {
+      return new Redacted_();
+    }
+
+    static instanceOf(obj: any): obj is Redacted_ {
+      return obj.tag === MsgLikeKind_Tags.Redacted;
+    }
+  }
+
+  type UnableToDecrypt__interface = {
+    tag: MsgLikeKind_Tags.UnableToDecrypt;
+    inner: Readonly<{ msg: EncryptedMessage }>;
+  };
+
+  /**
+   * An `m.room.encrypted` event that could not be decrypted.
+   */
+  class UnableToDecrypt_
+    extends UniffiEnum
+    implements UnableToDecrypt__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'MsgLikeKind';
+    readonly tag = MsgLikeKind_Tags.UnableToDecrypt;
+    readonly inner: Readonly<{ msg: EncryptedMessage }>;
+    constructor(inner: { msg: EncryptedMessage }) {
+      super('MsgLikeKind', 'UnableToDecrypt');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { msg: EncryptedMessage }): UnableToDecrypt_ {
+      return new UnableToDecrypt_(inner);
+    }
+
+    static instanceOf(obj: any): obj is UnableToDecrypt_ {
+      return obj.tag === MsgLikeKind_Tags.UnableToDecrypt;
+    }
+  }
+
+  function instanceOf(obj: any): obj is MsgLikeKind {
+    return obj[uniffiTypeNameSymbol] === 'MsgLikeKind';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Message: Message_,
+    Sticker: Sticker_,
+    Poll: Poll_,
+    Redacted: Redacted_,
+    UnableToDecrypt: UnableToDecrypt_,
+  });
+})();
+
+export type MsgLikeKind = InstanceType<
+  (typeof MsgLikeKind)[keyof Omit<typeof MsgLikeKind, 'instanceOf'>]
+>;
+
+// FfiConverter for enum MsgLikeKind
+const FfiConverterTypeMsgLikeKind = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = MsgLikeKind;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new MsgLikeKind.Message({
+            content: FfiConverterTypeMessageContent.read(from),
+          });
+        case 2:
+          return new MsgLikeKind.Sticker({
+            body: FfiConverterString.read(from),
+            info: FfiConverterTypeImageInfo.read(from),
+            source: FfiConverterTypeMediaSource.read(from),
+          });
+        case 3:
+          return new MsgLikeKind.Poll({
+            question: FfiConverterString.read(from),
+            kind: FfiConverterTypePollKind.read(from),
+            maxSelections: FfiConverterUInt64.read(from),
+            answers: FfiConverterArrayTypePollAnswer.read(from),
+            votes: FfiConverterMapStringArrayString.read(from),
+            endTime: FfiConverterOptionalTypeTimestamp.read(from),
+            hasBeenEdited: FfiConverterBool.read(from),
+          });
+        case 4:
+          return new MsgLikeKind.Redacted();
+        case 5:
+          return new MsgLikeKind.UnableToDecrypt({
+            msg: FfiConverterTypeEncryptedMessage.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case MsgLikeKind_Tags.Message: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterTypeMessageContent.write(inner.content, into);
+          return;
+        }
+        case MsgLikeKind_Tags.Sticker: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.body, into);
+          FfiConverterTypeImageInfo.write(inner.info, into);
+          FfiConverterTypeMediaSource.write(inner.source, into);
+          return;
+        }
+        case MsgLikeKind_Tags.Poll: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.question, into);
+          FfiConverterTypePollKind.write(inner.kind, into);
+          FfiConverterUInt64.write(inner.maxSelections, into);
+          FfiConverterArrayTypePollAnswer.write(inner.answers, into);
+          FfiConverterMapStringArrayString.write(inner.votes, into);
+          FfiConverterOptionalTypeTimestamp.write(inner.endTime, into);
+          FfiConverterBool.write(inner.hasBeenEdited, into);
+          return;
+        }
+        case MsgLikeKind_Tags.Redacted: {
+          ordinalConverter.write(4, into);
+          return;
+        }
+        case MsgLikeKind_Tags.UnableToDecrypt: {
+          ordinalConverter.write(5, into);
+          const inner = value.inner;
+          FfiConverterTypeEncryptedMessage.write(inner.msg, into);
+          return;
+        }
+        default:
+          // Throwing from here means that MsgLikeKind_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case MsgLikeKind_Tags.Message: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterTypeMessageContent.allocationSize(inner.content);
+          return size;
+        }
+        case MsgLikeKind_Tags.Sticker: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterString.allocationSize(inner.body);
+          size += FfiConverterTypeImageInfo.allocationSize(inner.info);
+          size += FfiConverterTypeMediaSource.allocationSize(inner.source);
+          return size;
+        }
+        case MsgLikeKind_Tags.Poll: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterString.allocationSize(inner.question);
+          size += FfiConverterTypePollKind.allocationSize(inner.kind);
+          size += FfiConverterUInt64.allocationSize(inner.maxSelections);
+          size += FfiConverterArrayTypePollAnswer.allocationSize(inner.answers);
+          size += FfiConverterMapStringArrayString.allocationSize(inner.votes);
+          size += FfiConverterOptionalTypeTimestamp.allocationSize(
+            inner.endTime
+          );
+          size += FfiConverterBool.allocationSize(inner.hasBeenEdited);
+          return size;
+        }
+        case MsgLikeKind_Tags.Redacted: {
+          return ordinalConverter.allocationSize(4);
+        }
+        case MsgLikeKind_Tags.UnableToDecrypt: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(5);
+          size += FfiConverterTypeEncryptedMessage.allocationSize(inner.msg);
           return size;
         }
         default:
@@ -14690,7 +21723,6 @@ const FfiConverterTypeNotifyType = (() => {
 export enum OidcError_Tags {
   NotSupported = 'NotSupported',
   MetadataInvalid = 'MetadataInvalid',
-  RegistrationsPathInvalid = 'RegistrationsPathInvalid',
   CallbackUrlInvalid = 'CallbackUrlInvalid',
   Cancelled = 'Cancelled',
   Generic = 'Generic',
@@ -14740,7 +21772,7 @@ export const OidcError = (() => {
       return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 2;
     }
   }
-  class RegistrationsPathInvalid extends UniffiError {
+  class CallbackUrlInvalid extends UniffiError {
     /**
      * @private
      * This field is private and should not be used.
@@ -14752,28 +21784,6 @@ export const OidcError = (() => {
      */
     readonly [variantOrdinalSymbol] = 3;
 
-    public readonly tag = OidcError_Tags.RegistrationsPathInvalid;
-
-    constructor(message: string) {
-      super('OidcError', 'RegistrationsPathInvalid', message);
-    }
-
-    static instanceOf(e: any): e is RegistrationsPathInvalid {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 3;
-    }
-  }
-  class CallbackUrlInvalid extends UniffiError {
-    /**
-     * @private
-     * This field is private and should not be used.
-     */
-    readonly [uniffiTypeNameSymbol]: string = 'OidcError';
-    /**
-     * @private
-     * This field is private and should not be used.
-     */
-    readonly [variantOrdinalSymbol] = 4;
-
     public readonly tag = OidcError_Tags.CallbackUrlInvalid;
 
     constructor(message: string) {
@@ -14781,7 +21791,7 @@ export const OidcError = (() => {
     }
 
     static instanceOf(e: any): e is CallbackUrlInvalid {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 4;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 3;
     }
   }
   class Cancelled extends UniffiError {
@@ -14794,7 +21804,7 @@ export const OidcError = (() => {
      * @private
      * This field is private and should not be used.
      */
-    readonly [variantOrdinalSymbol] = 5;
+    readonly [variantOrdinalSymbol] = 4;
 
     public readonly tag = OidcError_Tags.Cancelled;
 
@@ -14803,7 +21813,7 @@ export const OidcError = (() => {
     }
 
     static instanceOf(e: any): e is Cancelled {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 5;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 4;
     }
   }
   class Generic extends UniffiError {
@@ -14816,7 +21826,7 @@ export const OidcError = (() => {
      * @private
      * This field is private and should not be used.
      */
-    readonly [variantOrdinalSymbol] = 6;
+    readonly [variantOrdinalSymbol] = 5;
 
     public readonly tag = OidcError_Tags.Generic;
 
@@ -14825,7 +21835,7 @@ export const OidcError = (() => {
     }
 
     static instanceOf(e: any): e is Generic {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 6;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 5;
     }
   }
 
@@ -14836,7 +21846,6 @@ export const OidcError = (() => {
   return {
     NotSupported,
     MetadataInvalid,
-    RegistrationsPathInvalid,
     CallbackUrlInvalid,
     Cancelled,
     Generic,
@@ -14863,19 +21872,14 @@ const FfiConverterTypeOidcError = (() => {
           return new OidcError.MetadataInvalid(FfiConverterString.read(from));
 
         case 3:
-          return new OidcError.RegistrationsPathInvalid(
-            FfiConverterString.read(from)
-          );
-
-        case 4:
           return new OidcError.CallbackUrlInvalid(
             FfiConverterString.read(from)
           );
 
-        case 5:
+        case 4:
           return new OidcError.Cancelled(FfiConverterString.read(from));
 
-        case 6:
+        case 5:
           return new OidcError.Generic(FfiConverterString.read(from));
 
         default:
@@ -14896,39 +21900,39 @@ const FfiConverterTypeOidcError = (() => {
 
 // Enum: OidcPrompt
 export enum OidcPrompt_Tags {
-  None = 'None',
+  Create = 'Create',
   Login = 'Login',
   Consent = 'Consent',
-  SelectAccount = 'SelectAccount',
-  Create = 'Create',
   Unknown = 'Unknown',
 }
 export const OidcPrompt = (() => {
-  type None__interface = {
-    tag: OidcPrompt_Tags.None;
+  type Create__interface = {
+    tag: OidcPrompt_Tags.Create;
   };
 
   /**
-   * The Authorization Server must not display any authentication or consent
-   * user interface pages.
+   * The Authorization Server should prompt the End-User to create a user
+   * account.
+   *
+   * Defined in [Initiating User Registration via OpenID Connect](https://openid.net/specs/openid-connect-prompt-create-1_0.html).
    */
-  class None_ extends UniffiEnum implements None__interface {
+  class Create_ extends UniffiEnum implements Create__interface {
     /**
      * @private
      * This field is private and should not be used, use `tag` instead.
      */
     readonly [uniffiTypeNameSymbol] = 'OidcPrompt';
-    readonly tag = OidcPrompt_Tags.None;
+    readonly tag = OidcPrompt_Tags.Create;
     constructor() {
-      super('OidcPrompt', 'None');
+      super('OidcPrompt', 'Create');
     }
 
-    static new(): None_ {
-      return new None_();
+    static new(): Create_ {
+      return new Create_();
     }
 
-    static instanceOf(obj: any): obj is None_ {
-      return obj.tag === OidcPrompt_Tags.None;
+    static instanceOf(obj: any): obj is Create_ {
+      return obj.tag === OidcPrompt_Tags.Create;
     }
   }
 
@@ -14988,68 +21992,6 @@ export const OidcPrompt = (() => {
     }
   }
 
-  type SelectAccount__interface = {
-    tag: OidcPrompt_Tags.SelectAccount;
-  };
-
-  /**
-   * The Authorization Server should prompt the End-User to select a user
-   * account.
-   *
-   * This enables an End-User who has multiple accounts at the Authorization
-   * Server to select amongst the multiple accounts that they might have
-   * current sessions for.
-   */
-  class SelectAccount_ extends UniffiEnum implements SelectAccount__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'OidcPrompt';
-    readonly tag = OidcPrompt_Tags.SelectAccount;
-    constructor() {
-      super('OidcPrompt', 'SelectAccount');
-    }
-
-    static new(): SelectAccount_ {
-      return new SelectAccount_();
-    }
-
-    static instanceOf(obj: any): obj is SelectAccount_ {
-      return obj.tag === OidcPrompt_Tags.SelectAccount;
-    }
-  }
-
-  type Create__interface = {
-    tag: OidcPrompt_Tags.Create;
-  };
-
-  /**
-   * The Authorization Server should prompt the End-User to create a user
-   * account.
-   *
-   * Defined in [Initiating User Registration via OpenID Connect](https://openid.net/specs/openid-connect-prompt-create-1_0.html).
-   */
-  class Create_ extends UniffiEnum implements Create__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'OidcPrompt';
-    readonly tag = OidcPrompt_Tags.Create;
-    constructor() {
-      super('OidcPrompt', 'Create');
-    }
-
-    static new(): Create_ {
-      return new Create_();
-    }
-
-    static instanceOf(obj: any): obj is Create_ {
-      return obj.tag === OidcPrompt_Tags.Create;
-    }
-  }
-
   type Unknown__interface = {
     tag: OidcPrompt_Tags.Unknown;
     inner: Readonly<{ value: string }>;
@@ -15086,11 +22028,9 @@ export const OidcPrompt = (() => {
 
   return Object.freeze({
     instanceOf,
-    None: None_,
+    Create: Create_,
     Login: Login_,
     Consent: Consent_,
-    SelectAccount: SelectAccount_,
-    Create: Create_,
     Unknown: Unknown_,
   });
 })();
@@ -15107,16 +22047,12 @@ const FfiConverterTypeOidcPrompt = (() => {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
-          return new OidcPrompt.None();
+          return new OidcPrompt.Create();
         case 2:
           return new OidcPrompt.Login();
         case 3:
           return new OidcPrompt.Consent();
         case 4:
-          return new OidcPrompt.SelectAccount();
-        case 5:
-          return new OidcPrompt.Create();
-        case 6:
           return new OidcPrompt.Unknown({
             value: FfiConverterString.read(from),
           });
@@ -15126,7 +22062,7 @@ const FfiConverterTypeOidcPrompt = (() => {
     }
     write(value: TypeName, into: RustBuffer): void {
       switch (value.tag) {
-        case OidcPrompt_Tags.None: {
+        case OidcPrompt_Tags.Create: {
           ordinalConverter.write(1, into);
           return;
         }
@@ -15138,16 +22074,8 @@ const FfiConverterTypeOidcPrompt = (() => {
           ordinalConverter.write(3, into);
           return;
         }
-        case OidcPrompt_Tags.SelectAccount: {
-          ordinalConverter.write(4, into);
-          return;
-        }
-        case OidcPrompt_Tags.Create: {
-          ordinalConverter.write(5, into);
-          return;
-        }
         case OidcPrompt_Tags.Unknown: {
-          ordinalConverter.write(6, into);
+          ordinalConverter.write(4, into);
           const inner = value.inner;
           FfiConverterString.write(inner.value, into);
           return;
@@ -15159,7 +22087,7 @@ const FfiConverterTypeOidcPrompt = (() => {
     }
     allocationSize(value: TypeName): number {
       switch (value.tag) {
-        case OidcPrompt_Tags.None: {
+        case OidcPrompt_Tags.Create: {
           return ordinalConverter.allocationSize(1);
         }
         case OidcPrompt_Tags.Login: {
@@ -15168,15 +22096,9 @@ const FfiConverterTypeOidcPrompt = (() => {
         case OidcPrompt_Tags.Consent: {
           return ordinalConverter.allocationSize(3);
         }
-        case OidcPrompt_Tags.SelectAccount: {
-          return ordinalConverter.allocationSize(4);
-        }
-        case OidcPrompt_Tags.Create: {
-          return ordinalConverter.allocationSize(5);
-        }
         case OidcPrompt_Tags.Unknown: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(6);
+          let size = ordinalConverter.allocationSize(4);
           size += FfiConverterString.allocationSize(inner.value);
           return size;
         }
@@ -16735,6 +23657,443 @@ const FfiConverterTypePublicRoomJoinRule = (() => {
   return new FFIConverter();
 })();
 
+// Enum: PushCondition
+export enum PushCondition_Tags {
+  EventMatch = 'EventMatch',
+  ContainsDisplayName = 'ContainsDisplayName',
+  RoomMemberCount = 'RoomMemberCount',
+  SenderNotificationPermission = 'SenderNotificationPermission',
+  EventPropertyIs = 'EventPropertyIs',
+  EventPropertyContains = 'EventPropertyContains',
+}
+export const PushCondition = (() => {
+  type EventMatch__interface = {
+    tag: PushCondition_Tags.EventMatch;
+    inner: Readonly<{ key: string; pattern: string }>;
+  };
+
+  /**
+   * A glob pattern match on a field of the event.
+   */
+  class EventMatch_ extends UniffiEnum implements EventMatch__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'PushCondition';
+    readonly tag = PushCondition_Tags.EventMatch;
+    readonly inner: Readonly<{ key: string; pattern: string }>;
+    constructor(inner: {
+      /**
+       * The [dot-separated path] of the property of the event to match.
+       *
+       * [dot-separated path]: https://spec.matrix.org/latest/appendices/#dot-separated-property-paths
+       */ key: string;
+      /**
+       * The glob-style pattern to match against.
+       *
+       * Patterns with no special glob characters should be treated as having
+       * asterisks prepended and appended when testing the condition.
+       */ pattern: string;
+    }) {
+      super('PushCondition', 'EventMatch');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The [dot-separated path] of the property of the event to match.
+       *
+       * [dot-separated path]: https://spec.matrix.org/latest/appendices/#dot-separated-property-paths
+       */ key: string;
+      /**
+       * The glob-style pattern to match against.
+       *
+       * Patterns with no special glob characters should be treated as having
+       * asterisks prepended and appended when testing the condition.
+       */ pattern: string;
+    }): EventMatch_ {
+      return new EventMatch_(inner);
+    }
+
+    static instanceOf(obj: any): obj is EventMatch_ {
+      return obj.tag === PushCondition_Tags.EventMatch;
+    }
+  }
+
+  type ContainsDisplayName__interface = {
+    tag: PushCondition_Tags.ContainsDisplayName;
+  };
+
+  /**
+   * Matches unencrypted messages where `content.body` contains the owner's
+   * display name in that room.
+   */
+  class ContainsDisplayName_
+    extends UniffiEnum
+    implements ContainsDisplayName__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'PushCondition';
+    readonly tag = PushCondition_Tags.ContainsDisplayName;
+    constructor() {
+      super('PushCondition', 'ContainsDisplayName');
+    }
+
+    static new(): ContainsDisplayName_ {
+      return new ContainsDisplayName_();
+    }
+
+    static instanceOf(obj: any): obj is ContainsDisplayName_ {
+      return obj.tag === PushCondition_Tags.ContainsDisplayName;
+    }
+  }
+
+  type RoomMemberCount__interface = {
+    tag: PushCondition_Tags.RoomMemberCount;
+    inner: Readonly<{ prefix: ComparisonOperator; count: /*u64*/ bigint }>;
+  };
+
+  /**
+   * Matches the current number of members in the room.
+   */
+  class RoomMemberCount_
+    extends UniffiEnum
+    implements RoomMemberCount__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'PushCondition';
+    readonly tag = PushCondition_Tags.RoomMemberCount;
+    readonly inner: Readonly<{
+      prefix: ComparisonOperator;
+      count: /*u64*/ bigint;
+    }>;
+    constructor(inner: { prefix: ComparisonOperator; count: /*u64*/ bigint }) {
+      super('PushCondition', 'RoomMemberCount');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      prefix: ComparisonOperator;
+      count: /*u64*/ bigint;
+    }): RoomMemberCount_ {
+      return new RoomMemberCount_(inner);
+    }
+
+    static instanceOf(obj: any): obj is RoomMemberCount_ {
+      return obj.tag === PushCondition_Tags.RoomMemberCount;
+    }
+  }
+
+  type SenderNotificationPermission__interface = {
+    tag: PushCondition_Tags.SenderNotificationPermission;
+    inner: Readonly<{ key: string }>;
+  };
+
+  /**
+   * Takes into account the current power levels in the room, ensuring the
+   * sender of the event has high enough power to trigger the
+   * notification.
+   */
+  class SenderNotificationPermission_
+    extends UniffiEnum
+    implements SenderNotificationPermission__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'PushCondition';
+    readonly tag = PushCondition_Tags.SenderNotificationPermission;
+    readonly inner: Readonly<{ key: string }>;
+    constructor(inner: {
+      /**
+       * The field in the power level event the user needs a minimum power
+       * level for.
+       *
+       * Fields must be specified under the `notifications` property in the
+       * power level event's `content`.
+       */ key: string;
+    }) {
+      super('PushCondition', 'SenderNotificationPermission');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The field in the power level event the user needs a minimum power
+       * level for.
+       *
+       * Fields must be specified under the `notifications` property in the
+       * power level event's `content`.
+       */ key: string;
+    }): SenderNotificationPermission_ {
+      return new SenderNotificationPermission_(inner);
+    }
+
+    static instanceOf(obj: any): obj is SenderNotificationPermission_ {
+      return obj.tag === PushCondition_Tags.SenderNotificationPermission;
+    }
+  }
+
+  type EventPropertyIs__interface = {
+    tag: PushCondition_Tags.EventPropertyIs;
+    inner: Readonly<{ key: string; value: JsonValue }>;
+  };
+
+  /**
+   * Exact value match on a property of the event.
+   */
+  class EventPropertyIs_
+    extends UniffiEnum
+    implements EventPropertyIs__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'PushCondition';
+    readonly tag = PushCondition_Tags.EventPropertyIs;
+    readonly inner: Readonly<{ key: string; value: JsonValue }>;
+    constructor(inner: {
+      /**
+       * The [dot-separated path] of the property of the event to match.
+       *
+       * [dot-separated path]: https://spec.matrix.org/latest/appendices/#dot-separated-property-paths
+       */ key: string;
+      /**
+       * The value to match against.
+       */ value: JsonValue;
+    }) {
+      super('PushCondition', 'EventPropertyIs');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The [dot-separated path] of the property of the event to match.
+       *
+       * [dot-separated path]: https://spec.matrix.org/latest/appendices/#dot-separated-property-paths
+       */ key: string;
+      /**
+       * The value to match against.
+       */ value: JsonValue;
+    }): EventPropertyIs_ {
+      return new EventPropertyIs_(inner);
+    }
+
+    static instanceOf(obj: any): obj is EventPropertyIs_ {
+      return obj.tag === PushCondition_Tags.EventPropertyIs;
+    }
+  }
+
+  type EventPropertyContains__interface = {
+    tag: PushCondition_Tags.EventPropertyContains;
+    inner: Readonly<{ key: string; value: JsonValue }>;
+  };
+
+  /**
+   * Exact value match on a value in an array property of the event.
+   */
+  class EventPropertyContains_
+    extends UniffiEnum
+    implements EventPropertyContains__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'PushCondition';
+    readonly tag = PushCondition_Tags.EventPropertyContains;
+    readonly inner: Readonly<{ key: string; value: JsonValue }>;
+    constructor(inner: {
+      /**
+       * The [dot-separated path] of the property of the event to match.
+       *
+       * [dot-separated path]: https://spec.matrix.org/latest/appendices/#dot-separated-property-paths
+       */ key: string;
+      /**
+       * The value to match against.
+       */ value: JsonValue;
+    }) {
+      super('PushCondition', 'EventPropertyContains');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The [dot-separated path] of the property of the event to match.
+       *
+       * [dot-separated path]: https://spec.matrix.org/latest/appendices/#dot-separated-property-paths
+       */ key: string;
+      /**
+       * The value to match against.
+       */ value: JsonValue;
+    }): EventPropertyContains_ {
+      return new EventPropertyContains_(inner);
+    }
+
+    static instanceOf(obj: any): obj is EventPropertyContains_ {
+      return obj.tag === PushCondition_Tags.EventPropertyContains;
+    }
+  }
+
+  function instanceOf(obj: any): obj is PushCondition {
+    return obj[uniffiTypeNameSymbol] === 'PushCondition';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    EventMatch: EventMatch_,
+    ContainsDisplayName: ContainsDisplayName_,
+    RoomMemberCount: RoomMemberCount_,
+    SenderNotificationPermission: SenderNotificationPermission_,
+    EventPropertyIs: EventPropertyIs_,
+    EventPropertyContains: EventPropertyContains_,
+  });
+})();
+
+export type PushCondition = InstanceType<
+  (typeof PushCondition)[keyof Omit<typeof PushCondition, 'instanceOf'>]
+>;
+
+// FfiConverter for enum PushCondition
+const FfiConverterTypePushCondition = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = PushCondition;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new PushCondition.EventMatch({
+            key: FfiConverterString.read(from),
+            pattern: FfiConverterString.read(from),
+          });
+        case 2:
+          return new PushCondition.ContainsDisplayName();
+        case 3:
+          return new PushCondition.RoomMemberCount({
+            prefix: FfiConverterTypeComparisonOperator.read(from),
+            count: FfiConverterUInt64.read(from),
+          });
+        case 4:
+          return new PushCondition.SenderNotificationPermission({
+            key: FfiConverterString.read(from),
+          });
+        case 5:
+          return new PushCondition.EventPropertyIs({
+            key: FfiConverterString.read(from),
+            value: FfiConverterTypeJsonValue.read(from),
+          });
+        case 6:
+          return new PushCondition.EventPropertyContains({
+            key: FfiConverterString.read(from),
+            value: FfiConverterTypeJsonValue.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case PushCondition_Tags.EventMatch: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.key, into);
+          FfiConverterString.write(inner.pattern, into);
+          return;
+        }
+        case PushCondition_Tags.ContainsDisplayName: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case PushCondition_Tags.RoomMemberCount: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterTypeComparisonOperator.write(inner.prefix, into);
+          FfiConverterUInt64.write(inner.count, into);
+          return;
+        }
+        case PushCondition_Tags.SenderNotificationPermission: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.key, into);
+          return;
+        }
+        case PushCondition_Tags.EventPropertyIs: {
+          ordinalConverter.write(5, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.key, into);
+          FfiConverterTypeJsonValue.write(inner.value, into);
+          return;
+        }
+        case PushCondition_Tags.EventPropertyContains: {
+          ordinalConverter.write(6, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.key, into);
+          FfiConverterTypeJsonValue.write(inner.value, into);
+          return;
+        }
+        default:
+          // Throwing from here means that PushCondition_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case PushCondition_Tags.EventMatch: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterString.allocationSize(inner.key);
+          size += FfiConverterString.allocationSize(inner.pattern);
+          return size;
+        }
+        case PushCondition_Tags.ContainsDisplayName: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case PushCondition_Tags.RoomMemberCount: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterTypeComparisonOperator.allocationSize(
+            inner.prefix
+          );
+          size += FfiConverterUInt64.allocationSize(inner.count);
+          return size;
+        }
+        case PushCondition_Tags.SenderNotificationPermission: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterString.allocationSize(inner.key);
+          return size;
+        }
+        case PushCondition_Tags.EventPropertyIs: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(5);
+          size += FfiConverterString.allocationSize(inner.key);
+          size += FfiConverterTypeJsonValue.allocationSize(inner.value);
+          return size;
+        }
+        case PushCondition_Tags.EventPropertyContains: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(6);
+          size += FfiConverterString.allocationSize(inner.key);
+          size += FfiConverterTypeJsonValue.allocationSize(inner.value);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
 export enum PushFormat {
   EventIdOnly,
 }
@@ -17065,8 +24424,8 @@ export const QrLoginProgress = (() => {
   };
 
   /**
-   * We are waiting for the login and for the OIDC provider to give us an
-   * access token.
+   * We are waiting for the login and for the OAuth 2.0 authorization server
+   * to give us an access token.
    */
   class WaitingForToken_
     extends UniffiEnum
@@ -17886,172 +25245,213 @@ const FfiConverterTypeRecoveryState = (() => {
   return new FFIConverter();
 })();
 
-// Enum: RepliedToEventDetails
-export enum RepliedToEventDetails_Tags {
-  Unavailable = 'Unavailable',
-  Pending = 'Pending',
-  Ready = 'Ready',
-  Error = 'Error',
+// Enum: RoomAccountDataEvent
+export enum RoomAccountDataEvent_Tags {
+  FullyReadEvent = 'FullyReadEvent',
+  MarkedUnread = 'MarkedUnread',
+  Tag = 'Tag',
+  UnstableMarkedUnread = 'UnstableMarkedUnread',
 }
-export const RepliedToEventDetails = (() => {
-  type Unavailable__interface = {
-    tag: RepliedToEventDetails_Tags.Unavailable;
+/**
+ * Room account data events.
+ */
+export const RoomAccountDataEvent = (() => {
+  type FullyReadEvent__interface = {
+    tag: RoomAccountDataEvent_Tags.FullyReadEvent;
+    inner: Readonly<{ eventId: string }>;
   };
 
-  class Unavailable_ extends UniffiEnum implements Unavailable__interface {
+  /**
+   * m.fully_read
+   */
+  class FullyReadEvent_
+    extends UniffiEnum
+    implements FullyReadEvent__interface
+  {
     /**
      * @private
      * This field is private and should not be used, use `tag` instead.
      */
-    readonly [uniffiTypeNameSymbol] = 'RepliedToEventDetails';
-    readonly tag = RepliedToEventDetails_Tags.Unavailable;
-    constructor() {
-      super('RepliedToEventDetails', 'Unavailable');
-    }
-
-    static new(): Unavailable_ {
-      return new Unavailable_();
-    }
-
-    static instanceOf(obj: any): obj is Unavailable_ {
-      return obj.tag === RepliedToEventDetails_Tags.Unavailable;
-    }
-  }
-
-  type Pending__interface = {
-    tag: RepliedToEventDetails_Tags.Pending;
-  };
-
-  class Pending_ extends UniffiEnum implements Pending__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'RepliedToEventDetails';
-    readonly tag = RepliedToEventDetails_Tags.Pending;
-    constructor() {
-      super('RepliedToEventDetails', 'Pending');
-    }
-
-    static new(): Pending_ {
-      return new Pending_();
-    }
-
-    static instanceOf(obj: any): obj is Pending_ {
-      return obj.tag === RepliedToEventDetails_Tags.Pending;
-    }
-  }
-
-  type Ready__interface = {
-    tag: RepliedToEventDetails_Tags.Ready;
-    inner: Readonly<{
-      content: TimelineItemContent;
-      sender: string;
-      senderProfile: ProfileDetails;
-    }>;
-  };
-
-  class Ready_ extends UniffiEnum implements Ready__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'RepliedToEventDetails';
-    readonly tag = RepliedToEventDetails_Tags.Ready;
-    readonly inner: Readonly<{
-      content: TimelineItemContent;
-      sender: string;
-      senderProfile: ProfileDetails;
-    }>;
+    readonly [uniffiTypeNameSymbol] = 'RoomAccountDataEvent';
+    readonly tag = RoomAccountDataEvent_Tags.FullyReadEvent;
+    readonly inner: Readonly<{ eventId: string }>;
     constructor(inner: {
-      content: TimelineItemContent;
-      sender: string;
-      senderProfile: ProfileDetails;
+      /**
+       * The event the user's read marker is located at in the room.
+       */ eventId: string;
     }) {
-      super('RepliedToEventDetails', 'Ready');
+      super('RoomAccountDataEvent', 'FullyReadEvent');
       this.inner = Object.freeze(inner);
     }
 
     static new(inner: {
-      content: TimelineItemContent;
-      sender: string;
-      senderProfile: ProfileDetails;
-    }): Ready_ {
-      return new Ready_(inner);
+      /**
+       * The event the user's read marker is located at in the room.
+       */ eventId: string;
+    }): FullyReadEvent_ {
+      return new FullyReadEvent_(inner);
     }
 
-    static instanceOf(obj: any): obj is Ready_ {
-      return obj.tag === RepliedToEventDetails_Tags.Ready;
+    static instanceOf(obj: any): obj is FullyReadEvent_ {
+      return obj.tag === RoomAccountDataEvent_Tags.FullyReadEvent;
     }
   }
 
-  type Error__interface = {
-    tag: RepliedToEventDetails_Tags.Error;
-    inner: Readonly<{ message: string }>;
+  type MarkedUnread__interface = {
+    tag: RoomAccountDataEvent_Tags.MarkedUnread;
+    inner: Readonly<{ unread: boolean }>;
   };
 
-  class Error_ extends UniffiEnum implements Error__interface {
+  /**
+   * m.marked_unread
+   */
+  class MarkedUnread_ extends UniffiEnum implements MarkedUnread__interface {
     /**
      * @private
      * This field is private and should not be used, use `tag` instead.
      */
-    readonly [uniffiTypeNameSymbol] = 'RepliedToEventDetails';
-    readonly tag = RepliedToEventDetails_Tags.Error;
-    readonly inner: Readonly<{ message: string }>;
-    constructor(inner: { message: string }) {
-      super('RepliedToEventDetails', 'Error');
+    readonly [uniffiTypeNameSymbol] = 'RoomAccountDataEvent';
+    readonly tag = RoomAccountDataEvent_Tags.MarkedUnread;
+    readonly inner: Readonly<{ unread: boolean }>;
+    constructor(inner: {
+      /**
+       * The current unread state.
+       */ unread: boolean;
+    }) {
+      super('RoomAccountDataEvent', 'MarkedUnread');
       this.inner = Object.freeze(inner);
     }
 
-    static new(inner: { message: string }): Error_ {
-      return new Error_(inner);
+    static new(inner: {
+      /**
+       * The current unread state.
+       */ unread: boolean;
+    }): MarkedUnread_ {
+      return new MarkedUnread_(inner);
     }
 
-    static instanceOf(obj: any): obj is Error_ {
-      return obj.tag === RepliedToEventDetails_Tags.Error;
+    static instanceOf(obj: any): obj is MarkedUnread_ {
+      return obj.tag === RoomAccountDataEvent_Tags.MarkedUnread;
     }
   }
 
-  function instanceOf(obj: any): obj is RepliedToEventDetails {
-    return obj[uniffiTypeNameSymbol] === 'RepliedToEventDetails';
+  type Tag__interface = {
+    tag: RoomAccountDataEvent_Tags.Tag;
+    inner: Readonly<{ tags: Map<TagName, TagInfo> }>;
+  };
+
+  /**
+   * m.tag
+   */
+  class Tag_ extends UniffiEnum implements Tag__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomAccountDataEvent';
+    readonly tag = RoomAccountDataEvent_Tags.Tag;
+    readonly inner: Readonly<{ tags: Map<TagName, TagInfo> }>;
+    constructor(inner: { tags: Map<TagName, TagInfo> }) {
+      super('RoomAccountDataEvent', 'Tag');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { tags: Map<TagName, TagInfo> }): Tag_ {
+      return new Tag_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Tag_ {
+      return obj.tag === RoomAccountDataEvent_Tags.Tag;
+    }
+  }
+
+  type UnstableMarkedUnread__interface = {
+    tag: RoomAccountDataEvent_Tags.UnstableMarkedUnread;
+    inner: Readonly<{ unread: boolean }>;
+  };
+
+  /**
+   * com.famedly.marked_unread
+   */
+  class UnstableMarkedUnread_
+    extends UniffiEnum
+    implements UnstableMarkedUnread__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomAccountDataEvent';
+    readonly tag = RoomAccountDataEvent_Tags.UnstableMarkedUnread;
+    readonly inner: Readonly<{ unread: boolean }>;
+    constructor(inner: {
+      /**
+       * The current unread state.
+       */ unread: boolean;
+    }) {
+      super('RoomAccountDataEvent', 'UnstableMarkedUnread');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The current unread state.
+       */ unread: boolean;
+    }): UnstableMarkedUnread_ {
+      return new UnstableMarkedUnread_(inner);
+    }
+
+    static instanceOf(obj: any): obj is UnstableMarkedUnread_ {
+      return obj.tag === RoomAccountDataEvent_Tags.UnstableMarkedUnread;
+    }
+  }
+
+  function instanceOf(obj: any): obj is RoomAccountDataEvent {
+    return obj[uniffiTypeNameSymbol] === 'RoomAccountDataEvent';
   }
 
   return Object.freeze({
     instanceOf,
-    Unavailable: Unavailable_,
-    Pending: Pending_,
-    Ready: Ready_,
-    Error: Error_,
+    FullyReadEvent: FullyReadEvent_,
+    MarkedUnread: MarkedUnread_,
+    Tag: Tag_,
+    UnstableMarkedUnread: UnstableMarkedUnread_,
   });
 })();
 
-export type RepliedToEventDetails = InstanceType<
-  (typeof RepliedToEventDetails)[keyof Omit<
-    typeof RepliedToEventDetails,
+/**
+ * Room account data events.
+ */
+
+export type RoomAccountDataEvent = InstanceType<
+  (typeof RoomAccountDataEvent)[keyof Omit<
+    typeof RoomAccountDataEvent,
     'instanceOf'
   >]
 >;
 
-// FfiConverter for enum RepliedToEventDetails
-const FfiConverterTypeRepliedToEventDetails = (() => {
+// FfiConverter for enum RoomAccountDataEvent
+const FfiConverterTypeRoomAccountDataEvent = (() => {
   const ordinalConverter = FfiConverterInt32;
-  type TypeName = RepliedToEventDetails;
+  type TypeName = RoomAccountDataEvent;
   class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
-          return new RepliedToEventDetails.Unavailable();
+          return new RoomAccountDataEvent.FullyReadEvent({
+            eventId: FfiConverterString.read(from),
+          });
         case 2:
-          return new RepliedToEventDetails.Pending();
+          return new RoomAccountDataEvent.MarkedUnread({
+            unread: FfiConverterBool.read(from),
+          });
         case 3:
-          return new RepliedToEventDetails.Ready({
-            content: FfiConverterTypeTimelineItemContent.read(from),
-            sender: FfiConverterString.read(from),
-            senderProfile: FfiConverterTypeProfileDetails.read(from),
+          return new RoomAccountDataEvent.Tag({
+            tags: FfiConverterMapTypeTagNameTypeTagInfo.read(from),
           });
         case 4:
-          return new RepliedToEventDetails.Error({
-            message: FfiConverterString.read(from),
+          return new RoomAccountDataEvent.UnstableMarkedUnread({
+            unread: FfiConverterBool.read(from),
           });
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -18059,62 +25459,125 @@ const FfiConverterTypeRepliedToEventDetails = (() => {
     }
     write(value: TypeName, into: RustBuffer): void {
       switch (value.tag) {
-        case RepliedToEventDetails_Tags.Unavailable: {
+        case RoomAccountDataEvent_Tags.FullyReadEvent: {
           ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.eventId, into);
           return;
         }
-        case RepliedToEventDetails_Tags.Pending: {
+        case RoomAccountDataEvent_Tags.MarkedUnread: {
           ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterBool.write(inner.unread, into);
           return;
         }
-        case RepliedToEventDetails_Tags.Ready: {
+        case RoomAccountDataEvent_Tags.Tag: {
           ordinalConverter.write(3, into);
           const inner = value.inner;
-          FfiConverterTypeTimelineItemContent.write(inner.content, into);
-          FfiConverterString.write(inner.sender, into);
-          FfiConverterTypeProfileDetails.write(inner.senderProfile, into);
+          FfiConverterMapTypeTagNameTypeTagInfo.write(inner.tags, into);
           return;
         }
-        case RepliedToEventDetails_Tags.Error: {
+        case RoomAccountDataEvent_Tags.UnstableMarkedUnread: {
           ordinalConverter.write(4, into);
           const inner = value.inner;
-          FfiConverterString.write(inner.message, into);
+          FfiConverterBool.write(inner.unread, into);
           return;
         }
         default:
-          // Throwing from here means that RepliedToEventDetails_Tags hasn't matched an ordinal.
+          // Throwing from here means that RoomAccountDataEvent_Tags hasn't matched an ordinal.
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
     }
     allocationSize(value: TypeName): number {
       switch (value.tag) {
-        case RepliedToEventDetails_Tags.Unavailable: {
-          return ordinalConverter.allocationSize(1);
+        case RoomAccountDataEvent_Tags.FullyReadEvent: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterString.allocationSize(inner.eventId);
+          return size;
         }
-        case RepliedToEventDetails_Tags.Pending: {
-          return ordinalConverter.allocationSize(2);
+        case RoomAccountDataEvent_Tags.MarkedUnread: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterBool.allocationSize(inner.unread);
+          return size;
         }
-        case RepliedToEventDetails_Tags.Ready: {
+        case RoomAccountDataEvent_Tags.Tag: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(3);
-          size += FfiConverterTypeTimelineItemContent.allocationSize(
-            inner.content
-          );
-          size += FfiConverterString.allocationSize(inner.sender);
-          size += FfiConverterTypeProfileDetails.allocationSize(
-            inner.senderProfile
+          size += FfiConverterMapTypeTagNameTypeTagInfo.allocationSize(
+            inner.tags
           );
           return size;
         }
-        case RepliedToEventDetails_Tags.Error: {
+        case RoomAccountDataEvent_Tags.UnstableMarkedUnread: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(4);
-          size += FfiConverterString.allocationSize(inner.message);
+          size += FfiConverterBool.allocationSize(inner.unread);
           return size;
         }
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Types of room account data events.
+ */
+export enum RoomAccountDataEventType {
+  /**
+   * m.fully_read
+   */
+  FullyRead,
+  /**
+   * m.marked_unread
+   */
+  MarkedUnread,
+  /**
+   * m.tag
+   */
+  Tag,
+  /**
+   * com.famedly.marked_unread
+   */
+  UnstableMarkedUnread,
+}
+
+const FfiConverterTypeRoomAccountDataEventType = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = RoomAccountDataEventType;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return RoomAccountDataEventType.FullyRead;
+        case 2:
+          return RoomAccountDataEventType.MarkedUnread;
+        case 3:
+          return RoomAccountDataEventType.Tag;
+        case 4:
+          return RoomAccountDataEventType.UnstableMarkedUnread;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case RoomAccountDataEventType.FullyRead:
+          return ordinalConverter.write(1, into);
+        case RoomAccountDataEventType.MarkedUnread:
+          return ordinalConverter.write(2, into);
+        case RoomAccountDataEventType.Tag:
+          return ordinalConverter.write(3, into);
+        case RoomAccountDataEventType.UnstableMarkedUnread:
+          return ordinalConverter.write(4, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
     }
   }
   return new FFIConverter();
@@ -18653,6 +26116,7 @@ export enum RoomError_Tags {
   InvalidMediaInfo = 'InvalidMediaInfo',
   TimelineUnavailable = 'TimelineUnavailable',
   InvalidThumbnailData = 'InvalidThumbnailData',
+  InvalidRepliedToEventId = 'InvalidRepliedToEventId',
   FailedSendingAttachment = 'FailedSendingAttachment',
 }
 export const RoomError = (() => {
@@ -18766,7 +26230,7 @@ export const RoomError = (() => {
       return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 5;
     }
   }
-  class FailedSendingAttachment extends UniffiError {
+  class InvalidRepliedToEventId extends UniffiError {
     /**
      * @private
      * This field is private and should not be used.
@@ -18778,6 +26242,28 @@ export const RoomError = (() => {
      */
     readonly [variantOrdinalSymbol] = 6;
 
+    public readonly tag = RoomError_Tags.InvalidRepliedToEventId;
+
+    constructor(message: string) {
+      super('RoomError', 'InvalidRepliedToEventId', message);
+    }
+
+    static instanceOf(e: any): e is InvalidRepliedToEventId {
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 6;
+    }
+  }
+  class FailedSendingAttachment extends UniffiError {
+    /**
+     * @private
+     * This field is private and should not be used.
+     */
+    readonly [uniffiTypeNameSymbol]: string = 'RoomError';
+    /**
+     * @private
+     * This field is private and should not be used.
+     */
+    readonly [variantOrdinalSymbol] = 7;
+
     public readonly tag = RoomError_Tags.FailedSendingAttachment;
 
     constructor(message: string) {
@@ -18785,7 +26271,7 @@ export const RoomError = (() => {
     }
 
     static instanceOf(e: any): e is FailedSendingAttachment {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 6;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 7;
     }
   }
 
@@ -18799,6 +26285,7 @@ export const RoomError = (() => {
     InvalidMediaInfo,
     TimelineUnavailable,
     InvalidThumbnailData,
+    InvalidRepliedToEventId,
     FailedSendingAttachment,
     instanceOf,
   };
@@ -18840,6 +26327,11 @@ const FfiConverterTypeRoomError = (() => {
           );
 
         case 6:
+          return new RoomError.InvalidRepliedToEventId(
+            FfiConverterString.read(from)
+          );
+
+        case 7:
           return new RoomError.FailedSendingAttachment(
             FfiConverterString.read(from)
           );
@@ -18860,6 +26352,266 @@ const FfiConverterTypeRoomError = (() => {
   return new FfiConverter();
 })();
 
+// Enum: RoomHistoryVisibility
+export enum RoomHistoryVisibility_Tags {
+  Invited = 'Invited',
+  Joined = 'Joined',
+  Shared = 'Shared',
+  WorldReadable = 'WorldReadable',
+  Custom = 'Custom',
+}
+export const RoomHistoryVisibility = (() => {
+  type Invited__interface = {
+    tag: RoomHistoryVisibility_Tags.Invited;
+  };
+
+  /**
+   * Previous events are accessible to newly joined members from the point
+   * they were invited onwards.
+   *
+   * Events stop being accessible when the member's state changes to
+   * something other than *invite* or *join*.
+   */
+  class Invited_ extends UniffiEnum implements Invited__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomHistoryVisibility';
+    readonly tag = RoomHistoryVisibility_Tags.Invited;
+    constructor() {
+      super('RoomHistoryVisibility', 'Invited');
+    }
+
+    static new(): Invited_ {
+      return new Invited_();
+    }
+
+    static instanceOf(obj: any): obj is Invited_ {
+      return obj.tag === RoomHistoryVisibility_Tags.Invited;
+    }
+  }
+
+  type Joined__interface = {
+    tag: RoomHistoryVisibility_Tags.Joined;
+  };
+
+  /**
+   * Previous events are accessible to newly joined members from the point
+   * they joined the room onwards.
+   * Events stop being accessible when the member's state changes to
+   * something other than *join*.
+   */
+  class Joined_ extends UniffiEnum implements Joined__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomHistoryVisibility';
+    readonly tag = RoomHistoryVisibility_Tags.Joined;
+    constructor() {
+      super('RoomHistoryVisibility', 'Joined');
+    }
+
+    static new(): Joined_ {
+      return new Joined_();
+    }
+
+    static instanceOf(obj: any): obj is Joined_ {
+      return obj.tag === RoomHistoryVisibility_Tags.Joined;
+    }
+  }
+
+  type Shared__interface = {
+    tag: RoomHistoryVisibility_Tags.Shared;
+  };
+
+  /**
+   * Previous events are always accessible to newly joined members.
+   *
+   * All events in the room are accessible, even those sent when the member
+   * was not a part of the room.
+   */
+  class Shared_ extends UniffiEnum implements Shared__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomHistoryVisibility';
+    readonly tag = RoomHistoryVisibility_Tags.Shared;
+    constructor() {
+      super('RoomHistoryVisibility', 'Shared');
+    }
+
+    static new(): Shared_ {
+      return new Shared_();
+    }
+
+    static instanceOf(obj: any): obj is Shared_ {
+      return obj.tag === RoomHistoryVisibility_Tags.Shared;
+    }
+  }
+
+  type WorldReadable__interface = {
+    tag: RoomHistoryVisibility_Tags.WorldReadable;
+  };
+
+  /**
+   * All events while this is the `HistoryVisibility` value may be shared by
+   * any participating homeserver with anyone, regardless of whether they
+   * have ever joined the room.
+   */
+  class WorldReadable_ extends UniffiEnum implements WorldReadable__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomHistoryVisibility';
+    readonly tag = RoomHistoryVisibility_Tags.WorldReadable;
+    constructor() {
+      super('RoomHistoryVisibility', 'WorldReadable');
+    }
+
+    static new(): WorldReadable_ {
+      return new WorldReadable_();
+    }
+
+    static instanceOf(obj: any): obj is WorldReadable_ {
+      return obj.tag === RoomHistoryVisibility_Tags.WorldReadable;
+    }
+  }
+
+  type Custom__interface = {
+    tag: RoomHistoryVisibility_Tags.Custom;
+    inner: Readonly<{ value: string }>;
+  };
+
+  /**
+   * A custom visibility value.
+   */
+  class Custom_ extends UniffiEnum implements Custom__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomHistoryVisibility';
+    readonly tag = RoomHistoryVisibility_Tags.Custom;
+    readonly inner: Readonly<{ value: string }>;
+    constructor(inner: { value: string }) {
+      super('RoomHistoryVisibility', 'Custom');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: string }): Custom_ {
+      return new Custom_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Custom_ {
+      return obj.tag === RoomHistoryVisibility_Tags.Custom;
+    }
+  }
+
+  function instanceOf(obj: any): obj is RoomHistoryVisibility {
+    return obj[uniffiTypeNameSymbol] === 'RoomHistoryVisibility';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Invited: Invited_,
+    Joined: Joined_,
+    Shared: Shared_,
+    WorldReadable: WorldReadable_,
+    Custom: Custom_,
+  });
+})();
+
+export type RoomHistoryVisibility = InstanceType<
+  (typeof RoomHistoryVisibility)[keyof Omit<
+    typeof RoomHistoryVisibility,
+    'instanceOf'
+  >]
+>;
+
+// FfiConverter for enum RoomHistoryVisibility
+const FfiConverterTypeRoomHistoryVisibility = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = RoomHistoryVisibility;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new RoomHistoryVisibility.Invited();
+        case 2:
+          return new RoomHistoryVisibility.Joined();
+        case 3:
+          return new RoomHistoryVisibility.Shared();
+        case 4:
+          return new RoomHistoryVisibility.WorldReadable();
+        case 5:
+          return new RoomHistoryVisibility.Custom({
+            value: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case RoomHistoryVisibility_Tags.Invited: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case RoomHistoryVisibility_Tags.Joined: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case RoomHistoryVisibility_Tags.Shared: {
+          ordinalConverter.write(3, into);
+          return;
+        }
+        case RoomHistoryVisibility_Tags.WorldReadable: {
+          ordinalConverter.write(4, into);
+          return;
+        }
+        case RoomHistoryVisibility_Tags.Custom: {
+          ordinalConverter.write(5, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.value, into);
+          return;
+        }
+        default:
+          // Throwing from here means that RoomHistoryVisibility_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case RoomHistoryVisibility_Tags.Invited: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case RoomHistoryVisibility_Tags.Joined: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case RoomHistoryVisibility_Tags.Shared: {
+          return ordinalConverter.allocationSize(3);
+        }
+        case RoomHistoryVisibility_Tags.WorldReadable: {
+          return ordinalConverter.allocationSize(4);
+        }
+        case RoomHistoryVisibility_Tags.Custom: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(5);
+          size += FfiConverterString.allocationSize(inner.value);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
 // Enum: RoomListEntriesDynamicFilterKind
 export enum RoomListEntriesDynamicFilterKind_Tags {
   All = 'All',
@@ -18873,6 +26625,7 @@ export enum RoomListEntriesDynamicFilterKind_Tags {
   None = 'None',
   NormalizedMatchRoomName = 'NormalizedMatchRoomName',
   FuzzyMatchRoomName = 'FuzzyMatchRoomName',
+  DeduplicateVersions = 'DeduplicateVersions',
 }
 export const RoomListEntriesDynamicFilterKind = (() => {
   type All__interface = {
@@ -19174,6 +26927,35 @@ export const RoomListEntriesDynamicFilterKind = (() => {
     }
   }
 
+  type DeduplicateVersions__interface = {
+    tag: RoomListEntriesDynamicFilterKind_Tags.DeduplicateVersions;
+  };
+
+  class DeduplicateVersions_
+    extends UniffiEnum
+    implements DeduplicateVersions__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomListEntriesDynamicFilterKind';
+    readonly tag = RoomListEntriesDynamicFilterKind_Tags.DeduplicateVersions;
+    constructor() {
+      super('RoomListEntriesDynamicFilterKind', 'DeduplicateVersions');
+    }
+
+    static new(): DeduplicateVersions_ {
+      return new DeduplicateVersions_();
+    }
+
+    static instanceOf(obj: any): obj is DeduplicateVersions_ {
+      return (
+        obj.tag === RoomListEntriesDynamicFilterKind_Tags.DeduplicateVersions
+      );
+    }
+  }
+
   function instanceOf(obj: any): obj is RoomListEntriesDynamicFilterKind {
     return obj[uniffiTypeNameSymbol] === 'RoomListEntriesDynamicFilterKind';
   }
@@ -19191,6 +26973,7 @@ export const RoomListEntriesDynamicFilterKind = (() => {
     None: None_,
     NormalizedMatchRoomName: NormalizedMatchRoomName_,
     FuzzyMatchRoomName: FuzzyMatchRoomName_,
+    DeduplicateVersions: DeduplicateVersions_,
   });
 })();
 
@@ -19242,6 +27025,8 @@ const FfiConverterTypeRoomListEntriesDynamicFilterKind = (() => {
           return new RoomListEntriesDynamicFilterKind.FuzzyMatchRoomName({
             pattern: FfiConverterString.read(from),
           });
+        case 12:
+          return new RoomListEntriesDynamicFilterKind.DeduplicateVersions();
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -19308,6 +27093,10 @@ const FfiConverterTypeRoomListEntriesDynamicFilterKind = (() => {
           FfiConverterString.write(inner.pattern, into);
           return;
         }
+        case RoomListEntriesDynamicFilterKind_Tags.DeduplicateVersions: {
+          ordinalConverter.write(12, into);
+          return;
+        }
         default:
           // Throwing from here means that RoomListEntriesDynamicFilterKind_Tags hasn't matched an ordinal.
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -19371,6 +27160,9 @@ const FfiConverterTypeRoomListEntriesDynamicFilterKind = (() => {
           size += FfiConverterString.allocationSize(inner.pattern);
           return size;
         }
+        case RoomListEntriesDynamicFilterKind_Tags.DeduplicateVersions: {
+          return ordinalConverter.allocationSize(12);
+        }
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -19396,7 +27188,7 @@ export enum RoomListEntriesUpdate_Tags {
 export const RoomListEntriesUpdate = (() => {
   type Append__interface = {
     tag: RoomListEntriesUpdate_Tags.Append;
-    inner: Readonly<{ values: Array<RoomListItemInterface> }>;
+    inner: Readonly<{ values: Array<RoomInterface> }>;
   };
 
   class Append_ extends UniffiEnum implements Append__interface {
@@ -19406,13 +27198,13 @@ export const RoomListEntriesUpdate = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'RoomListEntriesUpdate';
     readonly tag = RoomListEntriesUpdate_Tags.Append;
-    readonly inner: Readonly<{ values: Array<RoomListItemInterface> }>;
-    constructor(inner: { values: Array<RoomListItemInterface> }) {
+    readonly inner: Readonly<{ values: Array<RoomInterface> }>;
+    constructor(inner: { values: Array<RoomInterface> }) {
       super('RoomListEntriesUpdate', 'Append');
       this.inner = Object.freeze(inner);
     }
 
-    static new(inner: { values: Array<RoomListItemInterface> }): Append_ {
+    static new(inner: { values: Array<RoomInterface> }): Append_ {
       return new Append_(inner);
     }
 
@@ -19447,7 +27239,7 @@ export const RoomListEntriesUpdate = (() => {
 
   type PushFront__interface = {
     tag: RoomListEntriesUpdate_Tags.PushFront;
-    inner: Readonly<{ value: RoomListItemInterface }>;
+    inner: Readonly<{ value: RoomInterface }>;
   };
 
   class PushFront_ extends UniffiEnum implements PushFront__interface {
@@ -19457,13 +27249,13 @@ export const RoomListEntriesUpdate = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'RoomListEntriesUpdate';
     readonly tag = RoomListEntriesUpdate_Tags.PushFront;
-    readonly inner: Readonly<{ value: RoomListItemInterface }>;
-    constructor(inner: { value: RoomListItemInterface }) {
+    readonly inner: Readonly<{ value: RoomInterface }>;
+    constructor(inner: { value: RoomInterface }) {
       super('RoomListEntriesUpdate', 'PushFront');
       this.inner = Object.freeze(inner);
     }
 
-    static new(inner: { value: RoomListItemInterface }): PushFront_ {
+    static new(inner: { value: RoomInterface }): PushFront_ {
       return new PushFront_(inner);
     }
 
@@ -19474,7 +27266,7 @@ export const RoomListEntriesUpdate = (() => {
 
   type PushBack__interface = {
     tag: RoomListEntriesUpdate_Tags.PushBack;
-    inner: Readonly<{ value: RoomListItemInterface }>;
+    inner: Readonly<{ value: RoomInterface }>;
   };
 
   class PushBack_ extends UniffiEnum implements PushBack__interface {
@@ -19484,13 +27276,13 @@ export const RoomListEntriesUpdate = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'RoomListEntriesUpdate';
     readonly tag = RoomListEntriesUpdate_Tags.PushBack;
-    readonly inner: Readonly<{ value: RoomListItemInterface }>;
-    constructor(inner: { value: RoomListItemInterface }) {
+    readonly inner: Readonly<{ value: RoomInterface }>;
+    constructor(inner: { value: RoomInterface }) {
       super('RoomListEntriesUpdate', 'PushBack');
       this.inner = Object.freeze(inner);
     }
 
-    static new(inner: { value: RoomListItemInterface }): PushBack_ {
+    static new(inner: { value: RoomInterface }): PushBack_ {
       return new PushBack_(inner);
     }
 
@@ -19549,7 +27341,7 @@ export const RoomListEntriesUpdate = (() => {
 
   type Insert__interface = {
     tag: RoomListEntriesUpdate_Tags.Insert;
-    inner: Readonly<{ index: /*u32*/ number; value: RoomListItemInterface }>;
+    inner: Readonly<{ index: /*u32*/ number; value: RoomInterface }>;
   };
 
   class Insert_ extends UniffiEnum implements Insert__interface {
@@ -19559,21 +27351,15 @@ export const RoomListEntriesUpdate = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'RoomListEntriesUpdate';
     readonly tag = RoomListEntriesUpdate_Tags.Insert;
-    readonly inner: Readonly<{
-      index: /*u32*/ number;
-      value: RoomListItemInterface;
-    }>;
-    constructor(inner: {
-      index: /*u32*/ number;
-      value: RoomListItemInterface;
-    }) {
+    readonly inner: Readonly<{ index: /*u32*/ number; value: RoomInterface }>;
+    constructor(inner: { index: /*u32*/ number; value: RoomInterface }) {
       super('RoomListEntriesUpdate', 'Insert');
       this.inner = Object.freeze(inner);
     }
 
     static new(inner: {
       index: /*u32*/ number;
-      value: RoomListItemInterface;
+      value: RoomInterface;
     }): Insert_ {
       return new Insert_(inner);
     }
@@ -19585,7 +27371,7 @@ export const RoomListEntriesUpdate = (() => {
 
   type Set__interface = {
     tag: RoomListEntriesUpdate_Tags.Set;
-    inner: Readonly<{ index: /*u32*/ number; value: RoomListItemInterface }>;
+    inner: Readonly<{ index: /*u32*/ number; value: RoomInterface }>;
   };
 
   class Set_ extends UniffiEnum implements Set__interface {
@@ -19595,22 +27381,13 @@ export const RoomListEntriesUpdate = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'RoomListEntriesUpdate';
     readonly tag = RoomListEntriesUpdate_Tags.Set;
-    readonly inner: Readonly<{
-      index: /*u32*/ number;
-      value: RoomListItemInterface;
-    }>;
-    constructor(inner: {
-      index: /*u32*/ number;
-      value: RoomListItemInterface;
-    }) {
+    readonly inner: Readonly<{ index: /*u32*/ number; value: RoomInterface }>;
+    constructor(inner: { index: /*u32*/ number; value: RoomInterface }) {
       super('RoomListEntriesUpdate', 'Set');
       this.inner = Object.freeze(inner);
     }
 
-    static new(inner: {
-      index: /*u32*/ number;
-      value: RoomListItemInterface;
-    }): Set_ {
+    static new(inner: { index: /*u32*/ number; value: RoomInterface }): Set_ {
       return new Set_(inner);
     }
 
@@ -19675,7 +27452,7 @@ export const RoomListEntriesUpdate = (() => {
 
   type Reset__interface = {
     tag: RoomListEntriesUpdate_Tags.Reset;
-    inner: Readonly<{ values: Array<RoomListItemInterface> }>;
+    inner: Readonly<{ values: Array<RoomInterface> }>;
   };
 
   class Reset_ extends UniffiEnum implements Reset__interface {
@@ -19685,13 +27462,13 @@ export const RoomListEntriesUpdate = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'RoomListEntriesUpdate';
     readonly tag = RoomListEntriesUpdate_Tags.Reset;
-    readonly inner: Readonly<{ values: Array<RoomListItemInterface> }>;
-    constructor(inner: { values: Array<RoomListItemInterface> }) {
+    readonly inner: Readonly<{ values: Array<RoomInterface> }>;
+    constructor(inner: { values: Array<RoomInterface> }) {
       super('RoomListEntriesUpdate', 'Reset');
       this.inner = Object.freeze(inner);
     }
 
-    static new(inner: { values: Array<RoomListItemInterface> }): Reset_ {
+    static new(inner: { values: Array<RoomInterface> }): Reset_ {
       return new Reset_(inner);
     }
 
@@ -19736,17 +27513,17 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
       switch (ordinalConverter.read(from)) {
         case 1:
           return new RoomListEntriesUpdate.Append({
-            values: FfiConverterArrayTypeRoomListItem.read(from),
+            values: FfiConverterArrayTypeRoom.read(from),
           });
         case 2:
           return new RoomListEntriesUpdate.Clear();
         case 3:
           return new RoomListEntriesUpdate.PushFront({
-            value: FfiConverterTypeRoomListItem.read(from),
+            value: FfiConverterTypeRoom.read(from),
           });
         case 4:
           return new RoomListEntriesUpdate.PushBack({
-            value: FfiConverterTypeRoomListItem.read(from),
+            value: FfiConverterTypeRoom.read(from),
           });
         case 5:
           return new RoomListEntriesUpdate.PopFront();
@@ -19755,12 +27532,12 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
         case 7:
           return new RoomListEntriesUpdate.Insert({
             index: FfiConverterUInt32.read(from),
-            value: FfiConverterTypeRoomListItem.read(from),
+            value: FfiConverterTypeRoom.read(from),
           });
         case 8:
           return new RoomListEntriesUpdate.Set({
             index: FfiConverterUInt32.read(from),
-            value: FfiConverterTypeRoomListItem.read(from),
+            value: FfiConverterTypeRoom.read(from),
           });
         case 9:
           return new RoomListEntriesUpdate.Remove({
@@ -19772,7 +27549,7 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
           });
         case 11:
           return new RoomListEntriesUpdate.Reset({
-            values: FfiConverterArrayTypeRoomListItem.read(from),
+            values: FfiConverterArrayTypeRoom.read(from),
           });
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -19783,7 +27560,7 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
         case RoomListEntriesUpdate_Tags.Append: {
           ordinalConverter.write(1, into);
           const inner = value.inner;
-          FfiConverterArrayTypeRoomListItem.write(inner.values, into);
+          FfiConverterArrayTypeRoom.write(inner.values, into);
           return;
         }
         case RoomListEntriesUpdate_Tags.Clear: {
@@ -19793,13 +27570,13 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
         case RoomListEntriesUpdate_Tags.PushFront: {
           ordinalConverter.write(3, into);
           const inner = value.inner;
-          FfiConverterTypeRoomListItem.write(inner.value, into);
+          FfiConverterTypeRoom.write(inner.value, into);
           return;
         }
         case RoomListEntriesUpdate_Tags.PushBack: {
           ordinalConverter.write(4, into);
           const inner = value.inner;
-          FfiConverterTypeRoomListItem.write(inner.value, into);
+          FfiConverterTypeRoom.write(inner.value, into);
           return;
         }
         case RoomListEntriesUpdate_Tags.PopFront: {
@@ -19814,14 +27591,14 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
           ordinalConverter.write(7, into);
           const inner = value.inner;
           FfiConverterUInt32.write(inner.index, into);
-          FfiConverterTypeRoomListItem.write(inner.value, into);
+          FfiConverterTypeRoom.write(inner.value, into);
           return;
         }
         case RoomListEntriesUpdate_Tags.Set: {
           ordinalConverter.write(8, into);
           const inner = value.inner;
           FfiConverterUInt32.write(inner.index, into);
-          FfiConverterTypeRoomListItem.write(inner.value, into);
+          FfiConverterTypeRoom.write(inner.value, into);
           return;
         }
         case RoomListEntriesUpdate_Tags.Remove: {
@@ -19839,7 +27616,7 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
         case RoomListEntriesUpdate_Tags.Reset: {
           ordinalConverter.write(11, into);
           const inner = value.inner;
-          FfiConverterArrayTypeRoomListItem.write(inner.values, into);
+          FfiConverterArrayTypeRoom.write(inner.values, into);
           return;
         }
         default:
@@ -19852,9 +27629,7 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
         case RoomListEntriesUpdate_Tags.Append: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(1);
-          size += FfiConverterArrayTypeRoomListItem.allocationSize(
-            inner.values
-          );
+          size += FfiConverterArrayTypeRoom.allocationSize(inner.values);
           return size;
         }
         case RoomListEntriesUpdate_Tags.Clear: {
@@ -19863,13 +27638,13 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
         case RoomListEntriesUpdate_Tags.PushFront: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(3);
-          size += FfiConverterTypeRoomListItem.allocationSize(inner.value);
+          size += FfiConverterTypeRoom.allocationSize(inner.value);
           return size;
         }
         case RoomListEntriesUpdate_Tags.PushBack: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(4);
-          size += FfiConverterTypeRoomListItem.allocationSize(inner.value);
+          size += FfiConverterTypeRoom.allocationSize(inner.value);
           return size;
         }
         case RoomListEntriesUpdate_Tags.PopFront: {
@@ -19882,14 +27657,14 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(7);
           size += FfiConverterUInt32.allocationSize(inner.index);
-          size += FfiConverterTypeRoomListItem.allocationSize(inner.value);
+          size += FfiConverterTypeRoom.allocationSize(inner.value);
           return size;
         }
         case RoomListEntriesUpdate_Tags.Set: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(8);
           size += FfiConverterUInt32.allocationSize(inner.index);
-          size += FfiConverterTypeRoomListItem.allocationSize(inner.value);
+          size += FfiConverterTypeRoom.allocationSize(inner.value);
           return size;
         }
         case RoomListEntriesUpdate_Tags.Remove: {
@@ -19907,9 +27682,7 @@ const FfiConverterTypeRoomListEntriesUpdate = (() => {
         case RoomListEntriesUpdate_Tags.Reset: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(11);
-          size += FfiConverterArrayTypeRoomListItem.allocationSize(
-            inner.values
-          );
+          size += FfiConverterArrayTypeRoom.allocationSize(inner.values);
           return size;
         }
         default:
@@ -19929,9 +27702,6 @@ export enum RoomListError_Tags {
   InputCannotBeApplied = 'InputCannotBeApplied',
   RoomNotFound = 'RoomNotFound',
   InvalidRoomId = 'InvalidRoomId',
-  TimelineAlreadyExists = 'TimelineAlreadyExists',
-  TimelineNotInitialized = 'TimelineNotInitialized',
-  InitializingTimeline = 'InitializingTimeline',
   EventCache = 'EventCache',
   IncorrectRoomMembership = 'IncorrectRoomMembership',
 }
@@ -20107,124 +27877,6 @@ export const RoomListError = (() => {
     }
   }
 
-  type TimelineAlreadyExists__interface = {
-    tag: RoomListError_Tags.TimelineAlreadyExists;
-    inner: Readonly<{ roomName: string }>;
-  };
-
-  class TimelineAlreadyExists_
-    extends UniffiError
-    implements TimelineAlreadyExists__interface
-  {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'RoomListError';
-    readonly tag = RoomListError_Tags.TimelineAlreadyExists;
-    readonly inner: Readonly<{ roomName: string }>;
-    constructor(inner: { roomName: string }) {
-      super('RoomListError', 'TimelineAlreadyExists');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: { roomName: string }): TimelineAlreadyExists_ {
-      return new TimelineAlreadyExists_(inner);
-    }
-
-    static instanceOf(obj: any): obj is TimelineAlreadyExists_ {
-      return obj.tag === RoomListError_Tags.TimelineAlreadyExists;
-    }
-
-    static hasInner(obj: any): obj is TimelineAlreadyExists_ {
-      return TimelineAlreadyExists_.instanceOf(obj);
-    }
-
-    static getInner(
-      obj: TimelineAlreadyExists_
-    ): Readonly<{ roomName: string }> {
-      return obj.inner;
-    }
-  }
-
-  type TimelineNotInitialized__interface = {
-    tag: RoomListError_Tags.TimelineNotInitialized;
-    inner: Readonly<{ roomName: string }>;
-  };
-
-  class TimelineNotInitialized_
-    extends UniffiError
-    implements TimelineNotInitialized__interface
-  {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'RoomListError';
-    readonly tag = RoomListError_Tags.TimelineNotInitialized;
-    readonly inner: Readonly<{ roomName: string }>;
-    constructor(inner: { roomName: string }) {
-      super('RoomListError', 'TimelineNotInitialized');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: { roomName: string }): TimelineNotInitialized_ {
-      return new TimelineNotInitialized_(inner);
-    }
-
-    static instanceOf(obj: any): obj is TimelineNotInitialized_ {
-      return obj.tag === RoomListError_Tags.TimelineNotInitialized;
-    }
-
-    static hasInner(obj: any): obj is TimelineNotInitialized_ {
-      return TimelineNotInitialized_.instanceOf(obj);
-    }
-
-    static getInner(
-      obj: TimelineNotInitialized_
-    ): Readonly<{ roomName: string }> {
-      return obj.inner;
-    }
-  }
-
-  type InitializingTimeline__interface = {
-    tag: RoomListError_Tags.InitializingTimeline;
-    inner: Readonly<{ error: string }>;
-  };
-
-  class InitializingTimeline_
-    extends UniffiError
-    implements InitializingTimeline__interface
-  {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'RoomListError';
-    readonly tag = RoomListError_Tags.InitializingTimeline;
-    readonly inner: Readonly<{ error: string }>;
-    constructor(inner: { error: string }) {
-      super('RoomListError', 'InitializingTimeline');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: { error: string }): InitializingTimeline_ {
-      return new InitializingTimeline_(inner);
-    }
-
-    static instanceOf(obj: any): obj is InitializingTimeline_ {
-      return obj.tag === RoomListError_Tags.InitializingTimeline;
-    }
-
-    static hasInner(obj: any): obj is InitializingTimeline_ {
-      return InitializingTimeline_.instanceOf(obj);
-    }
-
-    static getInner(obj: InitializingTimeline_): Readonly<{ error: string }> {
-      return obj.inner;
-    }
-  }
-
   type EventCache__interface = {
     tag: RoomListError_Tags.EventCache;
     inner: Readonly<{ error: string }>;
@@ -20317,9 +27969,6 @@ export const RoomListError = (() => {
     InputCannotBeApplied: InputCannotBeApplied_,
     RoomNotFound: RoomNotFound_,
     InvalidRoomId: InvalidRoomId_,
-    TimelineAlreadyExists: TimelineAlreadyExists_,
-    TimelineNotInitialized: TimelineNotInitialized_,
-    InitializingTimeline: InitializingTimeline_,
     EventCache: EventCache_,
     IncorrectRoomMembership: IncorrectRoomMembership_,
   });
@@ -20355,22 +28004,10 @@ const FfiConverterTypeRoomListError = (() => {
             error: FfiConverterString.read(from),
           });
         case 6:
-          return new RoomListError.TimelineAlreadyExists({
-            roomName: FfiConverterString.read(from),
-          });
-        case 7:
-          return new RoomListError.TimelineNotInitialized({
-            roomName: FfiConverterString.read(from),
-          });
-        case 8:
-          return new RoomListError.InitializingTimeline({
-            error: FfiConverterString.read(from),
-          });
-        case 9:
           return new RoomListError.EventCache({
             error: FfiConverterString.read(from),
           });
-        case 10:
+        case 7:
           return new RoomListError.IncorrectRoomMembership({
             expected: FfiConverterArrayTypeMembership.read(from),
             actual: FfiConverterTypeMembership.read(from),
@@ -20409,32 +28046,14 @@ const FfiConverterTypeRoomListError = (() => {
           FfiConverterString.write(inner.error, into);
           return;
         }
-        case RoomListError_Tags.TimelineAlreadyExists: {
-          ordinalConverter.write(6, into);
-          const inner = value.inner;
-          FfiConverterString.write(inner.roomName, into);
-          return;
-        }
-        case RoomListError_Tags.TimelineNotInitialized: {
-          ordinalConverter.write(7, into);
-          const inner = value.inner;
-          FfiConverterString.write(inner.roomName, into);
-          return;
-        }
-        case RoomListError_Tags.InitializingTimeline: {
-          ordinalConverter.write(8, into);
-          const inner = value.inner;
-          FfiConverterString.write(inner.error, into);
-          return;
-        }
         case RoomListError_Tags.EventCache: {
-          ordinalConverter.write(9, into);
+          ordinalConverter.write(6, into);
           const inner = value.inner;
           FfiConverterString.write(inner.error, into);
           return;
         }
         case RoomListError_Tags.IncorrectRoomMembership: {
-          ordinalConverter.write(10, into);
+          ordinalConverter.write(7, into);
           const inner = value.inner;
           FfiConverterArrayTypeMembership.write(inner.expected, into);
           FfiConverterTypeMembership.write(inner.actual, into);
@@ -20474,33 +28093,15 @@ const FfiConverterTypeRoomListError = (() => {
           size += FfiConverterString.allocationSize(inner.error);
           return size;
         }
-        case RoomListError_Tags.TimelineAlreadyExists: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(6);
-          size += FfiConverterString.allocationSize(inner.roomName);
-          return size;
-        }
-        case RoomListError_Tags.TimelineNotInitialized: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(7);
-          size += FfiConverterString.allocationSize(inner.roomName);
-          return size;
-        }
-        case RoomListError_Tags.InitializingTimeline: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(8);
-          size += FfiConverterString.allocationSize(inner.error);
-          return size;
-        }
         case RoomListError_Tags.EventCache: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(9);
+          let size = ordinalConverter.allocationSize(6);
           size += FfiConverterString.allocationSize(inner.error);
           return size;
         }
         case RoomListError_Tags.IncorrectRoomMembership: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(10);
+          let size = ordinalConverter.allocationSize(7);
           size += FfiConverterArrayTypeMembership.allocationSize(
             inner.expected
           );
@@ -20771,10 +28372,162 @@ const FfiConverterTypeRoomListServiceSyncIndicator = (() => {
   return new FFIConverter();
 })();
 
+// Enum: RoomLoadSettings
+export enum RoomLoadSettings_Tags {
+  All = 'All',
+  One = 'One',
+}
+/**
+ * Configure how many rooms will be restored when restoring the session with
+ * [`Client::restore_session_with`].
+ *
+ * Please, see the documentation of [`matrix_sdk::store::RoomLoadSettings`] to
+ * learn more.
+ */
+export const RoomLoadSettings = (() => {
+  type All__interface = {
+    tag: RoomLoadSettings_Tags.All;
+  };
+
+  /**
+   * Load all rooms from the `StateStore` into the in-memory state store
+   * `BaseStateStore`.
+   */
+  class All_ extends UniffiEnum implements All__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomLoadSettings';
+    readonly tag = RoomLoadSettings_Tags.All;
+    constructor() {
+      super('RoomLoadSettings', 'All');
+    }
+
+    static new(): All_ {
+      return new All_();
+    }
+
+    static instanceOf(obj: any): obj is All_ {
+      return obj.tag === RoomLoadSettings_Tags.All;
+    }
+  }
+
+  type One__interface = {
+    tag: RoomLoadSettings_Tags.One;
+    inner: Readonly<{ roomId: string }>;
+  };
+
+  /**
+   * Load a single room from the `StateStore` into the in-memory state
+   * store `BaseStateStore`.
+   *
+   * Please, be careful with this option. Read the documentation of
+   * [`RoomLoadSettings`].
+   */
+  class One_ extends UniffiEnum implements One__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomLoadSettings';
+    readonly tag = RoomLoadSettings_Tags.One;
+    readonly inner: Readonly<{ roomId: string }>;
+    constructor(inner: { roomId: string }) {
+      super('RoomLoadSettings', 'One');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { roomId: string }): One_ {
+      return new One_(inner);
+    }
+
+    static instanceOf(obj: any): obj is One_ {
+      return obj.tag === RoomLoadSettings_Tags.One;
+    }
+  }
+
+  function instanceOf(obj: any): obj is RoomLoadSettings {
+    return obj[uniffiTypeNameSymbol] === 'RoomLoadSettings';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    All: All_,
+    One: One_,
+  });
+})();
+
+/**
+ * Configure how many rooms will be restored when restoring the session with
+ * [`Client::restore_session_with`].
+ *
+ * Please, see the documentation of [`matrix_sdk::store::RoomLoadSettings`] to
+ * learn more.
+ */
+
+export type RoomLoadSettings = InstanceType<
+  (typeof RoomLoadSettings)[keyof Omit<typeof RoomLoadSettings, 'instanceOf'>]
+>;
+
+// FfiConverter for enum RoomLoadSettings
+const FfiConverterTypeRoomLoadSettings = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = RoomLoadSettings;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new RoomLoadSettings.All();
+        case 2:
+          return new RoomLoadSettings.One({
+            roomId: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case RoomLoadSettings_Tags.All: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case RoomLoadSettings_Tags.One: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.roomId, into);
+          return;
+        }
+        default:
+          // Throwing from here means that RoomLoadSettings_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case RoomLoadSettings_Tags.All: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case RoomLoadSettings_Tags.One: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterString.allocationSize(inner.roomId);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
 export enum RoomMessageEventMessageType {
   Audio,
   Emote,
   File,
+  Gallery,
   Image,
   Location,
   Notice,
@@ -20798,20 +28551,22 @@ const FfiConverterTypeRoomMessageEventMessageType = (() => {
         case 3:
           return RoomMessageEventMessageType.File;
         case 4:
-          return RoomMessageEventMessageType.Image;
+          return RoomMessageEventMessageType.Gallery;
         case 5:
-          return RoomMessageEventMessageType.Location;
+          return RoomMessageEventMessageType.Image;
         case 6:
-          return RoomMessageEventMessageType.Notice;
+          return RoomMessageEventMessageType.Location;
         case 7:
-          return RoomMessageEventMessageType.ServerNotice;
+          return RoomMessageEventMessageType.Notice;
         case 8:
-          return RoomMessageEventMessageType.Text;
+          return RoomMessageEventMessageType.ServerNotice;
         case 9:
-          return RoomMessageEventMessageType.Video;
+          return RoomMessageEventMessageType.Text;
         case 10:
-          return RoomMessageEventMessageType.VerificationRequest;
+          return RoomMessageEventMessageType.Video;
         case 11:
+          return RoomMessageEventMessageType.VerificationRequest;
+        case 12:
           return RoomMessageEventMessageType.Other;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -20825,22 +28580,24 @@ const FfiConverterTypeRoomMessageEventMessageType = (() => {
           return ordinalConverter.write(2, into);
         case RoomMessageEventMessageType.File:
           return ordinalConverter.write(3, into);
-        case RoomMessageEventMessageType.Image:
+        case RoomMessageEventMessageType.Gallery:
           return ordinalConverter.write(4, into);
-        case RoomMessageEventMessageType.Location:
+        case RoomMessageEventMessageType.Image:
           return ordinalConverter.write(5, into);
-        case RoomMessageEventMessageType.Notice:
+        case RoomMessageEventMessageType.Location:
           return ordinalConverter.write(6, into);
-        case RoomMessageEventMessageType.ServerNotice:
+        case RoomMessageEventMessageType.Notice:
           return ordinalConverter.write(7, into);
-        case RoomMessageEventMessageType.Text:
+        case RoomMessageEventMessageType.ServerNotice:
           return ordinalConverter.write(8, into);
-        case RoomMessageEventMessageType.Video:
+        case RoomMessageEventMessageType.Text:
           return ordinalConverter.write(9, into);
-        case RoomMessageEventMessageType.VerificationRequest:
+        case RoomMessageEventMessageType.Video:
           return ordinalConverter.write(10, into);
-        case RoomMessageEventMessageType.Other:
+        case RoomMessageEventMessageType.VerificationRequest:
           return ordinalConverter.write(11, into);
+        case RoomMessageEventMessageType.Other:
+          return ordinalConverter.write(12, into);
       }
     }
     allocationSize(value: TypeName): number {
@@ -21126,17 +28883,114 @@ const FfiConverterTypeRoomType = (() => {
   return new FFIConverter();
 })();
 
-export enum RoomVisibility {
+// Enum: RoomVisibility
+export enum RoomVisibility_Tags {
+  Public = 'Public',
+  Private = 'Private',
+  Custom = 'Custom',
+}
+export const RoomVisibility = (() => {
+  type Public__interface = {
+    tag: RoomVisibility_Tags.Public;
+  };
+
   /**
    * Indicates that the room will be shown in the published room list.
    */
-  Public,
+  class Public_ extends UniffiEnum implements Public__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomVisibility';
+    readonly tag = RoomVisibility_Tags.Public;
+    constructor() {
+      super('RoomVisibility', 'Public');
+    }
+
+    static new(): Public_ {
+      return new Public_();
+    }
+
+    static instanceOf(obj: any): obj is Public_ {
+      return obj.tag === RoomVisibility_Tags.Public;
+    }
+  }
+
+  type Private__interface = {
+    tag: RoomVisibility_Tags.Private;
+  };
+
   /**
    * Indicates that the room will not be shown in the published room list.
    */
-  Private,
-}
+  class Private_ extends UniffiEnum implements Private__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomVisibility';
+    readonly tag = RoomVisibility_Tags.Private;
+    constructor() {
+      super('RoomVisibility', 'Private');
+    }
 
+    static new(): Private_ {
+      return new Private_();
+    }
+
+    static instanceOf(obj: any): obj is Private_ {
+      return obj.tag === RoomVisibility_Tags.Private;
+    }
+  }
+
+  type Custom__interface = {
+    tag: RoomVisibility_Tags.Custom;
+    inner: Readonly<{ value: string }>;
+  };
+
+  /**
+   * A custom value that's not present in the spec.
+   */
+  class Custom_ extends UniffiEnum implements Custom__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RoomVisibility';
+    readonly tag = RoomVisibility_Tags.Custom;
+    readonly inner: Readonly<{ value: string }>;
+    constructor(inner: { value: string }) {
+      super('RoomVisibility', 'Custom');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: string }): Custom_ {
+      return new Custom_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Custom_ {
+      return obj.tag === RoomVisibility_Tags.Custom;
+    }
+  }
+
+  function instanceOf(obj: any): obj is RoomVisibility {
+    return obj[uniffiTypeNameSymbol] === 'RoomVisibility';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Public: Public_,
+    Private: Private_,
+    Custom: Custom_,
+  });
+})();
+
+export type RoomVisibility = InstanceType<
+  (typeof RoomVisibility)[keyof Omit<typeof RoomVisibility, 'instanceOf'>]
+>;
+
+// FfiConverter for enum RoomVisibility
 const FfiConverterTypeRoomVisibility = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = RoomVisibility;
@@ -21144,23 +28998,55 @@ const FfiConverterTypeRoomVisibility = (() => {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
-          return RoomVisibility.Public;
+          return new RoomVisibility.Public();
         case 2:
-          return RoomVisibility.Private;
+          return new RoomVisibility.Private();
+        case 3:
+          return new RoomVisibility.Custom({
+            value: FfiConverterString.read(from),
+          });
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
     }
     write(value: TypeName, into: RustBuffer): void {
-      switch (value) {
-        case RoomVisibility.Public:
-          return ordinalConverter.write(1, into);
-        case RoomVisibility.Private:
-          return ordinalConverter.write(2, into);
+      switch (value.tag) {
+        case RoomVisibility_Tags.Public: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case RoomVisibility_Tags.Private: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case RoomVisibility_Tags.Custom: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.value, into);
+          return;
+        }
+        default:
+          // Throwing from here means that RoomVisibility_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
       }
     }
     allocationSize(value: TypeName): number {
-      return ordinalConverter.allocationSize(0);
+      switch (value.tag) {
+        case RoomVisibility_Tags.Public: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case RoomVisibility_Tags.Private: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case RoomVisibility_Tags.Custom: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterString.allocationSize(inner.value);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
     }
   }
   return new FFIConverter();
@@ -21190,6 +29076,401 @@ const FfiConverterTypeRtcApplicationType = (() => {
     }
     allocationSize(value: TypeName): number {
       return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: RuleKind
+export enum RuleKind_Tags {
+  Override = 'Override',
+  Underride = 'Underride',
+  Sender = 'Sender',
+  Room = 'Room',
+  Content = 'Content',
+  Custom = 'Custom',
+}
+export const RuleKind = (() => {
+  type Override__interface = {
+    tag: RuleKind_Tags.Override;
+  };
+
+  /**
+   * User-configured rules that override all other kinds.
+   */
+  class Override_ extends UniffiEnum implements Override__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RuleKind';
+    readonly tag = RuleKind_Tags.Override;
+    constructor() {
+      super('RuleKind', 'Override');
+    }
+
+    static new(): Override_ {
+      return new Override_();
+    }
+
+    static instanceOf(obj: any): obj is Override_ {
+      return obj.tag === RuleKind_Tags.Override;
+    }
+  }
+
+  type Underride__interface = {
+    tag: RuleKind_Tags.Underride;
+  };
+
+  /**
+   * Lowest priority user-defined rules.
+   */
+  class Underride_ extends UniffiEnum implements Underride__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RuleKind';
+    readonly tag = RuleKind_Tags.Underride;
+    constructor() {
+      super('RuleKind', 'Underride');
+    }
+
+    static new(): Underride_ {
+      return new Underride_();
+    }
+
+    static instanceOf(obj: any): obj is Underride_ {
+      return obj.tag === RuleKind_Tags.Underride;
+    }
+  }
+
+  type Sender__interface = {
+    tag: RuleKind_Tags.Sender;
+  };
+
+  /**
+   * Sender-specific rules.
+   */
+  class Sender_ extends UniffiEnum implements Sender__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RuleKind';
+    readonly tag = RuleKind_Tags.Sender;
+    constructor() {
+      super('RuleKind', 'Sender');
+    }
+
+    static new(): Sender_ {
+      return new Sender_();
+    }
+
+    static instanceOf(obj: any): obj is Sender_ {
+      return obj.tag === RuleKind_Tags.Sender;
+    }
+  }
+
+  type Room__interface = {
+    tag: RuleKind_Tags.Room;
+  };
+
+  /**
+   * Room-specific rules.
+   */
+  class Room_ extends UniffiEnum implements Room__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RuleKind';
+    readonly tag = RuleKind_Tags.Room;
+    constructor() {
+      super('RuleKind', 'Room');
+    }
+
+    static new(): Room_ {
+      return new Room_();
+    }
+
+    static instanceOf(obj: any): obj is Room_ {
+      return obj.tag === RuleKind_Tags.Room;
+    }
+  }
+
+  type Content__interface = {
+    tag: RuleKind_Tags.Content;
+  };
+
+  /**
+   * Content-specific rules.
+   */
+  class Content_ extends UniffiEnum implements Content__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RuleKind';
+    readonly tag = RuleKind_Tags.Content;
+    constructor() {
+      super('RuleKind', 'Content');
+    }
+
+    static new(): Content_ {
+      return new Content_();
+    }
+
+    static instanceOf(obj: any): obj is Content_ {
+      return obj.tag === RuleKind_Tags.Content;
+    }
+  }
+
+  type Custom__interface = {
+    tag: RuleKind_Tags.Custom;
+    inner: Readonly<{ value: string }>;
+  };
+
+  class Custom_ extends UniffiEnum implements Custom__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'RuleKind';
+    readonly tag = RuleKind_Tags.Custom;
+    readonly inner: Readonly<{ value: string }>;
+    constructor(inner: { value: string }) {
+      super('RuleKind', 'Custom');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: string }): Custom_ {
+      return new Custom_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Custom_ {
+      return obj.tag === RuleKind_Tags.Custom;
+    }
+  }
+
+  function instanceOf(obj: any): obj is RuleKind {
+    return obj[uniffiTypeNameSymbol] === 'RuleKind';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Override: Override_,
+    Underride: Underride_,
+    Sender: Sender_,
+    Room: Room_,
+    Content: Content_,
+    Custom: Custom_,
+  });
+})();
+
+export type RuleKind = InstanceType<
+  (typeof RuleKind)[keyof Omit<typeof RuleKind, 'instanceOf'>]
+>;
+
+// FfiConverter for enum RuleKind
+const FfiConverterTypeRuleKind = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = RuleKind;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new RuleKind.Override();
+        case 2:
+          return new RuleKind.Underride();
+        case 3:
+          return new RuleKind.Sender();
+        case 4:
+          return new RuleKind.Room();
+        case 5:
+          return new RuleKind.Content();
+        case 6:
+          return new RuleKind.Custom({ value: FfiConverterString.read(from) });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case RuleKind_Tags.Override: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case RuleKind_Tags.Underride: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case RuleKind_Tags.Sender: {
+          ordinalConverter.write(3, into);
+          return;
+        }
+        case RuleKind_Tags.Room: {
+          ordinalConverter.write(4, into);
+          return;
+        }
+        case RuleKind_Tags.Content: {
+          ordinalConverter.write(5, into);
+          return;
+        }
+        case RuleKind_Tags.Custom: {
+          ordinalConverter.write(6, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.value, into);
+          return;
+        }
+        default:
+          // Throwing from here means that RuleKind_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case RuleKind_Tags.Override: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case RuleKind_Tags.Underride: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case RuleKind_Tags.Sender: {
+          return ordinalConverter.allocationSize(3);
+        }
+        case RuleKind_Tags.Room: {
+          return ordinalConverter.allocationSize(4);
+        }
+        case RuleKind_Tags.Content: {
+          return ordinalConverter.allocationSize(5);
+        }
+        case RuleKind_Tags.Custom: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(6);
+          size += FfiConverterString.allocationSize(inner.value);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: SecretStorageEncryptionAlgorithm
+export enum SecretStorageEncryptionAlgorithm_Tags {
+  V1AesHmacSha2 = 'V1AesHmacSha2',
+}
+/**
+ * An algorithm and its properties, used to encrypt a secret.
+ */
+export const SecretStorageEncryptionAlgorithm = (() => {
+  type V1AesHmacSha2__interface = {
+    tag: SecretStorageEncryptionAlgorithm_Tags.V1AesHmacSha2;
+    inner: Readonly<{ properties: SecretStorageV1AesHmacSha2Properties }>;
+  };
+
+  /**
+   * Encrypted using the `m.secret_storage.v1.aes-hmac-sha2` algorithm.
+   *
+   * Secrets using this method are encrypted using AES-CTR-256 and
+   * authenticated using HMAC-SHA-256.
+   */
+  class V1AesHmacSha2_ extends UniffiEnum implements V1AesHmacSha2__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'SecretStorageEncryptionAlgorithm';
+    readonly tag = SecretStorageEncryptionAlgorithm_Tags.V1AesHmacSha2;
+    readonly inner: Readonly<{
+      properties: SecretStorageV1AesHmacSha2Properties;
+    }>;
+    constructor(inner: { properties: SecretStorageV1AesHmacSha2Properties }) {
+      super('SecretStorageEncryptionAlgorithm', 'V1AesHmacSha2');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      properties: SecretStorageV1AesHmacSha2Properties;
+    }): V1AesHmacSha2_ {
+      return new V1AesHmacSha2_(inner);
+    }
+
+    static instanceOf(obj: any): obj is V1AesHmacSha2_ {
+      return obj.tag === SecretStorageEncryptionAlgorithm_Tags.V1AesHmacSha2;
+    }
+  }
+
+  function instanceOf(obj: any): obj is SecretStorageEncryptionAlgorithm {
+    return obj[uniffiTypeNameSymbol] === 'SecretStorageEncryptionAlgorithm';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    V1AesHmacSha2: V1AesHmacSha2_,
+  });
+})();
+
+/**
+ * An algorithm and its properties, used to encrypt a secret.
+ */
+
+export type SecretStorageEncryptionAlgorithm = InstanceType<
+  (typeof SecretStorageEncryptionAlgorithm)[keyof Omit<
+    typeof SecretStorageEncryptionAlgorithm,
+    'instanceOf'
+  >]
+>;
+
+// FfiConverter for enum SecretStorageEncryptionAlgorithm
+const FfiConverterTypeSecretStorageEncryptionAlgorithm = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = SecretStorageEncryptionAlgorithm;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new SecretStorageEncryptionAlgorithm.V1AesHmacSha2({
+            properties:
+              FfiConverterTypeSecretStorageV1AesHmacSha2Properties.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case SecretStorageEncryptionAlgorithm_Tags.V1AesHmacSha2: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterTypeSecretStorageV1AesHmacSha2Properties.write(
+            inner.properties,
+            into
+          );
+          return;
+        }
+        default:
+          // Throwing from here means that SecretStorageEncryptionAlgorithm_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case SecretStorageEncryptionAlgorithm_Tags.V1AesHmacSha2: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size +=
+            FfiConverterTypeSecretStorageV1AesHmacSha2Properties.allocationSize(
+              inner.properties
+            );
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
     }
   }
   return new FFIConverter();
@@ -21549,108 +29830,11 @@ const FfiConverterTypeShieldState = (() => {
   return new FFIConverter();
 })();
 
-// Enum: SlidingSyncVersion
-export enum SlidingSyncVersion_Tags {
-  None = 'None',
-  Proxy = 'Proxy',
-  Native = 'Native',
+export enum SlidingSyncVersion {
+  None,
+  Native,
 }
-export const SlidingSyncVersion = (() => {
-  type None__interface = {
-    tag: SlidingSyncVersion_Tags.None;
-  };
 
-  class None_ extends UniffiEnum implements None__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'SlidingSyncVersion';
-    readonly tag = SlidingSyncVersion_Tags.None;
-    constructor() {
-      super('SlidingSyncVersion', 'None');
-    }
-
-    static new(): None_ {
-      return new None_();
-    }
-
-    static instanceOf(obj: any): obj is None_ {
-      return obj.tag === SlidingSyncVersion_Tags.None;
-    }
-  }
-
-  type Proxy__interface = {
-    tag: SlidingSyncVersion_Tags.Proxy;
-    inner: Readonly<{ url: string }>;
-  };
-
-  class Proxy_ extends UniffiEnum implements Proxy__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'SlidingSyncVersion';
-    readonly tag = SlidingSyncVersion_Tags.Proxy;
-    readonly inner: Readonly<{ url: string }>;
-    constructor(inner: { url: string }) {
-      super('SlidingSyncVersion', 'Proxy');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: { url: string }): Proxy_ {
-      return new Proxy_(inner);
-    }
-
-    static instanceOf(obj: any): obj is Proxy_ {
-      return obj.tag === SlidingSyncVersion_Tags.Proxy;
-    }
-  }
-
-  type Native__interface = {
-    tag: SlidingSyncVersion_Tags.Native;
-  };
-
-  class Native_ extends UniffiEnum implements Native__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'SlidingSyncVersion';
-    readonly tag = SlidingSyncVersion_Tags.Native;
-    constructor() {
-      super('SlidingSyncVersion', 'Native');
-    }
-
-    static new(): Native_ {
-      return new Native_();
-    }
-
-    static instanceOf(obj: any): obj is Native_ {
-      return obj.tag === SlidingSyncVersion_Tags.Native;
-    }
-  }
-
-  function instanceOf(obj: any): obj is SlidingSyncVersion {
-    return obj[uniffiTypeNameSymbol] === 'SlidingSyncVersion';
-  }
-
-  return Object.freeze({
-    instanceOf,
-    None: None_,
-    Proxy: Proxy_,
-    Native: Native_,
-  });
-})();
-
-export type SlidingSyncVersion = InstanceType<
-  (typeof SlidingSyncVersion)[keyof Omit<
-    typeof SlidingSyncVersion,
-    'instanceOf'
-  >]
->;
-
-// FfiConverter for enum SlidingSyncVersion
 const FfiConverterTypeSlidingSyncVersion = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = SlidingSyncVersion;
@@ -21658,217 +29842,34 @@ const FfiConverterTypeSlidingSyncVersion = (() => {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
-          return new SlidingSyncVersion.None();
+          return SlidingSyncVersion.None;
         case 2:
-          return new SlidingSyncVersion.Proxy({
-            url: FfiConverterString.read(from),
-          });
-        case 3:
-          return new SlidingSyncVersion.Native();
+          return SlidingSyncVersion.Native;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
     }
     write(value: TypeName, into: RustBuffer): void {
-      switch (value.tag) {
-        case SlidingSyncVersion_Tags.None: {
-          ordinalConverter.write(1, into);
-          return;
-        }
-        case SlidingSyncVersion_Tags.Proxy: {
-          ordinalConverter.write(2, into);
-          const inner = value.inner;
-          FfiConverterString.write(inner.url, into);
-          return;
-        }
-        case SlidingSyncVersion_Tags.Native: {
-          ordinalConverter.write(3, into);
-          return;
-        }
-        default:
-          // Throwing from here means that SlidingSyncVersion_Tags hasn't matched an ordinal.
-          throw new UniffiInternalError.UnexpectedEnumCase();
+      switch (value) {
+        case SlidingSyncVersion.None:
+          return ordinalConverter.write(1, into);
+        case SlidingSyncVersion.Native:
+          return ordinalConverter.write(2, into);
       }
     }
     allocationSize(value: TypeName): number {
-      switch (value.tag) {
-        case SlidingSyncVersion_Tags.None: {
-          return ordinalConverter.allocationSize(1);
-        }
-        case SlidingSyncVersion_Tags.Proxy: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(2);
-          size += FfiConverterString.allocationSize(inner.url);
-          return size;
-        }
-        case SlidingSyncVersion_Tags.Native: {
-          return ordinalConverter.allocationSize(3);
-        }
-        default:
-          throw new UniffiInternalError.UnexpectedEnumCase();
-      }
+      return ordinalConverter.allocationSize(0);
     }
   }
   return new FFIConverter();
 })();
 
-// Enum: SlidingSyncVersionBuilder
-export enum SlidingSyncVersionBuilder_Tags {
-  None = 'None',
-  Proxy = 'Proxy',
-  Native = 'Native',
-  DiscoverProxy = 'DiscoverProxy',
-  DiscoverNative = 'DiscoverNative',
+export enum SlidingSyncVersionBuilder {
+  None,
+  Native,
+  DiscoverNative,
 }
-export const SlidingSyncVersionBuilder = (() => {
-  type None__interface = {
-    tag: SlidingSyncVersionBuilder_Tags.None;
-  };
 
-  class None_ extends UniffiEnum implements None__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'SlidingSyncVersionBuilder';
-    readonly tag = SlidingSyncVersionBuilder_Tags.None;
-    constructor() {
-      super('SlidingSyncVersionBuilder', 'None');
-    }
-
-    static new(): None_ {
-      return new None_();
-    }
-
-    static instanceOf(obj: any): obj is None_ {
-      return obj.tag === SlidingSyncVersionBuilder_Tags.None;
-    }
-  }
-
-  type Proxy__interface = {
-    tag: SlidingSyncVersionBuilder_Tags.Proxy;
-    inner: Readonly<{ url: string }>;
-  };
-
-  class Proxy_ extends UniffiEnum implements Proxy__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'SlidingSyncVersionBuilder';
-    readonly tag = SlidingSyncVersionBuilder_Tags.Proxy;
-    readonly inner: Readonly<{ url: string }>;
-    constructor(inner: { url: string }) {
-      super('SlidingSyncVersionBuilder', 'Proxy');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: { url: string }): Proxy_ {
-      return new Proxy_(inner);
-    }
-
-    static instanceOf(obj: any): obj is Proxy_ {
-      return obj.tag === SlidingSyncVersionBuilder_Tags.Proxy;
-    }
-  }
-
-  type Native__interface = {
-    tag: SlidingSyncVersionBuilder_Tags.Native;
-  };
-
-  class Native_ extends UniffiEnum implements Native__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'SlidingSyncVersionBuilder';
-    readonly tag = SlidingSyncVersionBuilder_Tags.Native;
-    constructor() {
-      super('SlidingSyncVersionBuilder', 'Native');
-    }
-
-    static new(): Native_ {
-      return new Native_();
-    }
-
-    static instanceOf(obj: any): obj is Native_ {
-      return obj.tag === SlidingSyncVersionBuilder_Tags.Native;
-    }
-  }
-
-  type DiscoverProxy__interface = {
-    tag: SlidingSyncVersionBuilder_Tags.DiscoverProxy;
-  };
-
-  class DiscoverProxy_ extends UniffiEnum implements DiscoverProxy__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'SlidingSyncVersionBuilder';
-    readonly tag = SlidingSyncVersionBuilder_Tags.DiscoverProxy;
-    constructor() {
-      super('SlidingSyncVersionBuilder', 'DiscoverProxy');
-    }
-
-    static new(): DiscoverProxy_ {
-      return new DiscoverProxy_();
-    }
-
-    static instanceOf(obj: any): obj is DiscoverProxy_ {
-      return obj.tag === SlidingSyncVersionBuilder_Tags.DiscoverProxy;
-    }
-  }
-
-  type DiscoverNative__interface = {
-    tag: SlidingSyncVersionBuilder_Tags.DiscoverNative;
-  };
-
-  class DiscoverNative_
-    extends UniffiEnum
-    implements DiscoverNative__interface
-  {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'SlidingSyncVersionBuilder';
-    readonly tag = SlidingSyncVersionBuilder_Tags.DiscoverNative;
-    constructor() {
-      super('SlidingSyncVersionBuilder', 'DiscoverNative');
-    }
-
-    static new(): DiscoverNative_ {
-      return new DiscoverNative_();
-    }
-
-    static instanceOf(obj: any): obj is DiscoverNative_ {
-      return obj.tag === SlidingSyncVersionBuilder_Tags.DiscoverNative;
-    }
-  }
-
-  function instanceOf(obj: any): obj is SlidingSyncVersionBuilder {
-    return obj[uniffiTypeNameSymbol] === 'SlidingSyncVersionBuilder';
-  }
-
-  return Object.freeze({
-    instanceOf,
-    None: None_,
-    Proxy: Proxy_,
-    Native: Native_,
-    DiscoverProxy: DiscoverProxy_,
-    DiscoverNative: DiscoverNative_,
-  });
-})();
-
-export type SlidingSyncVersionBuilder = InstanceType<
-  (typeof SlidingSyncVersionBuilder)[keyof Omit<
-    typeof SlidingSyncVersionBuilder,
-    'instanceOf'
-  >]
->;
-
-// FfiConverter for enum SlidingSyncVersionBuilder
 const FfiConverterTypeSlidingSyncVersionBuilder = (() => {
   const ordinalConverter = FfiConverterInt32;
   type TypeName = SlidingSyncVersionBuilder;
@@ -21876,73 +29877,27 @@ const FfiConverterTypeSlidingSyncVersionBuilder = (() => {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
-          return new SlidingSyncVersionBuilder.None();
+          return SlidingSyncVersionBuilder.None;
         case 2:
-          return new SlidingSyncVersionBuilder.Proxy({
-            url: FfiConverterString.read(from),
-          });
+          return SlidingSyncVersionBuilder.Native;
         case 3:
-          return new SlidingSyncVersionBuilder.Native();
-        case 4:
-          return new SlidingSyncVersionBuilder.DiscoverProxy();
-        case 5:
-          return new SlidingSyncVersionBuilder.DiscoverNative();
+          return SlidingSyncVersionBuilder.DiscoverNative;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
     }
     write(value: TypeName, into: RustBuffer): void {
-      switch (value.tag) {
-        case SlidingSyncVersionBuilder_Tags.None: {
-          ordinalConverter.write(1, into);
-          return;
-        }
-        case SlidingSyncVersionBuilder_Tags.Proxy: {
-          ordinalConverter.write(2, into);
-          const inner = value.inner;
-          FfiConverterString.write(inner.url, into);
-          return;
-        }
-        case SlidingSyncVersionBuilder_Tags.Native: {
-          ordinalConverter.write(3, into);
-          return;
-        }
-        case SlidingSyncVersionBuilder_Tags.DiscoverProxy: {
-          ordinalConverter.write(4, into);
-          return;
-        }
-        case SlidingSyncVersionBuilder_Tags.DiscoverNative: {
-          ordinalConverter.write(5, into);
-          return;
-        }
-        default:
-          // Throwing from here means that SlidingSyncVersionBuilder_Tags hasn't matched an ordinal.
-          throw new UniffiInternalError.UnexpectedEnumCase();
+      switch (value) {
+        case SlidingSyncVersionBuilder.None:
+          return ordinalConverter.write(1, into);
+        case SlidingSyncVersionBuilder.Native:
+          return ordinalConverter.write(2, into);
+        case SlidingSyncVersionBuilder.DiscoverNative:
+          return ordinalConverter.write(3, into);
       }
     }
     allocationSize(value: TypeName): number {
-      switch (value.tag) {
-        case SlidingSyncVersionBuilder_Tags.None: {
-          return ordinalConverter.allocationSize(1);
-        }
-        case SlidingSyncVersionBuilder_Tags.Proxy: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(2);
-          size += FfiConverterString.allocationSize(inner.url);
-          return size;
-        }
-        case SlidingSyncVersionBuilder_Tags.Native: {
-          return ordinalConverter.allocationSize(3);
-        }
-        case SlidingSyncVersionBuilder_Tags.DiscoverProxy: {
-          return ordinalConverter.allocationSize(4);
-        }
-        case SlidingSyncVersionBuilder_Tags.DiscoverNative: {
-          return ordinalConverter.allocationSize(5);
-        }
-        default:
-          throw new UniffiInternalError.UnexpectedEnumCase();
-      }
+      return ordinalConverter.allocationSize(0);
     }
   }
   return new FFIConverter();
@@ -22574,6 +30529,7 @@ export const StateEventContent = (() => {
 
   type RoomTopic__interface = {
     tag: StateEventContent_Tags.RoomTopic;
+    inner: Readonly<{ topic: string }>;
   };
 
   class RoomTopic_ extends UniffiEnum implements RoomTopic__interface {
@@ -22583,12 +30539,14 @@ export const StateEventContent = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'StateEventContent';
     readonly tag = StateEventContent_Tags.RoomTopic;
-    constructor() {
+    readonly inner: Readonly<{ topic: string }>;
+    constructor(inner: { topic: string }) {
       super('StateEventContent', 'RoomTopic');
+      this.inner = Object.freeze(inner);
     }
 
-    static new(): RoomTopic_ {
-      return new RoomTopic_();
+    static new(inner: { topic: string }): RoomTopic_ {
+      return new RoomTopic_(inner);
     }
 
     static instanceOf(obj: any): obj is RoomTopic_ {
@@ -22725,7 +30683,9 @@ const FfiConverterTypeStateEventContent = (() => {
         case 18:
           return new StateEventContent.RoomTombstone();
         case 19:
-          return new StateEventContent.RoomTopic();
+          return new StateEventContent.RoomTopic({
+            topic: FfiConverterString.read(from),
+          });
         case 20:
           return new StateEventContent.SpaceChild();
         case 21:
@@ -22813,6 +30773,8 @@ const FfiConverterTypeStateEventContent = (() => {
         }
         case StateEventContent_Tags.RoomTopic: {
           ordinalConverter.write(19, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.topic, into);
           return;
         }
         case StateEventContent_Tags.SpaceChild: {
@@ -22891,7 +30853,10 @@ const FfiConverterTypeStateEventContent = (() => {
           return ordinalConverter.allocationSize(18);
         }
         case StateEventContent_Tags.RoomTopic: {
-          return ordinalConverter.allocationSize(19);
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(19);
+          size += FfiConverterString.allocationSize(inner.topic);
+          return size;
         }
         case StateEventContent_Tags.SpaceChild: {
           return ordinalConverter.allocationSize(20);
@@ -23171,6 +31136,7 @@ export enum SyncServiceState {
   Running,
   Terminated,
   Error,
+  Offline,
 }
 
 const FfiConverterTypeSyncServiceState = (() => {
@@ -23187,6 +31153,8 @@ const FfiConverterTypeSyncServiceState = (() => {
           return SyncServiceState.Terminated;
         case 4:
           return SyncServiceState.Error;
+        case 5:
+          return SyncServiceState.Offline;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -23201,10 +31169,227 @@ const FfiConverterTypeSyncServiceState = (() => {
           return ordinalConverter.write(3, into);
         case SyncServiceState.Error:
           return ordinalConverter.write(4, into);
+        case SyncServiceState.Offline:
+          return ordinalConverter.write(5, into);
       }
     }
     allocationSize(value: TypeName): number {
       return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: TagName
+export enum TagName_Tags {
+  Favorite = 'Favorite',
+  LowPriority = 'LowPriority',
+  ServerNotice = 'ServerNotice',
+  User = 'User',
+}
+/**
+ * The name of a tag.
+ */
+export const TagName = (() => {
+  type Favorite__interface = {
+    tag: TagName_Tags.Favorite;
+  };
+
+  /**
+   * `m.favourite`: The user's favorite rooms.
+   */
+  class Favorite_ extends UniffiEnum implements Favorite__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TagName';
+    readonly tag = TagName_Tags.Favorite;
+    constructor() {
+      super('TagName', 'Favorite');
+    }
+
+    static new(): Favorite_ {
+      return new Favorite_();
+    }
+
+    static instanceOf(obj: any): obj is Favorite_ {
+      return obj.tag === TagName_Tags.Favorite;
+    }
+  }
+
+  type LowPriority__interface = {
+    tag: TagName_Tags.LowPriority;
+  };
+
+  /**
+   * `m.lowpriority`: These should be shown with lower precedence than
+   * others.
+   */
+  class LowPriority_ extends UniffiEnum implements LowPriority__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TagName';
+    readonly tag = TagName_Tags.LowPriority;
+    constructor() {
+      super('TagName', 'LowPriority');
+    }
+
+    static new(): LowPriority_ {
+      return new LowPriority_();
+    }
+
+    static instanceOf(obj: any): obj is LowPriority_ {
+      return obj.tag === TagName_Tags.LowPriority;
+    }
+  }
+
+  type ServerNotice__interface = {
+    tag: TagName_Tags.ServerNotice;
+  };
+
+  /**
+   * `m.server_notice`: Used to identify
+   */
+  class ServerNotice_ extends UniffiEnum implements ServerNotice__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TagName';
+    readonly tag = TagName_Tags.ServerNotice;
+    constructor() {
+      super('TagName', 'ServerNotice');
+    }
+
+    static new(): ServerNotice_ {
+      return new ServerNotice_();
+    }
+
+    static instanceOf(obj: any): obj is ServerNotice_ {
+      return obj.tag === TagName_Tags.ServerNotice;
+    }
+  }
+
+  type User__interface = {
+    tag: TagName_Tags.User;
+    inner: Readonly<{ name: UserTagName }>;
+  };
+
+  /**
+   * `u.*`: User-defined tag
+   */
+  class User_ extends UniffiEnum implements User__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TagName';
+    readonly tag = TagName_Tags.User;
+    readonly inner: Readonly<{ name: UserTagName }>;
+    constructor(inner: { name: UserTagName }) {
+      super('TagName', 'User');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { name: UserTagName }): User_ {
+      return new User_(inner);
+    }
+
+    static instanceOf(obj: any): obj is User_ {
+      return obj.tag === TagName_Tags.User;
+    }
+  }
+
+  function instanceOf(obj: any): obj is TagName {
+    return obj[uniffiTypeNameSymbol] === 'TagName';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Favorite: Favorite_,
+    LowPriority: LowPriority_,
+    ServerNotice: ServerNotice_,
+    User: User_,
+  });
+})();
+
+/**
+ * The name of a tag.
+ */
+
+export type TagName = InstanceType<
+  (typeof TagName)[keyof Omit<typeof TagName, 'instanceOf'>]
+>;
+
+// FfiConverter for enum TagName
+const FfiConverterTypeTagName = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = TagName;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new TagName.Favorite();
+        case 2:
+          return new TagName.LowPriority();
+        case 3:
+          return new TagName.ServerNotice();
+        case 4:
+          return new TagName.User({
+            name: FfiConverterTypeUserTagName.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case TagName_Tags.Favorite: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case TagName_Tags.LowPriority: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case TagName_Tags.ServerNotice: {
+          ordinalConverter.write(3, into);
+          return;
+        }
+        case TagName_Tags.User: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterTypeUserTagName.write(inner.name, into);
+          return;
+        }
+        default:
+          // Throwing from here means that TagName_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case TagName_Tags.Favorite: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case TagName_Tags.LowPriority: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case TagName_Tags.ServerNotice: {
+          return ordinalConverter.allocationSize(3);
+        }
+        case TagName_Tags.User: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterTypeUserTagName.allocationSize(inner.name);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
     }
   }
   return new FFIConverter();
@@ -23428,15 +31613,515 @@ const FfiConverterTypeTimelineEventType = (() => {
   return new FFIConverter();
 })();
 
+// Enum: TimelineFilter
+export enum TimelineFilter_Tags {
+  All = 'All',
+  OnlyMessage = 'OnlyMessage',
+  EventTypeFilter = 'EventTypeFilter',
+}
+export const TimelineFilter = (() => {
+  type All__interface = {
+    tag: TimelineFilter_Tags.All;
+  };
+
+  /**
+   * Show all the events in the timeline, independent of their type.
+   */
+  class All_ extends UniffiEnum implements All__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TimelineFilter';
+    readonly tag = TimelineFilter_Tags.All;
+    constructor() {
+      super('TimelineFilter', 'All');
+    }
+
+    static new(): All_ {
+      return new All_();
+    }
+
+    static instanceOf(obj: any): obj is All_ {
+      return obj.tag === TimelineFilter_Tags.All;
+    }
+  }
+
+  type OnlyMessage__interface = {
+    tag: TimelineFilter_Tags.OnlyMessage;
+    inner: Readonly<{ types: Array<RoomMessageEventMessageType> }>;
+  };
+
+  /**
+   * Show only `m.room.messages` of the given room message types.
+   */
+  class OnlyMessage_ extends UniffiEnum implements OnlyMessage__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TimelineFilter';
+    readonly tag = TimelineFilter_Tags.OnlyMessage;
+    readonly inner: Readonly<{ types: Array<RoomMessageEventMessageType> }>;
+    constructor(inner: {
+      /**
+       * A list of [`RoomMessageEventMessageType`] that will be allowed to
+       * appear in the timeline.
+       */ types: Array<RoomMessageEventMessageType>;
+    }) {
+      super('TimelineFilter', 'OnlyMessage');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * A list of [`RoomMessageEventMessageType`] that will be allowed to
+       * appear in the timeline.
+       */ types: Array<RoomMessageEventMessageType>;
+    }): OnlyMessage_ {
+      return new OnlyMessage_(inner);
+    }
+
+    static instanceOf(obj: any): obj is OnlyMessage_ {
+      return obj.tag === TimelineFilter_Tags.OnlyMessage;
+    }
+  }
+
+  type EventTypeFilter__interface = {
+    tag: TimelineFilter_Tags.EventTypeFilter;
+    inner: Readonly<{ filter: TimelineEventTypeFilterInterface }>;
+  };
+
+  /**
+   * Show only events which match this filter.
+   */
+  class EventTypeFilter_
+    extends UniffiEnum
+    implements EventTypeFilter__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TimelineFilter';
+    readonly tag = TimelineFilter_Tags.EventTypeFilter;
+    readonly inner: Readonly<{ filter: TimelineEventTypeFilterInterface }>;
+    constructor(inner: { filter: TimelineEventTypeFilterInterface }) {
+      super('TimelineFilter', 'EventTypeFilter');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      filter: TimelineEventTypeFilterInterface;
+    }): EventTypeFilter_ {
+      return new EventTypeFilter_(inner);
+    }
+
+    static instanceOf(obj: any): obj is EventTypeFilter_ {
+      return obj.tag === TimelineFilter_Tags.EventTypeFilter;
+    }
+  }
+
+  function instanceOf(obj: any): obj is TimelineFilter {
+    return obj[uniffiTypeNameSymbol] === 'TimelineFilter';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    All: All_,
+    OnlyMessage: OnlyMessage_,
+    EventTypeFilter: EventTypeFilter_,
+  });
+})();
+
+export type TimelineFilter = InstanceType<
+  (typeof TimelineFilter)[keyof Omit<typeof TimelineFilter, 'instanceOf'>]
+>;
+
+// FfiConverter for enum TimelineFilter
+const FfiConverterTypeTimelineFilter = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = TimelineFilter;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new TimelineFilter.All();
+        case 2:
+          return new TimelineFilter.OnlyMessage({
+            types: FfiConverterArrayTypeRoomMessageEventMessageType.read(from),
+          });
+        case 3:
+          return new TimelineFilter.EventTypeFilter({
+            filter: FfiConverterTypeTimelineEventTypeFilter.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case TimelineFilter_Tags.All: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case TimelineFilter_Tags.OnlyMessage: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterArrayTypeRoomMessageEventMessageType.write(
+            inner.types,
+            into
+          );
+          return;
+        }
+        case TimelineFilter_Tags.EventTypeFilter: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterTypeTimelineEventTypeFilter.write(inner.filter, into);
+          return;
+        }
+        default:
+          // Throwing from here means that TimelineFilter_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case TimelineFilter_Tags.All: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case TimelineFilter_Tags.OnlyMessage: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size +=
+            FfiConverterArrayTypeRoomMessageEventMessageType.allocationSize(
+              inner.types
+            );
+          return size;
+        }
+        case TimelineFilter_Tags.EventTypeFilter: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterTypeTimelineEventTypeFilter.allocationSize(
+            inner.filter
+          );
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: TimelineFocus
+export enum TimelineFocus_Tags {
+  Live = 'Live',
+  Event = 'Event',
+  Thread = 'Thread',
+  PinnedEvents = 'PinnedEvents',
+}
+export const TimelineFocus = (() => {
+  type Live__interface = {
+    tag: TimelineFocus_Tags.Live;
+    inner: Readonly<{ hideThreadedEvents: boolean }>;
+  };
+
+  class Live_ extends UniffiEnum implements Live__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TimelineFocus';
+    readonly tag = TimelineFocus_Tags.Live;
+    readonly inner: Readonly<{ hideThreadedEvents: boolean }>;
+    constructor(inner: {
+      /**
+       * Whether to hide in-thread replies from the live timeline.
+       */ hideThreadedEvents: boolean;
+    }) {
+      super('TimelineFocus', 'Live');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * Whether to hide in-thread replies from the live timeline.
+       */ hideThreadedEvents: boolean;
+    }): Live_ {
+      return new Live_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Live_ {
+      return obj.tag === TimelineFocus_Tags.Live;
+    }
+  }
+
+  type Event__interface = {
+    tag: TimelineFocus_Tags.Event;
+    inner: Readonly<{
+      eventId: string;
+      numContextEvents: /*u16*/ number;
+      hideThreadedEvents: boolean;
+    }>;
+  };
+
+  class Event_ extends UniffiEnum implements Event__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TimelineFocus';
+    readonly tag = TimelineFocus_Tags.Event;
+    readonly inner: Readonly<{
+      eventId: string;
+      numContextEvents: /*u16*/ number;
+      hideThreadedEvents: boolean;
+    }>;
+    constructor(inner: {
+      /**
+       * The initial event to focus on. This is usually the target of a
+       * permalink.
+       */ eventId: string;
+      /**
+       * The number of context events to load around the focused event.
+       */ numContextEvents: /*u16*/ number;
+      /**
+       * Whether to hide in-thread replies from the live timeline.
+       */ hideThreadedEvents: boolean;
+    }) {
+      super('TimelineFocus', 'Event');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The initial event to focus on. This is usually the target of a
+       * permalink.
+       */ eventId: string;
+      /**
+       * The number of context events to load around the focused event.
+       */ numContextEvents: /*u16*/ number;
+      /**
+       * Whether to hide in-thread replies from the live timeline.
+       */ hideThreadedEvents: boolean;
+    }): Event_ {
+      return new Event_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Event_ {
+      return obj.tag === TimelineFocus_Tags.Event;
+    }
+  }
+
+  type Thread__interface = {
+    tag: TimelineFocus_Tags.Thread;
+    inner: Readonly<{ rootEventId: string; numEvents: /*u16*/ number }>;
+  };
+
+  class Thread_ extends UniffiEnum implements Thread__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TimelineFocus';
+    readonly tag = TimelineFocus_Tags.Thread;
+    readonly inner: Readonly<{
+      rootEventId: string;
+      numEvents: /*u16*/ number;
+    }>;
+    constructor(inner: {
+      /**
+       * The thread root event ID to focus on.
+       */ rootEventId: string;
+      numEvents: /*u16*/ number;
+    }) {
+      super('TimelineFocus', 'Thread');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The thread root event ID to focus on.
+       */ rootEventId: string;
+      numEvents: /*u16*/ number;
+    }): Thread_ {
+      return new Thread_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Thread_ {
+      return obj.tag === TimelineFocus_Tags.Thread;
+    }
+  }
+
+  type PinnedEvents__interface = {
+    tag: TimelineFocus_Tags.PinnedEvents;
+    inner: Readonly<{
+      maxEventsToLoad: /*u16*/ number;
+      maxConcurrentRequests: /*u16*/ number;
+    }>;
+  };
+
+  class PinnedEvents_ extends UniffiEnum implements PinnedEvents__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'TimelineFocus';
+    readonly tag = TimelineFocus_Tags.PinnedEvents;
+    readonly inner: Readonly<{
+      maxEventsToLoad: /*u16*/ number;
+      maxConcurrentRequests: /*u16*/ number;
+    }>;
+    constructor(inner: {
+      maxEventsToLoad: /*u16*/ number;
+      maxConcurrentRequests: /*u16*/ number;
+    }) {
+      super('TimelineFocus', 'PinnedEvents');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      maxEventsToLoad: /*u16*/ number;
+      maxConcurrentRequests: /*u16*/ number;
+    }): PinnedEvents_ {
+      return new PinnedEvents_(inner);
+    }
+
+    static instanceOf(obj: any): obj is PinnedEvents_ {
+      return obj.tag === TimelineFocus_Tags.PinnedEvents;
+    }
+  }
+
+  function instanceOf(obj: any): obj is TimelineFocus {
+    return obj[uniffiTypeNameSymbol] === 'TimelineFocus';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Live: Live_,
+    Event: Event_,
+    Thread: Thread_,
+    PinnedEvents: PinnedEvents_,
+  });
+})();
+
+export type TimelineFocus = InstanceType<
+  (typeof TimelineFocus)[keyof Omit<typeof TimelineFocus, 'instanceOf'>]
+>;
+
+// FfiConverter for enum TimelineFocus
+const FfiConverterTypeTimelineFocus = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = TimelineFocus;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new TimelineFocus.Live({
+            hideThreadedEvents: FfiConverterBool.read(from),
+          });
+        case 2:
+          return new TimelineFocus.Event({
+            eventId: FfiConverterString.read(from),
+            numContextEvents: FfiConverterUInt16.read(from),
+            hideThreadedEvents: FfiConverterBool.read(from),
+          });
+        case 3:
+          return new TimelineFocus.Thread({
+            rootEventId: FfiConverterString.read(from),
+            numEvents: FfiConverterUInt16.read(from),
+          });
+        case 4:
+          return new TimelineFocus.PinnedEvents({
+            maxEventsToLoad: FfiConverterUInt16.read(from),
+            maxConcurrentRequests: FfiConverterUInt16.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case TimelineFocus_Tags.Live: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterBool.write(inner.hideThreadedEvents, into);
+          return;
+        }
+        case TimelineFocus_Tags.Event: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.eventId, into);
+          FfiConverterUInt16.write(inner.numContextEvents, into);
+          FfiConverterBool.write(inner.hideThreadedEvents, into);
+          return;
+        }
+        case TimelineFocus_Tags.Thread: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.rootEventId, into);
+          FfiConverterUInt16.write(inner.numEvents, into);
+          return;
+        }
+        case TimelineFocus_Tags.PinnedEvents: {
+          ordinalConverter.write(4, into);
+          const inner = value.inner;
+          FfiConverterUInt16.write(inner.maxEventsToLoad, into);
+          FfiConverterUInt16.write(inner.maxConcurrentRequests, into);
+          return;
+        }
+        default:
+          // Throwing from here means that TimelineFocus_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case TimelineFocus_Tags.Live: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterBool.allocationSize(inner.hideThreadedEvents);
+          return size;
+        }
+        case TimelineFocus_Tags.Event: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterString.allocationSize(inner.eventId);
+          size += FfiConverterUInt16.allocationSize(inner.numContextEvents);
+          size += FfiConverterBool.allocationSize(inner.hideThreadedEvents);
+          return size;
+        }
+        case TimelineFocus_Tags.Thread: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterString.allocationSize(inner.rootEventId);
+          size += FfiConverterUInt16.allocationSize(inner.numEvents);
+          return size;
+        }
+        case TimelineFocus_Tags.PinnedEvents: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(4);
+          size += FfiConverterUInt16.allocationSize(inner.maxEventsToLoad);
+          size += FfiConverterUInt16.allocationSize(
+            inner.maxConcurrentRequests
+          );
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
 // Enum: TimelineItemContent
 export enum TimelineItemContent_Tags {
-  Message = 'Message',
-  RedactedMessage = 'RedactedMessage',
-  Sticker = 'Sticker',
-  Poll = 'Poll',
+  MsgLike = 'MsgLike',
   CallInvite = 'CallInvite',
   CallNotify = 'CallNotify',
-  UnableToDecrypt = 'UnableToDecrypt',
   RoomMembership = 'RoomMembership',
   ProfileChange = 'ProfileChange',
   State = 'State',
@@ -23444,159 +32129,30 @@ export enum TimelineItemContent_Tags {
   FailedToParseState = 'FailedToParseState',
 }
 export const TimelineItemContent = (() => {
-  type Message__interface = {
-    tag: TimelineItemContent_Tags.Message;
-    inner: Readonly<{ content: MessageContent }>;
+  type MsgLike__interface = {
+    tag: TimelineItemContent_Tags.MsgLike;
+    inner: Readonly<{ content: MsgLikeContent }>;
   };
 
-  class Message_ extends UniffiEnum implements Message__interface {
+  class MsgLike_ extends UniffiEnum implements MsgLike__interface {
     /**
      * @private
      * This field is private and should not be used, use `tag` instead.
      */
     readonly [uniffiTypeNameSymbol] = 'TimelineItemContent';
-    readonly tag = TimelineItemContent_Tags.Message;
-    readonly inner: Readonly<{ content: MessageContent }>;
-    constructor(inner: { content: MessageContent }) {
-      super('TimelineItemContent', 'Message');
+    readonly tag = TimelineItemContent_Tags.MsgLike;
+    readonly inner: Readonly<{ content: MsgLikeContent }>;
+    constructor(inner: { content: MsgLikeContent }) {
+      super('TimelineItemContent', 'MsgLike');
       this.inner = Object.freeze(inner);
     }
 
-    static new(inner: { content: MessageContent }): Message_ {
-      return new Message_(inner);
+    static new(inner: { content: MsgLikeContent }): MsgLike_ {
+      return new MsgLike_(inner);
     }
 
-    static instanceOf(obj: any): obj is Message_ {
-      return obj.tag === TimelineItemContent_Tags.Message;
-    }
-  }
-
-  type RedactedMessage__interface = {
-    tag: TimelineItemContent_Tags.RedactedMessage;
-  };
-
-  class RedactedMessage_
-    extends UniffiEnum
-    implements RedactedMessage__interface
-  {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'TimelineItemContent';
-    readonly tag = TimelineItemContent_Tags.RedactedMessage;
-    constructor() {
-      super('TimelineItemContent', 'RedactedMessage');
-    }
-
-    static new(): RedactedMessage_ {
-      return new RedactedMessage_();
-    }
-
-    static instanceOf(obj: any): obj is RedactedMessage_ {
-      return obj.tag === TimelineItemContent_Tags.RedactedMessage;
-    }
-  }
-
-  type Sticker__interface = {
-    tag: TimelineItemContent_Tags.Sticker;
-    inner: Readonly<{
-      body: string;
-      info: ImageInfo;
-      source: MediaSourceInterface;
-    }>;
-  };
-
-  class Sticker_ extends UniffiEnum implements Sticker__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'TimelineItemContent';
-    readonly tag = TimelineItemContent_Tags.Sticker;
-    readonly inner: Readonly<{
-      body: string;
-      info: ImageInfo;
-      source: MediaSourceInterface;
-    }>;
-    constructor(inner: {
-      body: string;
-      info: ImageInfo;
-      source: MediaSourceInterface;
-    }) {
-      super('TimelineItemContent', 'Sticker');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: {
-      body: string;
-      info: ImageInfo;
-      source: MediaSourceInterface;
-    }): Sticker_ {
-      return new Sticker_(inner);
-    }
-
-    static instanceOf(obj: any): obj is Sticker_ {
-      return obj.tag === TimelineItemContent_Tags.Sticker;
-    }
-  }
-
-  type Poll__interface = {
-    tag: TimelineItemContent_Tags.Poll;
-    inner: Readonly<{
-      question: string;
-      kind: PollKind;
-      maxSelections: /*u64*/ bigint;
-      answers: Array<PollAnswer>;
-      votes: Map<string, Array<string>>;
-      endTime: /*u64*/ bigint | undefined;
-      hasBeenEdited: boolean;
-    }>;
-  };
-
-  class Poll_ extends UniffiEnum implements Poll__interface {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'TimelineItemContent';
-    readonly tag = TimelineItemContent_Tags.Poll;
-    readonly inner: Readonly<{
-      question: string;
-      kind: PollKind;
-      maxSelections: /*u64*/ bigint;
-      answers: Array<PollAnswer>;
-      votes: Map<string, Array<string>>;
-      endTime: /*u64*/ bigint | undefined;
-      hasBeenEdited: boolean;
-    }>;
-    constructor(inner: {
-      question: string;
-      kind: PollKind;
-      maxSelections: /*u64*/ bigint;
-      answers: Array<PollAnswer>;
-      votes: Map<string, Array<string>>;
-      endTime: /*u64*/ bigint | undefined;
-      hasBeenEdited: boolean;
-    }) {
-      super('TimelineItemContent', 'Poll');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: {
-      question: string;
-      kind: PollKind;
-      maxSelections: /*u64*/ bigint;
-      answers: Array<PollAnswer>;
-      votes: Map<string, Array<string>>;
-      endTime: /*u64*/ bigint | undefined;
-      hasBeenEdited: boolean;
-    }): Poll_ {
-      return new Poll_(inner);
-    }
-
-    static instanceOf(obj: any): obj is Poll_ {
-      return obj.tag === TimelineItemContent_Tags.Poll;
+    static instanceOf(obj: any): obj is MsgLike_ {
+      return obj.tag === TimelineItemContent_Tags.MsgLike;
     }
   }
 
@@ -23645,36 +32201,6 @@ export const TimelineItemContent = (() => {
 
     static instanceOf(obj: any): obj is CallNotify_ {
       return obj.tag === TimelineItemContent_Tags.CallNotify;
-    }
-  }
-
-  type UnableToDecrypt__interface = {
-    tag: TimelineItemContent_Tags.UnableToDecrypt;
-    inner: Readonly<{ msg: EncryptedMessage }>;
-  };
-
-  class UnableToDecrypt_
-    extends UniffiEnum
-    implements UnableToDecrypt__interface
-  {
-    /**
-     * @private
-     * This field is private and should not be used, use `tag` instead.
-     */
-    readonly [uniffiTypeNameSymbol] = 'TimelineItemContent';
-    readonly tag = TimelineItemContent_Tags.UnableToDecrypt;
-    readonly inner: Readonly<{ msg: EncryptedMessage }>;
-    constructor(inner: { msg: EncryptedMessage }) {
-      super('TimelineItemContent', 'UnableToDecrypt');
-      this.inner = Object.freeze(inner);
-    }
-
-    static new(inner: { msg: EncryptedMessage }): UnableToDecrypt_ {
-      return new UnableToDecrypt_(inner);
-    }
-
-    static instanceOf(obj: any): obj is UnableToDecrypt_ {
-      return obj.tag === TimelineItemContent_Tags.UnableToDecrypt;
     }
   }
 
@@ -23879,13 +32405,9 @@ export const TimelineItemContent = (() => {
 
   return Object.freeze({
     instanceOf,
-    Message: Message_,
-    RedactedMessage: RedactedMessage_,
-    Sticker: Sticker_,
-    Poll: Poll_,
+    MsgLike: MsgLike_,
     CallInvite: CallInvite_,
     CallNotify: CallNotify_,
-    UnableToDecrypt: UnableToDecrypt_,
     RoomMembership: RoomMembership_,
     ProfileChange: ProfileChange_,
     State: State_,
@@ -23909,60 +32431,38 @@ const FfiConverterTypeTimelineItemContent = (() => {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
-          return new TimelineItemContent.Message({
-            content: FfiConverterTypeMessageContent.read(from),
+          return new TimelineItemContent.MsgLike({
+            content: FfiConverterTypeMsgLikeContent.read(from),
           });
         case 2:
-          return new TimelineItemContent.RedactedMessage();
-        case 3:
-          return new TimelineItemContent.Sticker({
-            body: FfiConverterString.read(from),
-            info: FfiConverterTypeImageInfo.read(from),
-            source: FfiConverterTypeMediaSource.read(from),
-          });
-        case 4:
-          return new TimelineItemContent.Poll({
-            question: FfiConverterString.read(from),
-            kind: FfiConverterTypePollKind.read(from),
-            maxSelections: FfiConverterUInt64.read(from),
-            answers: FfiConverterArrayTypePollAnswer.read(from),
-            votes: FfiConverterMapStringArrayString.read(from),
-            endTime: FfiConverterOptionalUInt64.read(from),
-            hasBeenEdited: FfiConverterBool.read(from),
-          });
-        case 5:
           return new TimelineItemContent.CallInvite();
-        case 6:
+        case 3:
           return new TimelineItemContent.CallNotify();
-        case 7:
-          return new TimelineItemContent.UnableToDecrypt({
-            msg: FfiConverterTypeEncryptedMessage.read(from),
-          });
-        case 8:
+        case 4:
           return new TimelineItemContent.RoomMembership({
             userId: FfiConverterString.read(from),
             userDisplayName: FfiConverterOptionalString.read(from),
             change: FfiConverterOptionalTypeMembershipChange.read(from),
             reason: FfiConverterOptionalString.read(from),
           });
-        case 9:
+        case 5:
           return new TimelineItemContent.ProfileChange({
             displayName: FfiConverterOptionalString.read(from),
             prevDisplayName: FfiConverterOptionalString.read(from),
             avatarUrl: FfiConverterOptionalString.read(from),
             prevAvatarUrl: FfiConverterOptionalString.read(from),
           });
-        case 10:
+        case 6:
           return new TimelineItemContent.State({
             stateKey: FfiConverterString.read(from),
             content: FfiConverterTypeOtherState.read(from),
           });
-        case 11:
+        case 7:
           return new TimelineItemContent.FailedToParseMessageLike({
             eventType: FfiConverterString.read(from),
             error: FfiConverterString.read(from),
           });
-        case 12:
+        case 8:
           return new TimelineItemContent.FailedToParseState({
             eventType: FfiConverterString.read(from),
             stateKey: FfiConverterString.read(from),
@@ -23974,52 +32474,22 @@ const FfiConverterTypeTimelineItemContent = (() => {
     }
     write(value: TypeName, into: RustBuffer): void {
       switch (value.tag) {
-        case TimelineItemContent_Tags.Message: {
+        case TimelineItemContent_Tags.MsgLike: {
           ordinalConverter.write(1, into);
           const inner = value.inner;
-          FfiConverterTypeMessageContent.write(inner.content, into);
-          return;
-        }
-        case TimelineItemContent_Tags.RedactedMessage: {
-          ordinalConverter.write(2, into);
-          return;
-        }
-        case TimelineItemContent_Tags.Sticker: {
-          ordinalConverter.write(3, into);
-          const inner = value.inner;
-          FfiConverterString.write(inner.body, into);
-          FfiConverterTypeImageInfo.write(inner.info, into);
-          FfiConverterTypeMediaSource.write(inner.source, into);
-          return;
-        }
-        case TimelineItemContent_Tags.Poll: {
-          ordinalConverter.write(4, into);
-          const inner = value.inner;
-          FfiConverterString.write(inner.question, into);
-          FfiConverterTypePollKind.write(inner.kind, into);
-          FfiConverterUInt64.write(inner.maxSelections, into);
-          FfiConverterArrayTypePollAnswer.write(inner.answers, into);
-          FfiConverterMapStringArrayString.write(inner.votes, into);
-          FfiConverterOptionalUInt64.write(inner.endTime, into);
-          FfiConverterBool.write(inner.hasBeenEdited, into);
+          FfiConverterTypeMsgLikeContent.write(inner.content, into);
           return;
         }
         case TimelineItemContent_Tags.CallInvite: {
-          ordinalConverter.write(5, into);
+          ordinalConverter.write(2, into);
           return;
         }
         case TimelineItemContent_Tags.CallNotify: {
-          ordinalConverter.write(6, into);
-          return;
-        }
-        case TimelineItemContent_Tags.UnableToDecrypt: {
-          ordinalConverter.write(7, into);
-          const inner = value.inner;
-          FfiConverterTypeEncryptedMessage.write(inner.msg, into);
+          ordinalConverter.write(3, into);
           return;
         }
         case TimelineItemContent_Tags.RoomMembership: {
-          ordinalConverter.write(8, into);
+          ordinalConverter.write(4, into);
           const inner = value.inner;
           FfiConverterString.write(inner.userId, into);
           FfiConverterOptionalString.write(inner.userDisplayName, into);
@@ -24028,7 +32498,7 @@ const FfiConverterTypeTimelineItemContent = (() => {
           return;
         }
         case TimelineItemContent_Tags.ProfileChange: {
-          ordinalConverter.write(9, into);
+          ordinalConverter.write(5, into);
           const inner = value.inner;
           FfiConverterOptionalString.write(inner.displayName, into);
           FfiConverterOptionalString.write(inner.prevDisplayName, into);
@@ -24037,21 +32507,21 @@ const FfiConverterTypeTimelineItemContent = (() => {
           return;
         }
         case TimelineItemContent_Tags.State: {
-          ordinalConverter.write(10, into);
+          ordinalConverter.write(6, into);
           const inner = value.inner;
           FfiConverterString.write(inner.stateKey, into);
           FfiConverterTypeOtherState.write(inner.content, into);
           return;
         }
         case TimelineItemContent_Tags.FailedToParseMessageLike: {
-          ordinalConverter.write(11, into);
+          ordinalConverter.write(7, into);
           const inner = value.inner;
           FfiConverterString.write(inner.eventType, into);
           FfiConverterString.write(inner.error, into);
           return;
         }
         case TimelineItemContent_Tags.FailedToParseState: {
-          ordinalConverter.write(12, into);
+          ordinalConverter.write(8, into);
           const inner = value.inner;
           FfiConverterString.write(inner.eventType, into);
           FfiConverterString.write(inner.stateKey, into);
@@ -24065,50 +32535,21 @@ const FfiConverterTypeTimelineItemContent = (() => {
     }
     allocationSize(value: TypeName): number {
       switch (value.tag) {
-        case TimelineItemContent_Tags.Message: {
+        case TimelineItemContent_Tags.MsgLike: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(1);
-          size += FfiConverterTypeMessageContent.allocationSize(inner.content);
-          return size;
-        }
-        case TimelineItemContent_Tags.RedactedMessage: {
-          return ordinalConverter.allocationSize(2);
-        }
-        case TimelineItemContent_Tags.Sticker: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(3);
-          size += FfiConverterString.allocationSize(inner.body);
-          size += FfiConverterTypeImageInfo.allocationSize(inner.info);
-          size += FfiConverterTypeMediaSource.allocationSize(inner.source);
-          return size;
-        }
-        case TimelineItemContent_Tags.Poll: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(4);
-          size += FfiConverterString.allocationSize(inner.question);
-          size += FfiConverterTypePollKind.allocationSize(inner.kind);
-          size += FfiConverterUInt64.allocationSize(inner.maxSelections);
-          size += FfiConverterArrayTypePollAnswer.allocationSize(inner.answers);
-          size += FfiConverterMapStringArrayString.allocationSize(inner.votes);
-          size += FfiConverterOptionalUInt64.allocationSize(inner.endTime);
-          size += FfiConverterBool.allocationSize(inner.hasBeenEdited);
+          size += FfiConverterTypeMsgLikeContent.allocationSize(inner.content);
           return size;
         }
         case TimelineItemContent_Tags.CallInvite: {
-          return ordinalConverter.allocationSize(5);
+          return ordinalConverter.allocationSize(2);
         }
         case TimelineItemContent_Tags.CallNotify: {
-          return ordinalConverter.allocationSize(6);
-        }
-        case TimelineItemContent_Tags.UnableToDecrypt: {
-          const inner = value.inner;
-          let size = ordinalConverter.allocationSize(7);
-          size += FfiConverterTypeEncryptedMessage.allocationSize(inner.msg);
-          return size;
+          return ordinalConverter.allocationSize(3);
         }
         case TimelineItemContent_Tags.RoomMembership: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(8);
+          let size = ordinalConverter.allocationSize(4);
           size += FfiConverterString.allocationSize(inner.userId);
           size += FfiConverterOptionalString.allocationSize(
             inner.userDisplayName
@@ -24121,7 +32562,7 @@ const FfiConverterTypeTimelineItemContent = (() => {
         }
         case TimelineItemContent_Tags.ProfileChange: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(9);
+          let size = ordinalConverter.allocationSize(5);
           size += FfiConverterOptionalString.allocationSize(inner.displayName);
           size += FfiConverterOptionalString.allocationSize(
             inner.prevDisplayName
@@ -24134,24 +32575,463 @@ const FfiConverterTypeTimelineItemContent = (() => {
         }
         case TimelineItemContent_Tags.State: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(10);
+          let size = ordinalConverter.allocationSize(6);
           size += FfiConverterString.allocationSize(inner.stateKey);
           size += FfiConverterTypeOtherState.allocationSize(inner.content);
           return size;
         }
         case TimelineItemContent_Tags.FailedToParseMessageLike: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(11);
+          let size = ordinalConverter.allocationSize(7);
           size += FfiConverterString.allocationSize(inner.eventType);
           size += FfiConverterString.allocationSize(inner.error);
           return size;
         }
         case TimelineItemContent_Tags.FailedToParseState: {
           const inner = value.inner;
-          let size = ordinalConverter.allocationSize(12);
+          let size = ordinalConverter.allocationSize(8);
           size += FfiConverterString.allocationSize(inner.eventType);
           size += FfiConverterString.allocationSize(inner.stateKey);
           size += FfiConverterString.allocationSize(inner.error);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * A log pack can be used to set the trace log level for a group of multiple
+ * log targets at once, for debugging purposes.
+ */
+export enum TraceLogPacks {
+  /**
+   * Enables all the logs relevant to the event cache.
+   */
+  EventCache,
+  /**
+   * Enables all the logs relevant to the send queue.
+   */
+  SendQueue,
+  /**
+   * Enables all the logs relevant to the timeline.
+   */
+  Timeline,
+}
+
+const FfiConverterTypeTraceLogPacks = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = TraceLogPacks;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return TraceLogPacks.EventCache;
+        case 2:
+          return TraceLogPacks.SendQueue;
+        case 3:
+          return TraceLogPacks.Timeline;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case TraceLogPacks.EventCache:
+          return ordinalConverter.write(1, into);
+        case TraceLogPacks.SendQueue:
+          return ordinalConverter.write(2, into);
+        case TraceLogPacks.Timeline:
+          return ordinalConverter.write(3, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: Tweak
+export enum Tweak_Tags {
+  Sound = 'Sound',
+  Highlight = 'Highlight',
+  Custom = 'Custom',
+}
+/**
+ * Enum representing the push notification tweaks for a rule.
+ */
+export const Tweak = (() => {
+  type Sound__interface = {
+    tag: Tweak_Tags.Sound;
+    inner: Readonly<{ value: string }>;
+  };
+
+  /**
+   * A string representing the sound to be played when this notification
+   * arrives.
+   *
+   * A value of "default" means to play a default sound. A device may choose
+   * to alert the user by some other means if appropriate, eg. vibration.
+   */
+  class Sound_ extends UniffiEnum implements Sound__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'Tweak';
+    readonly tag = Tweak_Tags.Sound;
+    readonly inner: Readonly<{ value: string }>;
+    constructor(inner: { value: string }) {
+      super('Tweak', 'Sound');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: string }): Sound_ {
+      return new Sound_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Sound_ {
+      return obj.tag === Tweak_Tags.Sound;
+    }
+  }
+
+  type Highlight__interface = {
+    tag: Tweak_Tags.Highlight;
+    inner: Readonly<{ value: boolean }>;
+  };
+
+  /**
+   * A boolean representing whether or not this message should be highlighted
+   * in the UI.
+   */
+  class Highlight_ extends UniffiEnum implements Highlight__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'Tweak';
+    readonly tag = Tweak_Tags.Highlight;
+    readonly inner: Readonly<{ value: boolean }>;
+    constructor(inner: { value: boolean }) {
+      super('Tweak', 'Highlight');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { value: boolean }): Highlight_ {
+      return new Highlight_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Highlight_ {
+      return obj.tag === Tweak_Tags.Highlight;
+    }
+  }
+
+  type Custom__interface = {
+    tag: Tweak_Tags.Custom;
+    inner: Readonly<{ name: string; value: string }>;
+  };
+
+  /**
+   * A custom tweak
+   */
+  class Custom_ extends UniffiEnum implements Custom__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'Tweak';
+    readonly tag = Tweak_Tags.Custom;
+    readonly inner: Readonly<{ name: string; value: string }>;
+    constructor(inner: {
+      /**
+       * The name of the custom tweak (`set_tweak` field)
+       */ name: string;
+      /**
+       * The value of the custom tweak as an encoded JSON string
+       */ value: string;
+    }) {
+      super('Tweak', 'Custom');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The name of the custom tweak (`set_tweak` field)
+       */ name: string;
+      /**
+       * The value of the custom tweak as an encoded JSON string
+       */ value: string;
+    }): Custom_ {
+      return new Custom_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Custom_ {
+      return obj.tag === Tweak_Tags.Custom;
+    }
+  }
+
+  function instanceOf(obj: any): obj is Tweak {
+    return obj[uniffiTypeNameSymbol] === 'Tweak';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Sound: Sound_,
+    Highlight: Highlight_,
+    Custom: Custom_,
+  });
+})();
+
+/**
+ * Enum representing the push notification tweaks for a rule.
+ */
+
+export type Tweak = InstanceType<
+  (typeof Tweak)[keyof Omit<typeof Tweak, 'instanceOf'>]
+>;
+
+// FfiConverter for enum Tweak
+const FfiConverterTypeTweak = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = Tweak;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new Tweak.Sound({ value: FfiConverterString.read(from) });
+        case 2:
+          return new Tweak.Highlight({ value: FfiConverterBool.read(from) });
+        case 3:
+          return new Tweak.Custom({
+            name: FfiConverterString.read(from),
+            value: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case Tweak_Tags.Sound: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.value, into);
+          return;
+        }
+        case Tweak_Tags.Highlight: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterBool.write(inner.value, into);
+          return;
+        }
+        case Tweak_Tags.Custom: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.name, into);
+          FfiConverterString.write(inner.value, into);
+          return;
+        }
+        default:
+          // Throwing from here means that Tweak_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case Tweak_Tags.Sound: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterString.allocationSize(inner.value);
+          return size;
+        }
+        case Tweak_Tags.Highlight: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterBool.allocationSize(inner.value);
+          return size;
+        }
+        case Tweak_Tags.Custom: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterString.allocationSize(inner.name);
+          size += FfiConverterString.allocationSize(inner.value);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: UploadSource
+export enum UploadSource_Tags {
+  File = 'File',
+  Data = 'Data',
+}
+/**
+ * A source for uploading a file
+ */
+export const UploadSource = (() => {
+  type File__interface = {
+    tag: UploadSource_Tags.File;
+    inner: Readonly<{ filename: string }>;
+  };
+
+  /**
+   * Upload source is a file on disk
+   */
+  class File_ extends UniffiEnum implements File__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'UploadSource';
+    readonly tag = UploadSource_Tags.File;
+    readonly inner: Readonly<{ filename: string }>;
+    constructor(inner: {
+      /**
+       * Path to file
+       */ filename: string;
+    }) {
+      super('UploadSource', 'File');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * Path to file
+       */ filename: string;
+    }): File_ {
+      return new File_(inner);
+    }
+
+    static instanceOf(obj: any): obj is File_ {
+      return obj.tag === UploadSource_Tags.File;
+    }
+  }
+
+  type Data__interface = {
+    tag: UploadSource_Tags.Data;
+    inner: Readonly<{ bytes: ArrayBuffer; filename: string }>;
+  };
+
+  /**
+   * Upload source is data in memory
+   */
+  class Data_ extends UniffiEnum implements Data__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'UploadSource';
+    readonly tag = UploadSource_Tags.Data;
+    readonly inner: Readonly<{ bytes: ArrayBuffer; filename: string }>;
+    constructor(inner: {
+      /**
+       * Bytes being uploaded
+       */ bytes: ArrayBuffer;
+      /**
+       * Filename to associate with bytes
+       */ filename: string;
+    }) {
+      super('UploadSource', 'Data');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * Bytes being uploaded
+       */ bytes: ArrayBuffer;
+      /**
+       * Filename to associate with bytes
+       */ filename: string;
+    }): Data_ {
+      return new Data_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Data_ {
+      return obj.tag === UploadSource_Tags.Data;
+    }
+  }
+
+  function instanceOf(obj: any): obj is UploadSource {
+    return obj[uniffiTypeNameSymbol] === 'UploadSource';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    File: File_,
+    Data: Data_,
+  });
+})();
+
+/**
+ * A source for uploading a file
+ */
+
+export type UploadSource = InstanceType<
+  (typeof UploadSource)[keyof Omit<typeof UploadSource, 'instanceOf'>]
+>;
+
+// FfiConverter for enum UploadSource
+const FfiConverterTypeUploadSource = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = UploadSource;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new UploadSource.File({
+            filename: FfiConverterString.read(from),
+          });
+        case 2:
+          return new UploadSource.Data({
+            bytes: FfiConverterArrayBuffer.read(from),
+            filename: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case UploadSource_Tags.File: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.filename, into);
+          return;
+        }
+        case UploadSource_Tags.Data: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterArrayBuffer.write(inner.bytes, into);
+          FfiConverterString.write(inner.filename, into);
+          return;
+        }
+        default:
+          // Throwing from here means that UploadSource_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case UploadSource_Tags.File: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterString.allocationSize(inner.filename);
+          return size;
+        }
+        case UploadSource_Tags.Data: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterArrayBuffer.allocationSize(inner.bytes);
+          size += FfiConverterString.allocationSize(inner.filename);
           return size;
         }
         default:
@@ -24205,6 +33085,7 @@ const FfiConverterTypeVerificationState = (() => {
 export enum VirtualTimelineItem_Tags {
   DateDivider = 'DateDivider',
   ReadMarker = 'ReadMarker',
+  TimelineStart = 'TimelineStart',
 }
 /**
  * A [`TimelineItem`](super::TimelineItem) that doesn't correspond to an event.
@@ -24212,7 +33093,7 @@ export enum VirtualTimelineItem_Tags {
 export const VirtualTimelineItem = (() => {
   type DateDivider__interface = {
     tag: VirtualTimelineItem_Tags.DateDivider;
-    inner: Readonly<{ ts: /*u64*/ bigint }>;
+    inner: Readonly<{ ts: Timestamp }>;
   };
 
   /**
@@ -24226,12 +33107,12 @@ export const VirtualTimelineItem = (() => {
      */
     readonly [uniffiTypeNameSymbol] = 'VirtualTimelineItem';
     readonly tag = VirtualTimelineItem_Tags.DateDivider;
-    readonly inner: Readonly<{ ts: /*u64*/ bigint }>;
+    readonly inner: Readonly<{ ts: Timestamp }>;
     constructor(inner: {
       /**
        * A timestamp in milliseconds since Unix Epoch on that day in local
        * time.
-       */ ts: /*u64*/ bigint;
+       */ ts: Timestamp;
     }) {
       super('VirtualTimelineItem', 'DateDivider');
       this.inner = Object.freeze(inner);
@@ -24241,7 +33122,7 @@ export const VirtualTimelineItem = (() => {
       /**
        * A timestamp in milliseconds since Unix Epoch on that day in local
        * time.
-       */ ts: /*u64*/ bigint;
+       */ ts: Timestamp;
     }): DateDivider_ {
       return new DateDivider_(inner);
     }
@@ -24278,6 +33159,33 @@ export const VirtualTimelineItem = (() => {
     }
   }
 
+  type TimelineStart__interface = {
+    tag: VirtualTimelineItem_Tags.TimelineStart;
+  };
+
+  /**
+   * The timeline start, that is, the *oldest* event in time for that room.
+   */
+  class TimelineStart_ extends UniffiEnum implements TimelineStart__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'VirtualTimelineItem';
+    readonly tag = VirtualTimelineItem_Tags.TimelineStart;
+    constructor() {
+      super('VirtualTimelineItem', 'TimelineStart');
+    }
+
+    static new(): TimelineStart_ {
+      return new TimelineStart_();
+    }
+
+    static instanceOf(obj: any): obj is TimelineStart_ {
+      return obj.tag === VirtualTimelineItem_Tags.TimelineStart;
+    }
+  }
+
   function instanceOf(obj: any): obj is VirtualTimelineItem {
     return obj[uniffiTypeNameSymbol] === 'VirtualTimelineItem';
   }
@@ -24286,6 +33194,7 @@ export const VirtualTimelineItem = (() => {
     instanceOf,
     DateDivider: DateDivider_,
     ReadMarker: ReadMarker_,
+    TimelineStart: TimelineStart_,
   });
 })();
 
@@ -24309,10 +33218,12 @@ const FfiConverterTypeVirtualTimelineItem = (() => {
       switch (ordinalConverter.read(from)) {
         case 1:
           return new VirtualTimelineItem.DateDivider({
-            ts: FfiConverterUInt64.read(from),
+            ts: FfiConverterTypeTimestamp.read(from),
           });
         case 2:
           return new VirtualTimelineItem.ReadMarker();
+        case 3:
+          return new VirtualTimelineItem.TimelineStart();
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -24322,11 +33233,15 @@ const FfiConverterTypeVirtualTimelineItem = (() => {
         case VirtualTimelineItem_Tags.DateDivider: {
           ordinalConverter.write(1, into);
           const inner = value.inner;
-          FfiConverterUInt64.write(inner.ts, into);
+          FfiConverterTypeTimestamp.write(inner.ts, into);
           return;
         }
         case VirtualTimelineItem_Tags.ReadMarker: {
           ordinalConverter.write(2, into);
+          return;
+        }
+        case VirtualTimelineItem_Tags.TimelineStart: {
+          ordinalConverter.write(3, into);
           return;
         }
         default:
@@ -24339,11 +33254,14 @@ const FfiConverterTypeVirtualTimelineItem = (() => {
         case VirtualTimelineItem_Tags.DateDivider: {
           const inner = value.inner;
           let size = ordinalConverter.allocationSize(1);
-          size += FfiConverterUInt64.allocationSize(inner.ts);
+          size += FfiConverterTypeTimestamp.allocationSize(inner.ts);
           return size;
         }
         case VirtualTimelineItem_Tags.ReadMarker: {
           return ordinalConverter.allocationSize(2);
+        }
+        case VirtualTimelineItem_Tags.TimelineStart: {
+          return ordinalConverter.allocationSize(3);
         }
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -24359,6 +33277,7 @@ export enum WidgetEventFilter_Tags {
   RoomMessageWithMsgtype = 'RoomMessageWithMsgtype',
   StateWithType = 'StateWithType',
   StateWithTypeAndStateKey = 'StateWithTypeAndStateKey',
+  ToDevice = 'ToDevice',
 }
 /**
  * Different kinds of filters that could be applied to the timeline events.
@@ -24496,6 +33415,36 @@ export const WidgetEventFilter = (() => {
     }
   }
 
+  type ToDevice__interface = {
+    tag: WidgetEventFilter_Tags.ToDevice;
+    inner: Readonly<{ eventType: string }>;
+  };
+
+  /**
+   * Matches to-device events with the given `event_type`.
+   */
+  class ToDevice_ extends UniffiEnum implements ToDevice__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'WidgetEventFilter';
+    readonly tag = WidgetEventFilter_Tags.ToDevice;
+    readonly inner: Readonly<{ eventType: string }>;
+    constructor(inner: { eventType: string }) {
+      super('WidgetEventFilter', 'ToDevice');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { eventType: string }): ToDevice_ {
+      return new ToDevice_(inner);
+    }
+
+    static instanceOf(obj: any): obj is ToDevice_ {
+      return obj.tag === WidgetEventFilter_Tags.ToDevice;
+    }
+  }
+
   function instanceOf(obj: any): obj is WidgetEventFilter {
     return obj[uniffiTypeNameSymbol] === 'WidgetEventFilter';
   }
@@ -24506,6 +33455,7 @@ export const WidgetEventFilter = (() => {
     RoomMessageWithMsgtype: RoomMessageWithMsgtype_,
     StateWithType: StateWithType_,
     StateWithTypeAndStateKey: StateWithTypeAndStateKey_,
+    ToDevice: ToDevice_,
   });
 })();
 
@@ -24541,6 +33491,10 @@ const FfiConverterTypeWidgetEventFilter = (() => {
             eventType: FfiConverterString.read(from),
             stateKey: FfiConverterString.read(from),
           });
+        case 5:
+          return new WidgetEventFilter.ToDevice({
+            eventType: FfiConverterString.read(from),
+          });
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -24570,6 +33524,12 @@ const FfiConverterTypeWidgetEventFilter = (() => {
           const inner = value.inner;
           FfiConverterString.write(inner.eventType, into);
           FfiConverterString.write(inner.stateKey, into);
+          return;
+        }
+        case WidgetEventFilter_Tags.ToDevice: {
+          ordinalConverter.write(5, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.eventType, into);
           return;
         }
         default:
@@ -24604,6 +33564,12 @@ const FfiConverterTypeWidgetEventFilter = (() => {
           size += FfiConverterString.allocationSize(inner.stateKey);
           return size;
         }
+        case WidgetEventFilter_Tags.ToDevice: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(5);
+          size += FfiConverterString.allocationSize(inner.eventType);
+          return size;
+        }
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -24624,6 +33590,18 @@ const FfiConverterMapStringInt64 = new FfiConverterMap(
   FfiConverterInt64
 );
 
+// FfiConverter for Map<string, IgnoredUser>
+const FfiConverterMapStringTypeIgnoredUser = new FfiConverterMap(
+  FfiConverterString,
+  FfiConverterTypeIgnoredUser
+);
+
+// FfiConverter for Map<string, NotificationItem>
+const FfiConverterMapStringTypeNotificationItem = new FfiConverterMap(
+  FfiConverterString,
+  FfiConverterTypeNotificationItem
+);
+
 // FfiConverter for Map<string, Receipt>
 const FfiConverterMapStringTypeReceipt = new FfiConverterMap(
   FfiConverterString,
@@ -24642,7 +33620,7 @@ export interface ClientInterface {
    * failed etc.
    */
   abortOidcAuth(
-    authorizationData: OidcAuthorizationDataInterface,
+    authorizationData: OAuthAuthorizationDataInterface,
     asyncOpts_?: { signal: AbortSignal }
   ): Promise<void>;
   /**
@@ -24692,24 +33670,36 @@ export interface ClientInterface {
   /**
    * Retrieves an avatar cached from a previous call to [`Self::avatar_url`].
    */
-  cachedAvatarUrl() /*throws*/ : string | undefined;
+  cachedAvatarUrl(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<string | undefined>;
   /**
    * Lets the user know whether this is an `m.login.password` based
    * auth and if the account can actually be deactivated
    */
   canDeactivateAccount(): boolean;
+  /**
+   * Clear all the non-critical caches for this Client instance.
+   *
+   * WARNING: This will clear all the caches, including the base store (state
+   * store), so callers must make sure that any sync is inactive before
+   * calling this method. In particular, the `SyncService` must not be
+   * running. After the method returns, the Client will be in an unstable
+   * state, and it is required that the caller reinstantiates a new
+   * Client instance, be it via dropping the previous and re-creating it,
+   * restarting their application, or any other similar means.
+   *
+   * - This will get rid of the backing state store file, if provided.
+   * - This will empty all the room's persisted event caches, so all rooms
+   * will start as if they were empty.
+   * - This will empty the media cache according to the current media
+   * retention policy.
+   */
+  clearCaches(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
   createRoom(
     request: CreateRoomParameters,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<string>;
-  /**
-   * Creates a new room alias associated with the provided room id.
-   */
-  createRoomAlias(
-    roomAlias: string,
-    roomId: string,
-    asyncOpts_?: { signal: AbortSignal }
-  ) /*throws*/ : Promise<void>;
   /**
    * Login using JWT
    * This is an implementation of the custom_login https://docs.rs/matrix-sdk/latest/matrix_sdk/matrix_auth/struct.MatrixAuth.html#method.login_custom
@@ -24763,7 +33753,27 @@ export interface ClientInterface {
     asyncOpts_?: { signal: AbortSignal }
   ): Promise<void>;
   encryption(): EncryptionInterface;
+  /**
+   * Fetch the media preview configuration from the server.
+   */
+  fetchMediaPreviewConfig(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<MediaPreviewConfig | undefined>;
   getDmRoom(userId: string) /*throws*/ : RoomInterface | undefined;
+  /**
+   * Get the invite request avatars display policy
+   * currently stored in the cache.
+   */
+  getInviteAvatarsDisplayPolicy(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<InviteAvatars | undefined>;
+  /**
+   * Gets the `max_upload_size` value from the homeserver, which controls the
+   * max size a media upload request can have.
+   */
+  getMaxMediaUploadSize(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise</*u64*/ bigint>;
   getMediaContent(
     mediaSource: MediaSourceInterface,
     asyncOpts_?: { signal: AbortSignal }
@@ -24776,13 +33786,22 @@ export interface ClientInterface {
     tempDir: string | undefined,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<MediaFileHandleInterface>;
+  /**
+   * Get the media previews timeline display policy
+   * currently stored in the cache.
+   */
+  getMediaPreviewDisplayPolicy(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<MediaPreviews | undefined>;
   getMediaThumbnail(
     mediaSource: MediaSourceInterface,
     width: /*u64*/ bigint,
     height: /*u64*/ bigint,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<ArrayBuffer>;
-  getNotificationSettings(): NotificationSettingsInterface;
+  getNotificationSettings(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<NotificationSettingsInterface>;
   getProfile(
     userId: string,
     asyncOpts_?: { signal: AbortSignal }
@@ -24790,6 +33809,20 @@ export interface ClientInterface {
   getRecentlyVisitedRooms(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<Array<string>>;
+  /**
+   * Get a room by its ID.
+   *
+   * # Arguments
+   *
+   * * `room_id` - The ID of the room to get.
+   *
+   * # Returns
+   *
+   * A `Result` containing an optional room, or a `ClientError`.
+   * This method will not initialize the room's timeline or populate it with
+   * events.
+   */
+  getRoom(roomId: string) /*throws*/ : RoomInterface | undefined;
   /**
    * Given a room alias, get the preview of a room, to interact with it.
    */
@@ -24837,6 +33870,12 @@ export interface ClientInterface {
   ignoredUsers(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<Array<string>>;
+  /**
+   * Checks if the server supports the report room API.
+   */
+  isReportRoomApiSupported(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<boolean>;
   /**
    * Checks if a room alias is not in use yet.
    *
@@ -24907,22 +33946,40 @@ export interface ClientInterface {
    * Completes the OIDC login process.
    */
   loginWithOidcCallback(
-    authorizationData: OidcAuthorizationDataInterface,
     callbackUrl: string,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   /**
-   * Log out the current user. This method returns an optional URL that
-   * should be presented to the user to complete logout (in the case of
-   * Session having been authenticated using OIDC).
+   * Log the current user out.
    */
-  logout(asyncOpts_?: {
-    signal: AbortSignal;
-  }) /*throws*/ : Promise<string | undefined>;
+  logout(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
   notificationClient(
     processSetup: NotificationProcessSetup,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<NotificationClientInterface>;
+  /**
+   * Subscribe to updates of global account data events.
+   *
+   * Be careful that only the most recent value can be observed. Subscribers
+   * are notified when a new value is sent, but there is no guarantee that
+   * they will see all values.
+   */
+  observeAccountDataEvent(
+    eventType: AccountDataEventType,
+    listener: AccountDataListener
+  ): TaskHandleInterface;
+  /**
+   * Subscribe to updates of room account data events.
+   *
+   * Be careful that only the most recent value can be observed. Subscribers
+   * are notified when a new value is sent, but there is no guarantee that
+   * they will see all values.
+   */
+  observeRoomAccountDataEvent(
+    roomId: string,
+    eventType: RoomAccountDataEventType,
+    listener: RoomAccountDataListener
+  ) /*throws*/ : TaskHandleInterface;
   removeAvatar(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
   /**
    * Empty the server version and unstable features cache.
@@ -24944,9 +34001,24 @@ export interface ClientInterface {
   ) /*throws*/ : Promise<ResolvedRoomAlias | undefined>;
   /**
    * Restores the client from a `Session`.
+   *
+   * It reloads the entire set of rooms from the previous session.
+   *
+   * If you want to control the amount of rooms to reloads, check
+   * [`Client::restore_session_with`].
    */
   restoreSession(
     session: Session,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Restores the client from a `Session`.
+   *
+   * It reloads a set of rooms controlled by [`RoomLoadSettings`].
+   */
+  restoreSessionWith(
+    session: Session,
+    roomLoadSettings: RoomLoadSettings,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   /**
@@ -24988,11 +34060,36 @@ export interface ClientInterface {
     content: string,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
+  /**
+   * Sets the [ClientDelegate] which will inform about authentication errors.
+   * Returns an error if the delegate was already set.
+   */
   setDelegate(
     delegate: ClientDelegate | undefined
-  ): TaskHandleInterface | undefined;
+  ) /*throws*/ : TaskHandleInterface | undefined;
   setDisplayName(
     name: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Set the invite request avatars display policy
+   */
+  setInviteAvatarsDisplayPolicy(
+    policy: InviteAvatars,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Set the media previews timeline display policy
+   */
+  setMediaPreviewDisplayPolicy(
+    policy: MediaPreviews,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Set the media retention policy.
+   */
+  setMediaRetentionPolicy(
+    policy: MediaRetentionPolicy,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   /**
@@ -25008,6 +34105,14 @@ export interface ClientInterface {
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   /**
+   * Sets the [UnableToDecryptDelegate] which will inform about UTDs.
+   * Returns an error if the delegate was already set.
+   */
+  setUtdDelegate(
+    utdDelegate: UnableToDecryptDelegate,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
    * The sliding sync version.
    */
   slidingSyncVersion(): SlidingSyncVersion;
@@ -25020,6 +34125,30 @@ export interface ClientInterface {
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<SsoHandlerInterface>;
   subscribeToIgnoredUsers(listener: IgnoredUsersListener): TaskHandleInterface;
+  /**
+   * Subscribe to changes in the media preview configuration.
+   */
+  subscribeToMediaPreviewConfig(
+    listener: MediaPreviewConfigListener,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<TaskHandleInterface>;
+  /**
+   * Subscribe to [`RoomInfo`] updates given a provided [`RoomId`].
+   *
+   * This works even for rooms we haven't received yet, so we can subscribe
+   * to this and wait until we receive updates from them when sync responses
+   * are processed.
+   *
+   * Note this method should be used sparingly since using callback
+   * interfaces is expensive, as well as keeping them alive for a long
+   * time. Usages of this method should be short-lived and dropped as
+   * soon as possible.
+   */
+  subscribeToRoomInfo(
+    roomId: string,
+    listener: RoomInfoListener,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<TaskHandleInterface>;
   /**
    * Subscribe to the global enablement status of the send queue, at the
    * client-wide level.
@@ -25055,12 +34184,30 @@ export interface ClientInterface {
    * view has succeeded, call `login_with_oidc_callback` with the callback it
    * returns. If a failure occurs and a callback isn't available, make sure
    * to call `abort_oidc_auth` to inform the client of this.
+   *
+   * # Arguments
+   *
+   * * `oidc_configuration` - The configuration used to load the credentials
+   * of the client if it is already registered with the authorization
+   * server, or register the client and store its credentials if it isn't.
+   *
+   * * `prompt` - The desired user experience in the web UI. No value means
+   * that the user wishes to login into an existing account, and a value of
+   * `Create` means that the user wishes to register a new account.
+   *
+   * * `login_hint` - A generic login hint that an identity provider can use
+   * to pre-fill the login form. The format of this hint is not restricted
+   * by the spec as external providers all have their own way to handle the hint.
+   * However, it should be noted that when providing a user ID as a hint
+   * for MAS (with no upstream provider), then the format to use is defined
+   * by [MSC4198]: https://github.com/matrix-org/matrix-spec-proposals/pull/4198
    */
   urlForOidc(
     oidcConfiguration: OidcConfiguration,
-    prompt: OidcPrompt,
+    prompt: OidcPrompt | undefined,
+    loginHint: string | undefined,
     asyncOpts_?: { signal: AbortSignal }
-  ) /*throws*/ : Promise<OidcAuthorizationDataInterface>;
+  ) /*throws*/ : Promise<OAuthAuthorizationDataInterface>;
   userId() /*throws*/ : string;
   /**
    * The server name part of the current user ID
@@ -25084,7 +34231,7 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    * failed etc.
    */
   public async abortOidcAuth(
-    authorizationData: OidcAuthorizationDataInterface,
+    authorizationData: OAuthAuthorizationDataInterface,
     asyncOpts_?: { signal: AbortSignal }
   ): Promise<void> {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
@@ -25094,7 +34241,7 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
         /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_abort_oidc_auth(
             uniffiTypeClientObjectFactory.clonePointer(this),
-            FfiConverterTypeOidcAuthorizationData.lower(authorizationData)
+            FfiConverterTypeOAuthAuthorizationData.lower(authorizationData)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -25332,21 +34479,41 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
   /**
    * Retrieves an avatar cached from a previous call to [`Self::avatar_url`].
    */
-  public cachedAvatarUrl(): string | undefined /*throws*/ {
-    return FfiConverterOptionalString.lift(
-      uniffiCaller.rustCallWithError(
-        /*liftError:*/ FfiConverterTypeClientError.lift.bind(
-          FfiConverterTypeClientError
-        ),
-        /*caller:*/ (callStatus) => {
+  public async cachedAvatarUrl(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<string | undefined> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_cached_avatar_url(
-            uniffiTypeClientObjectFactory.clonePointer(this),
-            callStatus
+            uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
+          FfiConverterOptionalString
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   /**
@@ -25365,6 +34532,58 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
         /*liftString:*/ FfiConverterString.lift
       )
     );
+  }
+
+  /**
+   * Clear all the non-critical caches for this Client instance.
+   *
+   * WARNING: This will clear all the caches, including the base store (state
+   * store), so callers must make sure that any sync is inactive before
+   * calling this method. In particular, the `SyncService` must not be
+   * running. After the method returns, the Client will be in an unstable
+   * state, and it is required that the caller reinstantiates a new
+   * Client instance, be it via dropping the previous and re-creating it,
+   * restarting their application, or any other similar means.
+   *
+   * - This will get rid of the backing state store file, if provided.
+   * - This will empty all the room's persisted event caches, so all rooms
+   * will start as if they were empty.
+   * - This will empty the media cache according to the current media
+   * retention policy.
+   */
+  public async clearCaches(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_clear_caches(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   public async createRoom(
@@ -25390,48 +34609,6 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
         /*freeFunc:*/ nativeModule()
           .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterString.lift.bind(FfiConverterString),
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_,
-        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
-          FfiConverterTypeClientError
-        )
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
-  }
-
-  /**
-   * Creates a new room alias associated with the provided room id.
-   */
-  public async createRoomAlias(
-    roomAlias: string,
-    roomId: string,
-    asyncOpts_?: { signal: AbortSignal }
-  ): Promise<void> /*throws*/ {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_create_room_alias(
-            uniffiTypeClientObjectFactory.clonePointer(this),
-            FfiConverterString.lower(roomAlias),
-            FfiConverterString.lower(roomId)
-          );
-        },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
-        /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
         /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
@@ -25692,6 +34869,46 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     );
   }
 
+  /**
+   * Fetch the media preview configuration from the server.
+   */
+  public async fetchMediaPreviewConfig(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<MediaPreviewConfig | undefined> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_fetch_media_preview_config(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterOptionalTypeMediaPreviewConfig.lift.bind(
+          FfiConverterOptionalTypeMediaPreviewConfig
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
   public getDmRoom(userId: string): RoomInterface | undefined /*throws*/ {
     return FfiConverterOptionalTypeRoom.lift(
       uniffiCaller.rustCallWithError(
@@ -25708,6 +34925,86 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
         /*liftString:*/ FfiConverterString.lift
       )
     );
+  }
+
+  /**
+   * Get the invite request avatars display policy
+   * currently stored in the cache.
+   */
+  public async getInviteAvatarsDisplayPolicy(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<InviteAvatars | undefined> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_invite_avatars_display_policy(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterOptionalTypeInviteAvatars.lift.bind(
+          FfiConverterOptionalTypeInviteAvatars
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Gets the `max_upload_size` value from the homeserver, which controls the
+   * max size a media upload request can have.
+   */
+  public async getMaxMediaUploadSize(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise</*u64*/ bigint> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_max_media_upload_size(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_u64,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_u64,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_u64,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_u64,
+        /*liftFunc:*/ FfiConverterUInt64.lift.bind(FfiConverterUInt64),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   public async getMediaContent(
@@ -25796,6 +35093,47 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     }
   }
 
+  /**
+   * Get the media previews timeline display policy
+   * currently stored in the cache.
+   */
+  public async getMediaPreviewDisplayPolicy(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<MediaPreviews | undefined> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_media_preview_display_policy(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterOptionalTypeMediaPreviews.lift.bind(
+          FfiConverterOptionalTypeMediaPreviews
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
   public async getMediaThumbnail(
     mediaSource: MediaSourceInterface,
     width: /*u64*/ bigint,
@@ -25839,18 +35177,38 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     }
   }
 
-  public getNotificationSettings(): NotificationSettingsInterface {
-    return FfiConverterTypeNotificationSettings.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
+  public async getNotificationSettings(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<NotificationSettingsInterface> {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_notification_settings(
-            uniffiTypeClientObjectFactory.clonePointer(this),
-            callStatus
+            uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
+        /*liftFunc:*/ FfiConverterTypeNotificationSettings.lift.bind(
+          FfiConverterTypeNotificationSettings
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   public async getProfile(
@@ -25927,6 +35285,37 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
       }
       throw __error;
     }
+  }
+
+  /**
+   * Get a room by its ID.
+   *
+   * # Arguments
+   *
+   * * `room_id` - The ID of the room to get.
+   *
+   * # Returns
+   *
+   * A `Result` containing an optional room, or a `ClientError`.
+   * This method will not initialize the room's timeline or populate it with
+   * events.
+   */
+  public getRoom(roomId: string): RoomInterface | undefined /*throws*/ {
+    return FfiConverterOptionalTypeRoom.lift(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        ),
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_get_room(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterString.lower(roomId),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
   }
 
   /**
@@ -26226,6 +35615,44 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
   }
 
   /**
+   * Checks if the server supports the report room API.
+   */
+  public async isReportRoomApiSupported(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<boolean> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_is_report_room_api_supported(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
+        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
    * Checks if a room alias is not in use yet.
    *
    * Returns:
@@ -26502,7 +35929,6 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    * Completes the OIDC login process.
    */
   public async loginWithOidcCallback(
-    authorizationData: OidcAuthorizationDataInterface,
     callbackUrl: string,
     asyncOpts_?: { signal: AbortSignal }
   ): Promise<void> /*throws*/ {
@@ -26513,7 +35939,6 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
         /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_login_with_oidc_callback(
             uniffiTypeClientObjectFactory.clonePointer(this),
-            FfiConverterTypeOidcAuthorizationData.lower(authorizationData),
             FfiConverterString.lower(callbackUrl)
           );
         },
@@ -26541,13 +35966,11 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
   }
 
   /**
-   * Log out the current user. This method returns an optional URL that
-   * should be presented to the user to complete logout (in the case of
-   * Session having been authenticated using OIDC).
+   * Log the current user out.
    */
   public async logout(asyncOpts_?: {
     signal: AbortSignal;
-  }): Promise<string | undefined> /*throws*/ {
+  }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
@@ -26558,16 +35981,14 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
           );
         },
         /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
         /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
         /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
         /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
-        /*liftFunc:*/ FfiConverterOptionalString.lift.bind(
-          FfiConverterOptionalString
-        ),
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
         /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
@@ -26619,6 +36040,63 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
       }
       throw __error;
     }
+  }
+
+  /**
+   * Subscribe to updates of global account data events.
+   *
+   * Be careful that only the most recent value can be observed. Subscribers
+   * are notified when a new value is sent, but there is no guarantee that
+   * they will see all values.
+   */
+  public observeAccountDataEvent(
+    eventType: AccountDataEventType,
+    listener: AccountDataListener
+  ): TaskHandleInterface {
+    return FfiConverterTypeTaskHandle.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_observe_account_data_event(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterTypeAccountDataEventType.lower(eventType),
+            FfiConverterTypeAccountDataListener.lower(listener),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Subscribe to updates of room account data events.
+   *
+   * Be careful that only the most recent value can be observed. Subscribers
+   * are notified when a new value is sent, but there is no guarantee that
+   * they will see all values.
+   */
+  public observeRoomAccountDataEvent(
+    roomId: string,
+    eventType: RoomAccountDataEventType,
+    listener: RoomAccountDataListener
+  ): TaskHandleInterface /*throws*/ {
+    return FfiConverterTypeTaskHandle.lift(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        ),
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_observe_room_account_data_event(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterString.lower(roomId),
+            FfiConverterTypeRoomAccountDataEventType.lower(eventType),
+            FfiConverterTypeRoomAccountDataListener.lower(listener),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
   }
 
   public async removeAvatar(asyncOpts_?: {
@@ -26743,6 +36221,11 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
 
   /**
    * Restores the client from a `Session`.
+   *
+   * It reloads the entire set of rooms from the previous session.
+   *
+   * If you want to control the amount of rooms to reloads, check
+   * [`Client::restore_session_with`].
    */
   public async restoreSession(
     session: Session,
@@ -26756,6 +36239,50 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_restore_session(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeSession.lower(session)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Restores the client from a `Session`.
+   *
+   * It reloads a set of rooms controlled by [`RoomLoadSettings`].
+   */
+  public async restoreSessionWith(
+    session: Session,
+    roomLoadSettings: RoomLoadSettings,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_restore_session_with(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterTypeSession.lower(session),
+            FfiConverterTypeRoomLoadSettings.lower(roomLoadSettings)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -26978,11 +36505,18 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
     }
   }
 
+  /**
+   * Sets the [ClientDelegate] which will inform about authentication errors.
+   * Returns an error if the delegate was already set.
+   */
   public setDelegate(
     delegate: ClientDelegate | undefined
-  ): TaskHandleInterface | undefined {
+  ): TaskHandleInterface | undefined /*throws*/ {
     return FfiConverterOptionalTypeTaskHandle.lift(
-      uniffiCaller.rustCall(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        ),
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_delegate(
             uniffiTypeClientObjectFactory.clonePointer(this),
@@ -27033,6 +36567,126 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
   }
 
   /**
+   * Set the invite request avatars display policy
+   */
+  public async setInviteAvatarsDisplayPolicy(
+    policy: InviteAvatars,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_invite_avatars_display_policy(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterTypeInviteAvatars.lower(policy)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Set the media previews timeline display policy
+   */
+  public async setMediaPreviewDisplayPolicy(
+    policy: MediaPreviews,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_media_preview_display_policy(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterTypeMediaPreviews.lower(policy)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Set the media retention policy.
+   */
+  public async setMediaRetentionPolicy(
+    policy: MediaRetentionPolicy,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_media_retention_policy(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterTypeMediaRetentionPolicy.lower(policy)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
    * Registers a pusher with given parameters
    */
   public async setPusher(
@@ -27057,6 +36711,47 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
             FfiConverterString.lower(deviceDisplayName),
             FfiConverterOptionalString.lower(profileTag),
             FfiConverterString.lower(lang)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Sets the [UnableToDecryptDelegate] which will inform about UTDs.
+   * Returns an error if the delegate was already set.
+   */
+  public async setUtdDelegate(
+    utdDelegate: UnableToDecryptDelegate,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_utd_delegate(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterTypeUnableToDecryptDelegate.lower(utdDelegate)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -27158,6 +36853,101 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
         /*liftString:*/ FfiConverterString.lift
       )
     );
+  }
+
+  /**
+   * Subscribe to changes in the media preview configuration.
+   */
+  public async subscribeToMediaPreviewConfig(
+    listener: MediaPreviewConfigListener,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<TaskHandleInterface> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_subscribe_to_media_preview_config(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterTypeMediaPreviewConfigListener.lower(listener)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
+        /*liftFunc:*/ FfiConverterTypeTaskHandle.lift.bind(
+          FfiConverterTypeTaskHandle
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Subscribe to [`RoomInfo`] updates given a provided [`RoomId`].
+   *
+   * This works even for rooms we haven't received yet, so we can subscribe
+   * to this and wait until we receive updates from them when sync responses
+   * are processed.
+   *
+   * Note this method should be used sparingly since using callback
+   * interfaces is expensive, as well as keeping them alive for a long
+   * time. Usages of this method should be short-lived and dropped as
+   * soon as possible.
+   */
+  public async subscribeToRoomInfo(
+    roomId: string,
+    listener: RoomInfoListener,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<TaskHandleInterface> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_subscribe_to_room_info(
+            uniffiTypeClientObjectFactory.clonePointer(this),
+            FfiConverterString.lower(roomId),
+            FfiConverterTypeRoomInfoListener.lower(listener)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
+        /*liftFunc:*/ FfiConverterTypeTaskHandle.lift.bind(
+          FfiConverterTypeTaskHandle
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   /**
@@ -27357,12 +37147,30 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
    * view has succeeded, call `login_with_oidc_callback` with the callback it
    * returns. If a failure occurs and a callback isn't available, make sure
    * to call `abort_oidc_auth` to inform the client of this.
+   *
+   * # Arguments
+   *
+   * * `oidc_configuration` - The configuration used to load the credentials
+   * of the client if it is already registered with the authorization
+   * server, or register the client and store its credentials if it isn't.
+   *
+   * * `prompt` - The desired user experience in the web UI. No value means
+   * that the user wishes to login into an existing account, and a value of
+   * `Create` means that the user wishes to register a new account.
+   *
+   * * `login_hint` - A generic login hint that an identity provider can use
+   * to pre-fill the login form. The format of this hint is not restricted
+   * by the spec as external providers all have their own way to handle the hint.
+   * However, it should be noted that when providing a user ID as a hint
+   * for MAS (with no upstream provider), then the format to use is defined
+   * by [MSC4198]: https://github.com/matrix-org/matrix-spec-proposals/pull/4198
    */
   public async urlForOidc(
     oidcConfiguration: OidcConfiguration,
-    prompt: OidcPrompt,
+    prompt: OidcPrompt | undefined,
+    loginHint: string | undefined,
     asyncOpts_?: { signal: AbortSignal }
-  ): Promise<OidcAuthorizationDataInterface> /*throws*/ {
+  ): Promise<OAuthAuthorizationDataInterface> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
@@ -27371,7 +37179,8 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_url_for_oidc(
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeOidcConfiguration.lower(oidcConfiguration),
-            FfiConverterTypeOidcPrompt.lower(prompt)
+            FfiConverterOptionalTypeOidcPrompt.lower(prompt),
+            FfiConverterOptionalString.lower(loginHint)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -27382,8 +37191,8 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
           .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
           .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
-        /*liftFunc:*/ FfiConverterTypeOidcAuthorizationData.lift.bind(
-          FfiConverterTypeOidcAuthorizationData
+        /*liftFunc:*/ FfiConverterTypeOAuthAuthorizationData.lift.bind(
+          FfiConverterTypeOAuthAuthorizationData
         ),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -27544,8 +37353,8 @@ export interface ClientBuilderInterface {
    *
    * This method will build the client and immediately attempt to log the
    * client in using the provided [`QrCodeData`] using the login
-   * mechanism described in [MSC4108]. As such this methods requires OIDC
-   * support as well as sliding sync support.
+   * mechanism described in [MSC4108]. As such this methods requires OAuth
+   * 2.0 support as well as sliding sync support.
    *
    * The usage of the progress_listener is required to transfer the
    * [`CheckCode`] to the existing client.
@@ -27568,8 +37377,16 @@ export interface ClientBuilderInterface {
   disableBuiltInRootCertificates(): ClientBuilderInterface;
   disableSslVerification(): ClientBuilderInterface;
   enableOidcRefreshLock(): ClientBuilderInterface;
+  /**
+   * Set whether to enable the experimental support for sending and receiving
+   * encrypted room history on invite, per [MSC4268].
+   *
+   * [MSC4268]: https://github.com/matrix-org/matrix-spec-proposals/pull/4268
+   */
+  enableShareHistoryOnInvite(
+    enableShareHistoryOnInvite: boolean
+  ): ClientBuilderInterface;
   homeserverUrl(url: string): ClientBuilderInterface;
-  passphrase(passphrase: string | undefined): ClientBuilderInterface;
   proxy(url: string): ClientBuilderInterface;
   /**
    * Add a default request config to this client.
@@ -27589,6 +37406,40 @@ export interface ClientBuilderInterface {
   serverName(serverName: string): ClientBuilderInterface;
   serverNameOrHomeserverUrl(serverNameOrUrl: string): ClientBuilderInterface;
   /**
+   * Set the cache size for the SQLite stores given to
+   * [`ClientBuilder::session_paths`].
+   *
+   * Each store exposes a SQLite connection. This method controls the cache
+   * size, in **bytes (!)**.
+   *
+   * The cache represents data SQLite holds in memory at once per open
+   * database file. The default cache implementation does not allocate the
+   * full amount of cache memory all at once. Cache memory is allocated
+   * in smaller chunks on an as-needed basis.
+   *
+   * See [`SqliteStoreConfig::cache_size`] to learn more.
+   */
+  sessionCacheSize(
+    cacheSize: /*u32*/ number | undefined
+  ): ClientBuilderInterface;
+  /**
+   * Set the size limit for the SQLite WAL files of stores given to
+   * [`ClientBuilder::session_paths`].
+   *
+   * Each store uses the WAL journal mode. This method controls the size
+   * limit of the WAL files, in **bytes (!)**.
+   *
+   * See [`SqliteStoreConfig::journal_size_limit`] to learn more.
+   */
+  sessionJournalSizeLimit(
+    limit: /*u32*/ number | undefined
+  ): ClientBuilderInterface;
+  /**
+   * Set the passphrase for the stores given to
+   * [`ClientBuilder::session_paths`].
+   */
+  sessionPassphrase(passphrase: string | undefined): ClientBuilderInterface;
+  /**
    * Sets the paths that the client will use to store its data and caches.
    * Both paths **must** be unique per session as the SDK stores aren't
    * capable of handling multiple users, however it is valid to use the
@@ -27597,6 +37448,20 @@ export interface ClientBuilderInterface {
    * Leaving this unset tells the client to use an in-memory data store.
    */
   sessionPaths(dataPath: string, cachePath: string): ClientBuilderInterface;
+  /**
+   * Set the pool max size for the SQLite stores given to
+   * [`ClientBuilder::session_paths`].
+   *
+   * Each store exposes an async pool of connections. This method controls
+   * the size of the pool. The larger the pool is, the more memory is
+   * consumed, but also the more the app is reactive because it doesn't need
+   * to wait on a pool to be available to run queries.
+   *
+   * See [`SqliteStoreConfig::pool_max_size`] to learn more.
+   */
+  sessionPoolMaxSize(
+    poolMaxSize: /*u32*/ number | undefined
+  ): ClientBuilderInterface;
   setSessionDelegate(
     sessionDelegate: ClientSessionDelegate
   ): ClientBuilderInterface;
@@ -27604,19 +37469,15 @@ export interface ClientBuilderInterface {
     versionBuilder: SlidingSyncVersionBuilder
   ): ClientBuilderInterface;
   /**
-   * Whether to use the event cache persistent storage or not.
+   * Tell the client that the system is memory constrained, like in a push
+   * notification process for example.
    *
-   * This is a temporary feature flag, for testing the event cache's
-   * persistent storage. Follow new developments in https://github.com/matrix-org/matrix-rust-sdk/issues/3280.
-   *
-   * This is disabled by default. When disabled, a one-time cleanup is
-   * performed when creating the client, and it will clear all the events
-   * previously stored in the event cache.
-   *
-   * When enabled, it will attempt to store events in the event cache as
-   * they're received, and reuse them when reconstructing timelines.
+   * So far, at the time of writing (2025-04-07), it changes the defaults of
+   * [`SqliteStoreConfig`], so one might not need to call
+   * [`ClientBuilder::session_cache_size`] and siblings for example. Please
+   * check [`SqliteStoreConfig::with_low_memory_config`].
    */
-  useEventCachePersistentStorage(value: boolean): ClientBuilderInterface;
+  systemIsMemoryConstrained(): ClientBuilderInterface;
   userAgent(userAgent: string): ClientBuilderInterface;
   username(username: string): ClientBuilderInterface;
 }
@@ -27761,8 +37622,8 @@ export class ClientBuilder
    *
    * This method will build the client and immediately attempt to log the
    * client in using the provided [`QrCodeData`] using the login
-   * mechanism described in [MSC4108]. As such this methods requires OIDC
-   * support as well as sliding sync support.
+   * mechanism described in [MSC4108]. As such this methods requires OAuth
+   * 2.0 support as well as sliding sync support.
    *
    * The usage of the progress_listener is required to transfer the
    * [`CheckCode`] to the existing client.
@@ -27888,13 +37749,21 @@ export class ClientBuilder
     );
   }
 
-  public homeserverUrl(url: string): ClientBuilderInterface {
+  /**
+   * Set whether to enable the experimental support for sending and receiving
+   * encrypted room history on invite, per [MSC4268].
+   *
+   * [MSC4268]: https://github.com/matrix-org/matrix-spec-proposals/pull/4268
+   */
+  public enableShareHistoryOnInvite(
+    enableShareHistoryOnInvite: boolean
+  ): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
       uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_homeserver_url(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_enable_share_history_on_invite(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
-            FfiConverterString.lower(url),
+            FfiConverterBool.lower(enableShareHistoryOnInvite),
             callStatus
           );
         },
@@ -27903,13 +37772,13 @@ export class ClientBuilder
     );
   }
 
-  public passphrase(passphrase: string | undefined): ClientBuilderInterface {
+  public homeserverUrl(url: string): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
       uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_passphrase(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_homeserver_url(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
-            FfiConverterOptionalString.lower(passphrase),
+            FfiConverterString.lower(url),
             callStatus
           );
         },
@@ -28025,6 +37894,84 @@ export class ClientBuilder
   }
 
   /**
+   * Set the cache size for the SQLite stores given to
+   * [`ClientBuilder::session_paths`].
+   *
+   * Each store exposes a SQLite connection. This method controls the cache
+   * size, in **bytes (!)**.
+   *
+   * The cache represents data SQLite holds in memory at once per open
+   * database file. The default cache implementation does not allocate the
+   * full amount of cache memory all at once. Cache memory is allocated
+   * in smaller chunks on an as-needed basis.
+   *
+   * See [`SqliteStoreConfig::cache_size`] to learn more.
+   */
+  public sessionCacheSize(
+    cacheSize: /*u32*/ number | undefined
+  ): ClientBuilderInterface {
+    return FfiConverterTypeClientBuilder.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_session_cache_size(
+            uniffiTypeClientBuilderObjectFactory.clonePointer(this),
+            FfiConverterOptionalUInt32.lower(cacheSize),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Set the size limit for the SQLite WAL files of stores given to
+   * [`ClientBuilder::session_paths`].
+   *
+   * Each store uses the WAL journal mode. This method controls the size
+   * limit of the WAL files, in **bytes (!)**.
+   *
+   * See [`SqliteStoreConfig::journal_size_limit`] to learn more.
+   */
+  public sessionJournalSizeLimit(
+    limit: /*u32*/ number | undefined
+  ): ClientBuilderInterface {
+    return FfiConverterTypeClientBuilder.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_session_journal_size_limit(
+            uniffiTypeClientBuilderObjectFactory.clonePointer(this),
+            FfiConverterOptionalUInt32.lower(limit),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Set the passphrase for the stores given to
+   * [`ClientBuilder::session_paths`].
+   */
+  public sessionPassphrase(
+    passphrase: string | undefined
+  ): ClientBuilderInterface {
+    return FfiConverterTypeClientBuilder.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_session_passphrase(
+            uniffiTypeClientBuilderObjectFactory.clonePointer(this),
+            FfiConverterOptionalString.lower(passphrase),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
    * Sets the paths that the client will use to store its data and caches.
    * Both paths **must** be unique per session as the SDK stores aren't
    * capable of handling multiple users, however it is valid to use the
@@ -28043,6 +37990,34 @@ export class ClientBuilder
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
             FfiConverterString.lower(dataPath),
             FfiConverterString.lower(cachePath),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Set the pool max size for the SQLite stores given to
+   * [`ClientBuilder::session_paths`].
+   *
+   * Each store exposes an async pool of connections. This method controls
+   * the size of the pool. The larger the pool is, the more memory is
+   * consumed, but also the more the app is reactive because it doesn't need
+   * to wait on a pool to be available to run queries.
+   *
+   * See [`SqliteStoreConfig::pool_max_size`] to learn more.
+   */
+  public sessionPoolMaxSize(
+    poolMaxSize: /*u32*/ number | undefined
+  ): ClientBuilderInterface {
+    return FfiConverterTypeClientBuilder.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_session_pool_max_size(
+            uniffiTypeClientBuilderObjectFactory.clonePointer(this),
+            FfiConverterOptionalUInt32.lower(poolMaxSize),
             callStatus
           );
         },
@@ -28086,27 +38061,20 @@ export class ClientBuilder
   }
 
   /**
-   * Whether to use the event cache persistent storage or not.
+   * Tell the client that the system is memory constrained, like in a push
+   * notification process for example.
    *
-   * This is a temporary feature flag, for testing the event cache's
-   * persistent storage. Follow new developments in https://github.com/matrix-org/matrix-rust-sdk/issues/3280.
-   *
-   * This is disabled by default. When disabled, a one-time cleanup is
-   * performed when creating the client, and it will clear all the events
-   * previously stored in the event cache.
-   *
-   * When enabled, it will attempt to store events in the event cache as
-   * they're received, and reuse them when reconstructing timelines.
+   * So far, at the time of writing (2025-04-07), it changes the defaults of
+   * [`SqliteStoreConfig`], so one might not need to call
+   * [`ClientBuilder::session_cache_size`] and siblings for example. Please
+   * check [`SqliteStoreConfig::with_low_memory_config`].
    */
-  public useEventCachePersistentStorage(
-    value: boolean
-  ): ClientBuilderInterface {
+  public systemIsMemoryConstrained(): ClientBuilderInterface {
     return FfiConverterTypeClientBuilder.lift(
       uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_use_event_cache_persistent_storage(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_system_is_memory_constrained(
             uniffiTypeClientBuilderObjectFactory.clonePointer(this),
-            FfiConverterBool.lower(value),
             callStatus
           );
         },
@@ -29507,7 +39475,7 @@ const FfiConverterTypeIdentityResetHandle = new FfiConverterObject(
 );
 
 export interface InReplyToDetailsInterface {
-  event(): RepliedToEventDetails;
+  event(): EmbeddedEventDetails;
   eventId(): string;
 }
 
@@ -29526,8 +39494,8 @@ export class InReplyToDetails
       uniffiTypeInReplyToDetailsObjectFactory.bless(pointer);
   }
 
-  public event(): RepliedToEventDetails {
-    return FfiConverterTypeRepliedToEventDetails.lift(
+  public event(): EmbeddedEventDetails {
+    return FfiConverterTypeEmbeddedEventDetails.lift(
       uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_inreplytodetails_event(
@@ -29940,6 +39908,7 @@ const FfiConverterTypeKnockRequestActions = new FfiConverterObject(
  * Wrapper to retrieve some timeline item info lazily.
  */
 export interface LazyTimelineItemProviderInterface {
+  containsOnlyEmojis(): boolean;
   /**
    * Returns some debug information for this event timeline item.
    */
@@ -29971,6 +39940,20 @@ export class LazyTimelineItemProvider
     this[pointerLiteralSymbol] = pointer;
     this[destructorGuardSymbol] =
       uniffiTypeLazyTimelineItemProviderObjectFactory.bless(pointer);
+  }
+
+  public containsOnlyEmojis(): boolean {
+    return FfiConverterBool.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_lazytimelineitemprovider_contains_only_emojis(
+            uniffiTypeLazyTimelineItemProviderObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
   }
 
   /**
@@ -30447,6 +40430,25 @@ export interface NotificationClientInterface {
     eventId: string,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<NotificationItem | undefined>;
+  /**
+   * Get several notification items in a single batch.
+   *
+   * Returns an error if the flow failed when preparing to fetch the
+   * notifications, and a [`HashMap`] containing either a
+   * [`NotificationItem`] or no entry for it if it failed to fetch a
+   * notification for the provided [`EventId`].
+   */
+  getNotifications(
+    requests: Array<NotificationItemsRequest>,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<Map<string, NotificationItem>>;
+  /**
+   * Fetches a room by its ID using the in-memory state store backed client.
+   *
+   * Useful to retrieve room information after running the limited
+   * notification client sliding sync loop.
+   */
+  getRoom(roomId: string) /*throws*/ : RoomInterface | undefined;
 }
 
 export class NotificationClient
@@ -30507,6 +40509,77 @@ export class NotificationClient
       }
       throw __error;
     }
+  }
+
+  /**
+   * Get several notification items in a single batch.
+   *
+   * Returns an error if the flow failed when preparing to fetch the
+   * notifications, and a [`HashMap`] containing either a
+   * [`NotificationItem`] or no entry for it if it failed to fetch a
+   * notification for the provided [`EventId`].
+   */
+  public async getNotifications(
+    requests: Array<NotificationItemsRequest>,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<Map<string, NotificationItem>> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationclient_get_notifications(
+            uniffiTypeNotificationClientObjectFactory.clonePointer(this),
+            FfiConverterArrayTypeNotificationItemsRequest.lower(requests)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterMapStringTypeNotificationItem.lift.bind(
+          FfiConverterMapStringTypeNotificationItem
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Fetches a room by its ID using the in-memory state store backed client.
+   *
+   * Useful to retrieve room information after running the limited
+   * notification client sliding sync loop.
+   */
+  public getRoom(roomId: string): RoomInterface | undefined /*throws*/ {
+    return FfiConverterOptionalTypeRoom.lift(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        ),
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationclient_get_room(
+            uniffiTypeNotificationClientObjectFactory.clonePointer(this),
+            FfiConverterString.lower(roomId),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
   }
 
   /**
@@ -30698,6 +40771,16 @@ export interface NotificationSettingsInterface {
    */
   setCallEnabled(
     enabled: boolean,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Sets a custom push rule with the given actions and conditions.
+   */
+  setCustomPushRule(
+    ruleId: string,
+    ruleKind: RuleKind,
+    actions: Array<Action>,
+    conditions: Array<PushCondition>,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   /**
@@ -31305,6 +41388,52 @@ export class NotificationSettings
   }
 
   /**
+   * Sets a custom push rule with the given actions and conditions.
+   */
+  public async setCustomPushRule(
+    ruleId: string,
+    ruleKind: RuleKind,
+    actions: Array<Action>,
+    conditions: Array<PushCondition>,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_notificationsettings_set_custom_push_rule(
+            uniffiTypeNotificationSettingsObjectFactory.clonePointer(this),
+            FfiConverterString.lower(ruleId),
+            FfiConverterTypeRuleKind.lower(ruleKind),
+            FfiConverterArrayTypeAction.lower(actions),
+            FfiConverterArrayTypePushCondition.lower(conditions)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeNotificationSettingsError.lift.bind(
+          FfiConverterTypeNotificationSettingsError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
    * Set the default room notification mode
    *
    * # Arguments
@@ -31672,7 +41801,16 @@ const FfiConverterTypeNotificationSettings = new FfiConverterObject(
  * The [`QrCodeData`] can be serialized and encoded as a QR code or it can be
  * decoded from a QR code.
  */
-export interface QrCodeDataInterface {}
+export interface QrCodeDataInterface {
+  /**
+   * The server name contained within the scanned QR code data.
+   *
+   * Note: This value is only present when scanning a QR code the belongs to
+   * a logged in client. The mode where the new client shows the QR code
+   * will return `None`.
+   */
+  serverName(): string | undefined;
+}
 
 /**
  * Data for the QR code login mechanism.
@@ -31709,6 +41847,27 @@ export class QrCodeData
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_constructor_qrcodedata_from_bytes(
             FfiConverterArrayBuffer.lower(bytes),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * The server name contained within the scanned QR code data.
+   *
+   * Note: This value is only present when scanning a QR code the belongs to
+   * a logged in client. The mode where the new client shows the QR code
+   * will return `None`.
+   */
+  public serverName(): string | undefined {
+    return FfiConverterOptionalString.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_qrcodedata_server_name(
+            uniffiTypeQrCodeDataObjectFactory.clonePointer(this),
             callStatus
           );
         },
@@ -31909,12 +42068,36 @@ export interface RoomInterface {
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   /**
+   * Enable End-to-end encryption in this room.
+   */
+  enableEncryption(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<void>;
+  /**
    * Enable or disable the send queue for that particular room.
    */
   enableSendQueue(enable: boolean): void;
+  encryptionState(): EncryptionState;
+  /**
+   * Forget this room.
+   *
+   * This communicates to the homeserver that it should forget the room.
+   *
+   * Only left or banned-from rooms can be forgotten.
+   */
+  forget(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
   getPowerLevels(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<RoomPowerLevels>;
+  /**
+   * Returns the visibility for this room in the room directory.
+   *
+   * [Public](`RoomVisibility::Public`) rooms are listed in the room
+   * directory and can be found using it.
+   */
+  getRoomVisibility(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<RoomVisibility>;
   /**
    * Is there a non expired membership with application "m.call" and scope
    * "m.room" in this room.
@@ -31959,14 +42142,19 @@ export interface RoomInterface {
   ) /*throws*/ : Promise<void>;
   invitedMembersCount(): /*u64*/ bigint;
   /**
-   * For rooms one is invited to, retrieves the room member information for
-   * the user who invited the logged-in user to a room.
+   * Get the user who created the invite, if any.
    */
   inviter(asyncOpts_?: {
     signal: AbortSignal;
-  }): Promise<RoomMember | undefined>;
-  isDirect(): boolean;
-  isEncrypted() /*throws*/ : boolean;
+  }) /*throws*/ : Promise<RoomMember | undefined>;
+  isDirect(asyncOpts_?: { signal: AbortSignal }): Promise<boolean>;
+  /**
+   * Checks whether the room is encrypted or not.
+   *
+   * **Note**: this info may not be reliable if you don't set up
+   * `m.room.encryption` as required state.
+   */
+  isEncrypted(asyncOpts_?: { signal: AbortSignal }): Promise<boolean>;
   isPublic(): boolean;
   /**
    * Returns whether the send queue for that particular room is enabled or
@@ -31974,7 +42162,6 @@ export interface RoomInterface {
    */
   isSendQueueEnabled(): boolean;
   isSpace(): boolean;
-  isTombstoned(): boolean;
   /**
    * Join this room.
    *
@@ -31987,6 +42174,12 @@ export interface RoomInterface {
     reason: string | undefined,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
+  latestEncryptionState(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<EncryptionState>;
+  latestEvent(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<EventTimelineItem | undefined>;
   /**
    * Leave this room.
    *
@@ -32003,7 +42196,7 @@ export interface RoomInterface {
    * Mark a room as read, by attaching a read receipt on the latest event.
    *
    * Note: this does NOT unset the unread flag; it's the caller's
-   * responsibility to do so, if needs be.
+   * responsibility to do so, if need be.
    */
   markAsRead(
     receiptType: ReceiptType,
@@ -32028,42 +42221,66 @@ export interface RoomInterface {
     userId: string,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<string | undefined>;
+  /**
+   * Get the membership details for the current user.
+   *
+   * Returns:
+   * - If the user was present in the room, a
+   * [`matrix_sdk::room::RoomMemberWithSenderInfo`] containing both the
+   * user info and the member info of the sender of the `m.room.member`
+   * event.
+   * - If the current user is not present, an error.
+   */
+  memberWithSenderInfo(
+    userId: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<RoomMemberWithSenderInfo>;
   members(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<RoomMembersIteratorInterface>;
   membersNoSync(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<RoomMembersIteratorInterface>;
-  membership(): Membership;
   /**
-   * A timeline instance that can be configured to only include RoomMessage
-   * type events and filter those further based on their message type.
-   *
-   * Virtual timeline items will still be provided and the
-   * `default_event_filter` will be applied before everything else.
-   *
-   * # Arguments
-   *
-   * * `internal_id_prefix` - An optional String that will be prepended to
-   * all the timeline item's internal IDs, making it possible to
-   * distinguish different timeline instances from each other.
-   *
-   * * `allowed_message_types` - A list of `RoomMessageEventMessageType` that
-   * will be allowed to appear in the timeline
+   * The room's current membership state.
    */
-  messageFilteredTimeline(
-    internalIdPrefix: string | undefined,
-    allowedMessageTypes: Array<RoomMessageEventMessageType>,
-    dateDividerMode: DateDividerMode,
-    asyncOpts_?: { signal: AbortSignal }
-  ) /*throws*/ : Promise<TimelineInterface>;
+  membership(): Membership;
   ownUserId(): string;
-  pinnedEventsTimeline(
-    internalIdPrefix: string | undefined,
-    maxEventsToLoad: /*u16*/ number,
-    maxConcurrentRequests: /*u16*/ number,
+  /**
+   * If this room is the successor of a tombstoned room, return the
+   * “reference” to the predecessor room.
+   *
+   * A room is tombstoned if it has received a [`m.room.tombstone`] state
+   * event.
+   *
+   * To determine if a room is the successor of a tombstoned room, the
+   * [`m.room.create`] must have been received, **with** a `predecessor`
+   * field.
+   *
+   * [`m.room.tombstone`]: https://spec.matrix.org/v1.14/client-server-api/#mroomtombstone
+   * [`m.room.create`]: https://spec.matrix.org/v1.14/client-server-api/#mroomcreate
+   */
+  predecessorRoom(): PredecessorRoom | undefined;
+  /**
+   * Builds a `RoomPreview` from a room list item. This is intended for
+   * invited, knocked or banned rooms.
+   */
+  previewRoom(
+    via: Array<string>,
     asyncOpts_?: { signal: AbortSignal }
-  ) /*throws*/ : Promise<TimelineInterface>;
+  ) /*throws*/ : Promise<RoomPreviewInterface>;
+  /**
+   * Publish a new room alias for this room in the room directory.
+   *
+   * Returns:
+   * - `true` if the room alias didn't exist and it's now published.
+   * - `false` if the room alias was already present so it couldn't be
+   * published.
+   */
+  publishRoomAliasInRoomDirectory(
+    alias: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<boolean>;
   /**
    * The raw name as present in the room state event.
    */
@@ -32088,6 +42305,18 @@ export interface RoomInterface {
    */
   removeAvatar(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
   /**
+   * Remove an existing room alias for this room in the room directory.
+   *
+   * Returns:
+   * - `true` if the room alias was present and it's now removed from the
+   * room directory.
+   * - `false` if the room alias didn't exist so it couldn't be removed.
+   */
+  removeRoomAliasFromRoomDirectory(
+    alias: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<boolean>;
+  /**
    * Reports an event from the room.
    *
    * # Arguments
@@ -32102,6 +42331,22 @@ export interface RoomInterface {
   reportContent(
     eventId: string,
     score: /*i32*/ number | undefined,
+    reason: string | undefined,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Reports a room as inappropriate to the server.
+   * The caller is not required to be joined to the room to report it.
+   *
+   * # Arguments
+   *
+   * * `reason` - The reason the room is being reported.
+   *
+   * # Errors
+   *
+   * Returns an error if the room is not found or on rate limit
+   */
+  reportRoom(
     reason: string | undefined,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
@@ -32154,10 +42399,22 @@ export interface RoomInterface {
    * It will configure the notify type: ring or notify based on:
    * - is this a DM room -> ring
    * - is this a group with more than one other member -> notify
+   *
+   * Returns:
+   * - `Ok(true)` if the event was successfully sent.
+   * - `Ok(false)` if we didn't send it because it was unnecessary.
+   * - `Err(_)` if sending the event failed.
    */
   sendCallNotificationIfNeeded(asyncOpts_?: {
     signal: AbortSignal;
-  }) /*throws*/ : Promise<void>;
+  }) /*throws*/ : Promise<boolean>;
+  /**
+   * Send the current users live location beacon in the room.
+   */
+  sendLiveLocation(
+    geoUri: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
   /**
    * Send a raw event to the room.
    *
@@ -32204,9 +42461,23 @@ export interface RoomInterface {
     newValue: boolean,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
+  /**
+   * Start the current users live location share in the room.
+   */
+  startLiveLocationShare(
+    durationMillis: /*u64*/ bigint,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Stop the current users live location share in the room.
+   */
+  stopLiveLocationShare(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<void>;
   subscribeToIdentityStatusChanges(
-    listener: IdentityStatusChangeListener
-  ): TaskHandleInterface;
+    listener: IdentityStatusChangeListener,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<TaskHandleInterface>;
   /**
    * Subscribes to requests to join this room (knock member events), using a
    * `listener` to be notified of the changes.
@@ -32219,27 +42490,46 @@ export interface RoomInterface {
     listener: KnockRequestsListener,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<TaskHandleInterface>;
+  /**
+   * Subscribes to live location shares in this room, using a `listener` to
+   * be notified of the changes.
+   *
+   * The current live location shares will be emitted immediately when
+   * subscribing, along with a [`TaskHandle`] to cancel the subscription.
+   */
+  subscribeToLiveLocationShares(
+    listener: LiveLocationShareListener
+  ): TaskHandleInterface;
   subscribeToRoomInfoUpdates(listener: RoomInfoListener): TaskHandleInterface;
   subscribeToTypingNotifications(
     listener: TypingNotificationsListener
   ): TaskHandleInterface;
+  /**
+   * If this room is tombstoned, return the “reference” to the successor room
+   * —i.e. the room replacing this one.
+   *
+   * A room is tombstoned if it has received a [`m.room.tombstone`] state
+   * event.
+   *
+   * [`m.room.tombstone`]: https://spec.matrix.org/v1.14/client-server-api/#mroomtombstone
+   */
+  successorRoom(): SuccessorRoom | undefined;
   suggestedRoleForUser(
     userId: string,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<RoomMemberRole>;
+  /**
+   * Create a timeline with a default configuration, i.e. a live timeline
+   * with read receipts and read marker tracking.
+   */
   timeline(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<TimelineInterface>;
   /**
-   * Returns a timeline focused on the given event.
-   *
-   * Note: this timeline is independent from that returned with
-   * [`Self::timeline`], and as such it is not cached.
+   * Build a new timeline instance with the given configuration.
    */
-  timelineFocusedOnEvent(
-    eventId: string,
-    numContextEvents: /*u16*/ number,
-    internalIdPrefix: string | undefined,
+  timelineWithConfiguration(
+    configuration: TimelineConfiguration,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<TimelineInterface>;
   topic(): string | undefined;
@@ -32252,8 +42542,39 @@ export interface RoomInterface {
     reason: string | undefined,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
+  /**
+   * Update the canonical alias of the room.
+   *
+   * Note that publishing the alias in the room directory is done separately.
+   */
+  updateCanonicalAlias(
+    alias: string | undefined,
+    altAliases: Array<string>,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Update room history visibility for this room.
+   */
+  updateHistoryVisibility(
+    visibility: RoomHistoryVisibility,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Update the join rule for this room.
+   */
+  updateJoinRules(
+    newRule: JoinRule,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
   updatePowerLevelsForUsers(
     updates: Array<UserPowerLevelUpdate>,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
+  /**
+   * Update the room's visibility in the room directory.
+   */
+  updateRoomVisibility(
+    visibility: RoomVisibility,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   /**
@@ -32990,6 +43311,44 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
   }
 
   /**
+   * Enable End-to-end encryption in this room.
+   */
+  public async enableEncryption(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_enable_encryption(
+            uniffiTypeRoomObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
    * Enable or disable the send queue for that particular room.
    */
   public enableSendQueue(enable: boolean): void {
@@ -33003,6 +43362,62 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
       },
       /*liftString:*/ FfiConverterString.lift
     );
+  }
+
+  public encryptionState(): EncryptionState {
+    return FfiConverterTypeEncryptionState.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_encryption_state(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Forget this room.
+   *
+   * This communicates to the homeserver that it should forget the room.
+   *
+   * Only left or banned-from rooms can be forgotten.
+   */
+  public async forget(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_forget(
+            uniffiTypeRoomObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   public async getPowerLevels(asyncOpts_?: {
@@ -33027,6 +43442,49 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
           .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
         /*liftFunc:*/ FfiConverterTypeRoomPowerLevels.lift.bind(
           FfiConverterTypeRoomPowerLevels
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Returns the visibility for this room in the room directory.
+   *
+   * [Public](`RoomVisibility::Public`) rooms are listed in the room
+   * directory and can be found using it.
+   */
+  public async getRoomVisibility(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<RoomVisibility> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_get_room_visibility(
+            uniffiTypeRoomObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterTypeRoomVisibility.lift.bind(
+          FfiConverterTypeRoomVisibility
         ),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
@@ -33238,12 +43696,11 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
   }
 
   /**
-   * For rooms one is invited to, retrieves the room member information for
-   * the user who invited the logged-in user to a room.
+   * Get the user who created the invite, if any.
    */
   public async inviter(asyncOpts_?: {
     signal: AbortSignal;
-  }): Promise<RoomMember | undefined> {
+  }): Promise<RoomMember | undefined> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
@@ -33265,6 +43722,41 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
           FfiConverterOptionalTypeRoomMember
         ),
         /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  public async isDirect(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<boolean> {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_direct(
+            uniffiTypeRoomObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
+        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
+        /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
       );
     } catch (__error: any) {
@@ -33275,35 +43767,42 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
-  public isDirect(): boolean {
-    return FfiConverterBool.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_direct(
-            uniffiTypeRoomObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  public isEncrypted(): boolean /*throws*/ {
-    return FfiConverterBool.lift(
-      uniffiCaller.rustCallWithError(
-        /*liftError:*/ FfiConverterTypeClientError.lift.bind(
-          FfiConverterTypeClientError
-        ),
-        /*caller:*/ (callStatus) => {
+  /**
+   * Checks whether the room is encrypted or not.
+   *
+   * **Note**: this info may not be reliable if you don't set up
+   * `m.room.encryption` as required state.
+   */
+  public async isEncrypted(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<boolean> {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_encrypted(
-            uniffiTypeRoomObjectFactory.clonePointer(this),
-            callStatus
+            uniffiTypeRoomObjectFactory.clonePointer(this)
           );
         },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
+        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   public isPublic(): boolean {
@@ -33343,20 +43842,6 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
       uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_space(
-            uniffiTypeRoomObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  public isTombstoned(): boolean {
-    return FfiConverterBool.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_is_tombstoned(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
@@ -33459,6 +43944,77 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
+  public async latestEncryptionState(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<EncryptionState> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_latest_encryption_state(
+            uniffiTypeRoomObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterTypeEncryptionState.lift.bind(
+          FfiConverterTypeEncryptionState
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  public async latestEvent(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<EventTimelineItem | undefined> {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_latest_event(
+            uniffiTypeRoomObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterOptionalTypeEventTimelineItem.lift.bind(
+          FfiConverterOptionalTypeEventTimelineItem
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
   /**
    * Leave this room.
    *
@@ -33543,7 +44099,7 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    * Mark a room as read, by attaching a read receipt on the latest event.
    *
    * Note: this does NOT unset the unread flag; it's the caller's
-   * responsibility to do so, if needs be.
+   * responsibility to do so, if need be.
    */
   public async markAsRead(
     receiptType: ReceiptType,
@@ -33771,6 +44327,55 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
+  /**
+   * Get the membership details for the current user.
+   *
+   * Returns:
+   * - If the user was present in the room, a
+   * [`matrix_sdk::room::RoomMemberWithSenderInfo`] containing both the
+   * user info and the member info of the sender of the `m.room.member`
+   * event.
+   * - If the current user is not present, an error.
+   */
+  public async memberWithSenderInfo(
+    userId: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<RoomMemberWithSenderInfo> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_member_with_sender_info(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterString.lower(userId)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterTypeRoomMemberWithSenderInfo.lift.bind(
+          FfiConverterTypeRoomMemberWithSenderInfo
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
   public async members(asyncOpts_?: {
     signal: AbortSignal;
   }): Promise<RoomMembersIteratorInterface> /*throws*/ {
@@ -33845,6 +44450,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
+  /**
+   * The room's current membership state.
+   */
   public membership(): Membership {
     return FfiConverterTypeMembership.lift(
       uniffiCaller.rustCall(
@@ -33857,67 +44465,6 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
         /*liftString:*/ FfiConverterString.lift
       )
     );
-  }
-
-  /**
-   * A timeline instance that can be configured to only include RoomMessage
-   * type events and filter those further based on their message type.
-   *
-   * Virtual timeline items will still be provided and the
-   * `default_event_filter` will be applied before everything else.
-   *
-   * # Arguments
-   *
-   * * `internal_id_prefix` - An optional String that will be prepended to
-   * all the timeline item's internal IDs, making it possible to
-   * distinguish different timeline instances from each other.
-   *
-   * * `allowed_message_types` - A list of `RoomMessageEventMessageType` that
-   * will be allowed to appear in the timeline
-   */
-  public async messageFilteredTimeline(
-    internalIdPrefix: string | undefined,
-    allowedMessageTypes: Array<RoomMessageEventMessageType>,
-    dateDividerMode: DateDividerMode,
-    asyncOpts_?: { signal: AbortSignal }
-  ): Promise<TimelineInterface> /*throws*/ {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_message_filtered_timeline(
-            uniffiTypeRoomObjectFactory.clonePointer(this),
-            FfiConverterOptionalString.lower(internalIdPrefix),
-            FfiConverterArrayTypeRoomMessageEventMessageType.lower(
-              allowedMessageTypes
-            ),
-            FfiConverterTypeDateDividerMode.lower(dateDividerMode)
-          );
-        },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
-        /*liftFunc:*/ FfiConverterTypeTimeline.lift.bind(
-          FfiConverterTypeTimeline
-        ),
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_,
-        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
-          FfiConverterTypeClientError
-        )
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
   }
 
   public ownUserId(): string {
@@ -33934,22 +44481,50 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     );
   }
 
-  public async pinnedEventsTimeline(
-    internalIdPrefix: string | undefined,
-    maxEventsToLoad: /*u16*/ number,
-    maxConcurrentRequests: /*u16*/ number,
+  /**
+   * If this room is the successor of a tombstoned room, return the
+   * “reference” to the predecessor room.
+   *
+   * A room is tombstoned if it has received a [`m.room.tombstone`] state
+   * event.
+   *
+   * To determine if a room is the successor of a tombstoned room, the
+   * [`m.room.create`] must have been received, **with** a `predecessor`
+   * field.
+   *
+   * [`m.room.tombstone`]: https://spec.matrix.org/v1.14/client-server-api/#mroomtombstone
+   * [`m.room.create`]: https://spec.matrix.org/v1.14/client-server-api/#mroomcreate
+   */
+  public predecessorRoom(): PredecessorRoom | undefined {
+    return FfiConverterOptionalTypePredecessorRoom.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_predecessor_room(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Builds a `RoomPreview` from a room list item. This is intended for
+   * invited, knocked or banned rooms.
+   */
+  public async previewRoom(
+    via: Array<string>,
     asyncOpts_?: { signal: AbortSignal }
-  ): Promise<TimelineInterface> /*throws*/ {
+  ): Promise<RoomPreviewInterface> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
         /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_pinned_events_timeline(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_preview_room(
             uniffiTypeRoomObjectFactory.clonePointer(this),
-            FfiConverterOptionalString.lower(internalIdPrefix),
-            FfiConverterUInt16.lower(maxEventsToLoad),
-            FfiConverterUInt16.lower(maxConcurrentRequests)
+            FfiConverterArrayString.lower(via)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -33960,9 +44535,54 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
           .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
         /*freeFunc:*/ nativeModule()
           .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
-        /*liftFunc:*/ FfiConverterTypeTimeline.lift.bind(
-          FfiConverterTypeTimeline
+        /*liftFunc:*/ FfiConverterTypeRoomPreview.lift.bind(
+          FfiConverterTypeRoomPreview
         ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Publish a new room alias for this room in the room directory.
+   *
+   * Returns:
+   * - `true` if the room alias didn't exist and it's now published.
+   * - `false` if the room alias was already present so it couldn't be
+   * published.
+   */
+  public async publishRoomAliasInRoomDirectory(
+    alias: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<boolean> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_publish_room_alias_in_room_directory(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterString.lower(alias)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
+        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
         /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
@@ -34082,6 +44702,51 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
   }
 
   /**
+   * Remove an existing room alias for this room in the room directory.
+   *
+   * Returns:
+   * - `true` if the room alias was present and it's now removed from the
+   * room directory.
+   * - `false` if the room alias didn't exist so it couldn't be removed.
+   */
+  public async removeRoomAliasFromRoomDirectory(
+    alias: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<boolean> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_remove_room_alias_from_room_directory(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterString.lower(alias)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
+        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
    * Reports an event from the room.
    *
    * # Arguments
@@ -34108,6 +44773,55 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterString.lower(eventId),
             FfiConverterOptionalInt32.lower(score),
+            FfiConverterOptionalString.lower(reason)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Reports a room as inappropriate to the server.
+   * The caller is not required to be joined to the room to report it.
+   *
+   * # Arguments
+   *
+   * * `reason` - The reason the room is being reported.
+   *
+   * # Errors
+   *
+   * Returns an error if the room is not found or on rate limit
+   */
+  public async reportRoom(
+    reason: string | undefined,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_report_room(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterOptionalString.lower(reason)
           );
         },
@@ -34356,10 +45070,15 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
    * It will configure the notify type: ring or notify based on:
    * - is this a DM room -> ring
    * - is this a group with more than one other member -> notify
+   *
+   * Returns:
+   * - `Ok(true)` if the event was successfully sent.
+   * - `Ok(false)` if we didn't send it because it was unnecessary.
+   * - `Err(_)` if sending the event failed.
    */
   public async sendCallNotificationIfNeeded(asyncOpts_?: {
     signal: AbortSignal;
-  }): Promise<void> /*throws*/ {
+  }): Promise<boolean> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
@@ -34367,6 +45086,46 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
         /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_send_call_notification_if_needed(
             uniffiTypeRoomObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
+        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Send the current users live location beacon in the room.
+   */
+  public async sendLiveLocation(
+    geoUri: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_send_live_location(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterString.lower(geoUri)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -34639,21 +45398,121 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
-  public subscribeToIdentityStatusChanges(
-    listener: IdentityStatusChangeListener
-  ): TaskHandleInterface {
-    return FfiConverterTypeTaskHandle.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_identity_status_changes(
+  /**
+   * Start the current users live location share in the room.
+   */
+  public async startLiveLocationShare(
+    durationMillis: /*u64*/ bigint,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_start_live_location_share(
             uniffiTypeRoomObjectFactory.clonePointer(this),
-            FfiConverterTypeIdentityStatusChangeListener.lower(listener),
-            callStatus
+            FfiConverterUInt64.lower(durationMillis)
           );
         },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Stop the current users live location share in the room.
+   */
+  public async stopLiveLocationShare(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_stop_live_location_share(
+            uniffiTypeRoomObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  public async subscribeToIdentityStatusChanges(
+    listener: IdentityStatusChangeListener,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<TaskHandleInterface> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_identity_status_changes(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterTypeIdentityStatusChangeListener.lower(listener)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
+        /*liftFunc:*/ FfiConverterTypeTaskHandle.lift.bind(
+          FfiConverterTypeTaskHandle
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   /**
@@ -34703,6 +45562,30 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
+  /**
+   * Subscribes to live location shares in this room, using a `listener` to
+   * be notified of the changes.
+   *
+   * The current live location shares will be emitted immediately when
+   * subscribing, along with a [`TaskHandle`] to cancel the subscription.
+   */
+  public subscribeToLiveLocationShares(
+    listener: LiveLocationShareListener
+  ): TaskHandleInterface {
+    return FfiConverterTypeTaskHandle.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_live_location_shares(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterTypeLiveLocationShareListener.lower(listener),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
   public subscribeToRoomInfoUpdates(
     listener: RoomInfoListener
   ): TaskHandleInterface {
@@ -34729,6 +45612,29 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_subscribe_to_typing_notifications(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterTypeTypingNotificationsListener.lower(listener),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * If this room is tombstoned, return the “reference” to the successor room
+   * —i.e. the room replacing this one.
+   *
+   * A room is tombstoned if it has received a [`m.room.tombstone`] state
+   * event.
+   *
+   * [`m.room.tombstone`]: https://spec.matrix.org/v1.14/client-server-api/#mroomtombstone
+   */
+  public successorRoom(): SuccessorRoom | undefined {
+    return FfiConverterOptionalTypeSuccessorRoom.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_successor_room(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
             callStatus
           );
         },
@@ -34776,6 +45682,10 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
+  /**
+   * Create a timeline with a default configuration, i.e. a live timeline
+   * with read receipts and read marker tracking.
+   */
   public async timeline(asyncOpts_?: {
     signal: AbortSignal;
   }): Promise<TimelineInterface> /*throws*/ {
@@ -34814,15 +45724,10 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
   }
 
   /**
-   * Returns a timeline focused on the given event.
-   *
-   * Note: this timeline is independent from that returned with
-   * [`Self::timeline`], and as such it is not cached.
+   * Build a new timeline instance with the given configuration.
    */
-  public async timelineFocusedOnEvent(
-    eventId: string,
-    numContextEvents: /*u16*/ number,
-    internalIdPrefix: string | undefined,
+  public async timelineWithConfiguration(
+    configuration: TimelineConfiguration,
     asyncOpts_?: { signal: AbortSignal }
   ): Promise<TimelineInterface> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
@@ -34830,11 +45735,9 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
       return await uniffiRustCallAsync(
         /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_timeline_focused_on_event(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_timeline_with_configuration(
             uniffiTypeRoomObjectFactory.clonePointer(this),
-            FfiConverterString.lower(eventId),
-            FfiConverterUInt16.lower(numContextEvents),
-            FfiConverterOptionalString.lower(internalIdPrefix)
+            FfiConverterTypeTimelineConfiguration.lower(configuration)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -34850,8 +45753,8 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
         ),
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_,
-        /*errorHandler:*/ FfiConverterTypeFocusEventError.lift.bind(
-          FfiConverterTypeFocusEventError
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
         )
       );
     } catch (__error: any) {
@@ -34952,6 +45855,130 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
     }
   }
 
+  /**
+   * Update the canonical alias of the room.
+   *
+   * Note that publishing the alias in the room directory is done separately.
+   */
+  public async updateCanonicalAlias(
+    alias: string | undefined,
+    altAliases: Array<string>,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_update_canonical_alias(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterOptionalString.lower(alias),
+            FfiConverterArrayString.lower(altAliases)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Update room history visibility for this room.
+   */
+  public async updateHistoryVisibility(
+    visibility: RoomHistoryVisibility,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_update_history_visibility(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterTypeRoomHistoryVisibility.lower(visibility)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Update the join rule for this room.
+   */
+  public async updateJoinRules(
+    newRule: JoinRule,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_update_join_rules(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterTypeJoinRule.lower(newRule)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
   public async updatePowerLevelsForUsers(
     updates: Array<UserPowerLevelUpdate>,
     asyncOpts_?: { signal: AbortSignal }
@@ -34964,6 +45991,46 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_update_power_levels_for_users(
             uniffiTypeRoomObjectFactory.clonePointer(this),
             FfiConverterArrayTypeUserPowerLevelUpdate.lower(updates)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Update the room's visibility in the room directory.
+   */
+  public async updateRoomVisibility(
+    visibility: RoomVisibility,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_room_update_room_visibility(
+            uniffiTypeRoomObjectFactory.clonePointer(this),
+            FfiConverterTypeRoomVisibility.lower(visibility)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -35553,7 +46620,7 @@ export interface RoomListInterface {
   loadingState(
     listener: RoomListLoadingStateListener
   ) /*throws*/ : RoomListLoadingStateResult;
-  room(roomId: string) /*throws*/ : RoomListItemInterface;
+  room(roomId: string) /*throws*/ : RoomInterface;
 }
 
 export class RoomList
@@ -35610,8 +46677,8 @@ export class RoomList
     );
   }
 
-  public room(roomId: string): RoomListItemInterface /*throws*/ {
-    return FfiConverterTypeRoomListItem.lift(
+  public room(roomId: string): RoomInterface /*throws*/ {
+    return FfiConverterTypeRoom.lift(
       uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
           FfiConverterTypeRoomListError
@@ -36036,550 +47103,11 @@ const FfiConverterTypeRoomListEntriesWithDynamicAdaptersResult =
     uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory
   );
 
-export interface RoomListItemInterface {
-  avatarUrl(): string | undefined;
-  canonicalAlias(): string | undefined;
-  /**
-   * Returns the room's name from the state event if available, otherwise
-   * compute a room name based on the room's nature (DM or not) and number of
-   * members.
-   */
-  displayName(): string | undefined;
-  /**
-   * Build a full `Room` FFI object, filling its associated timeline.
-   *
-   * An error will be returned if the room is a state different than joined
-   * or if its internal timeline hasn't been initialized.
-   */
-  fullRoom() /*throws*/ : RoomInterface;
-  id(): string;
-  /**
-   * Initializes the timeline for this room using the provided parameters.
-   *
-   * * `event_type_filter` - An optional [`TimelineEventTypeFilter`] to be
-   * used to filter timeline events besides the default timeline filter. If
-   * `None` is passed, only the default timeline filter will be used.
-   * * `internal_id_prefix` - An optional String that will be prepended to
-   * all the timeline item's internal IDs, making it possible to
-   * distinguish different timeline instances from each other.
-   */
-  initTimeline(
-    eventTypeFilter: TimelineEventTypeFilterInterface | undefined,
-    internalIdPrefix: string | undefined,
-    asyncOpts_?: { signal: AbortSignal }
-  ) /*throws*/ : Promise<void>;
-  /**
-   * Builds a `Room` FFI from an invited room without initializing its
-   * internal timeline.
-   *
-   * An error will be returned if the room is a state different than invited.
-   *
-   * ⚠️ Holding on to this room instance after it has been joined is not
-   * safe. Use `full_room` instead.
-   */
-  invitedRoom() /*throws*/ : RoomInterface;
-  isDirect(): boolean;
-  /**
-   * Checks whether the room is encrypted or not.
-   *
-   * **Note**: this info may not be reliable if you don't set up
-   * `m.room.encryption` as required state.
-   */
-  isEncrypted(asyncOpts_?: { signal: AbortSignal }): Promise<boolean>;
-  /**
-   * Checks whether the Room's timeline has been initialized before.
-   */
-  isTimelineInitialized(): boolean;
-  latestEvent(asyncOpts_?: {
-    signal: AbortSignal;
-  }): Promise<EventTimelineItem | undefined>;
-  /**
-   * The room's current membership state.
-   */
-  membership(): Membership;
-  /**
-   * Builds a `RoomPreview` from a room list item. This is intended for
-   * invited or knocked rooms.
-   *
-   * An error will be returned if the room is in a state other than invited
-   * or knocked.
-   */
-  previewRoom(
-    via: Array<string>,
-    asyncOpts_?: { signal: AbortSignal }
-  ) /*throws*/ : Promise<RoomPreviewInterface>;
-  roomInfo(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<RoomInfo>;
-}
-
-export class RoomListItem
-  extends UniffiAbstractObject
-  implements RoomListItemInterface
-{
-  readonly [uniffiTypeNameSymbol] = 'RoomListItem';
-  readonly [destructorGuardSymbol]: UniffiRustArcPtr;
-  readonly [pointerLiteralSymbol]: UnsafeMutableRawPointer;
-  // No primary constructor declared for this class.
-  private constructor(pointer: UnsafeMutableRawPointer) {
-    super();
-    this[pointerLiteralSymbol] = pointer;
-    this[destructorGuardSymbol] =
-      uniffiTypeRoomListItemObjectFactory.bless(pointer);
-  }
-
-  public avatarUrl(): string | undefined {
-    return FfiConverterOptionalString.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_avatar_url(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  public canonicalAlias(): string | undefined {
-    return FfiConverterOptionalString.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_canonical_alias(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  /**
-   * Returns the room's name from the state event if available, otherwise
-   * compute a room name based on the room's nature (DM or not) and number of
-   * members.
-   */
-  public displayName(): string | undefined {
-    return FfiConverterOptionalString.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_display_name(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  /**
-   * Build a full `Room` FFI object, filling its associated timeline.
-   *
-   * An error will be returned if the room is a state different than joined
-   * or if its internal timeline hasn't been initialized.
-   */
-  public fullRoom(): RoomInterface /*throws*/ {
-    return FfiConverterTypeRoom.lift(
-      uniffiCaller.rustCallWithError(
-        /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
-          FfiConverterTypeRoomListError
-        ),
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_full_room(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  public id(): string {
-    return FfiConverterString.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_id(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  /**
-   * Initializes the timeline for this room using the provided parameters.
-   *
-   * * `event_type_filter` - An optional [`TimelineEventTypeFilter`] to be
-   * used to filter timeline events besides the default timeline filter. If
-   * `None` is passed, only the default timeline filter will be used.
-   * * `internal_id_prefix` - An optional String that will be prepended to
-   * all the timeline item's internal IDs, making it possible to
-   * distinguish different timeline instances from each other.
-   */
-  public async initTimeline(
-    eventTypeFilter: TimelineEventTypeFilterInterface | undefined,
-    internalIdPrefix: string | undefined,
-    asyncOpts_?: { signal: AbortSignal }
-  ): Promise<void> /*throws*/ {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_init_timeline(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            FfiConverterOptionalTypeTimelineEventTypeFilter.lower(
-              eventTypeFilter
-            ),
-            FfiConverterOptionalString.lower(internalIdPrefix)
-          );
-        },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
-        /*liftFunc:*/ (_v) => {},
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_,
-        /*errorHandler:*/ FfiConverterTypeRoomListError.lift.bind(
-          FfiConverterTypeRoomListError
-        )
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
-  }
-
-  /**
-   * Builds a `Room` FFI from an invited room without initializing its
-   * internal timeline.
-   *
-   * An error will be returned if the room is a state different than invited.
-   *
-   * ⚠️ Holding on to this room instance after it has been joined is not
-   * safe. Use `full_room` instead.
-   */
-  public invitedRoom(): RoomInterface /*throws*/ {
-    return FfiConverterTypeRoom.lift(
-      uniffiCaller.rustCallWithError(
-        /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
-          FfiConverterTypeRoomListError
-        ),
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_invited_room(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  public isDirect(): boolean {
-    return FfiConverterBool.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_direct(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  /**
-   * Checks whether the room is encrypted or not.
-   *
-   * **Note**: this info may not be reliable if you don't set up
-   * `m.room.encryption` as required state.
-   */
-  public async isEncrypted(asyncOpts_?: {
-    signal: AbortSignal;
-  }): Promise<boolean> {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_encrypted(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this)
-          );
-        },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
-        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
-  }
-
-  /**
-   * Checks whether the Room's timeline has been initialized before.
-   */
-  public isTimelineInitialized(): boolean {
-    return FfiConverterBool.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_is_timeline_initialized(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  public async latestEvent(asyncOpts_?: {
-    signal: AbortSignal;
-  }): Promise<EventTimelineItem | undefined> {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_latest_event(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this)
-          );
-        },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
-        /*liftFunc:*/ FfiConverterOptionalTypeEventTimelineItem.lift.bind(
-          FfiConverterOptionalTypeEventTimelineItem
-        ),
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
-  }
-
-  /**
-   * The room's current membership state.
-   */
-  public membership(): Membership {
-    return FfiConverterTypeMembership.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_membership(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            callStatus
-          );
-        },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
-  }
-
-  /**
-   * Builds a `RoomPreview` from a room list item. This is intended for
-   * invited or knocked rooms.
-   *
-   * An error will be returned if the room is in a state other than invited
-   * or knocked.
-   */
-  public async previewRoom(
-    via: Array<string>,
-    asyncOpts_?: { signal: AbortSignal }
-  ): Promise<RoomPreviewInterface> /*throws*/ {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_preview_room(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this),
-            FfiConverterArrayString.lower(via)
-          );
-        },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
-        /*liftFunc:*/ FfiConverterTypeRoomPreview.lift.bind(
-          FfiConverterTypeRoomPreview
-        ),
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_,
-        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
-          FfiConverterTypeClientError
-        )
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
-  }
-
-  public async roomInfo(asyncOpts_?: {
-    signal: AbortSignal;
-  }): Promise<RoomInfo> /*throws*/ {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roomlistitem_room_info(
-            uniffiTypeRoomListItemObjectFactory.clonePointer(this)
-          );
-        },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
-        /*liftFunc:*/ FfiConverterTypeRoomInfo.lift.bind(
-          FfiConverterTypeRoomInfo
-        ),
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_,
-        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
-          FfiConverterTypeClientError
-        )
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
-  }
-
-  /**
-   * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
-   */
-  uniffiDestroy(): void {
-    const ptr = (this as any)[destructorGuardSymbol];
-    if (ptr !== undefined) {
-      const pointer = uniffiTypeRoomListItemObjectFactory.pointer(this);
-      uniffiTypeRoomListItemObjectFactory.freePointer(pointer);
-      uniffiTypeRoomListItemObjectFactory.unbless(ptr);
-      delete (this as any)[destructorGuardSymbol];
-    }
-  }
-
-  static instanceOf(obj: any): obj is RoomListItem {
-    return uniffiTypeRoomListItemObjectFactory.isConcreteType(obj);
-  }
-}
-
-const uniffiTypeRoomListItemObjectFactory: UniffiObjectFactory<RoomListItemInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): RoomListItemInterface {
-      const instance = Object.create(RoomListItem.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'RoomListItem';
-      return instance;
-    },
-
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roomlistitem_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
-
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
-
-    pointer(obj: RoomListItemInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
-
-    clonePointer(obj: RoomListItemInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistitem(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
-
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistitem(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
-
-    isConcreteType(obj: any): obj is RoomListItemInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'RoomListItem'
-      );
-    },
-  };
-// FfiConverter for RoomListItemInterface
-const FfiConverterTypeRoomListItem = new FfiConverterObject(
-  uniffiTypeRoomListItemObjectFactory
-);
-
 export interface RoomListServiceInterface {
   allRooms(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<RoomListInterface>;
-  room(roomId: string) /*throws*/ : RoomListItemInterface;
+  room(roomId: string) /*throws*/ : RoomInterface;
   state(listener: RoomListServiceStateListener): TaskHandleInterface;
   subscribeToRooms(roomIds: Array<string>) /*throws*/ : void;
   syncIndicator(
@@ -36641,8 +47169,8 @@ export class RoomListService
     }
   }
 
-  public room(roomId: string): RoomListItemInterface /*throws*/ {
-    return FfiConverterTypeRoomListItem.lift(
+  public room(roomId: string): RoomInterface /*throws*/ {
+    return FfiConverterTypeRoom.lift(
       uniffiCaller.rustCallWithError(
         /*liftError:*/ FfiConverterTypeRoomListError.lift.bind(
           FfiConverterTypeRoomListError
@@ -37085,6 +47613,10 @@ const FfiConverterTypeRoomMessageEventContentWithoutRelation =
  */
 export interface RoomPreviewInterface {
   /**
+   * Forget the room if we had access to it, and it was left or banned.
+   */
+  forget(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
+  /**
    * Returns the room info the preview contains.
    */
   info() /*throws*/ : RoomPreviewInfo;
@@ -37098,9 +47630,18 @@ export interface RoomPreviewInterface {
    * Leave the room if the room preview state is either joined, invited or
    * knocked.
    *
+   * If rejecting an invite then also forget it as an extra layer of
+   * protection against spam attacks.
+   *
    * Will return an error otherwise.
    */
   leave(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
+  /**
+   * Get the membership details for the current user.
+   */
+  ownMembershipDetails(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<RoomMemberWithSenderInfo | undefined>;
 }
 
 /**
@@ -37120,6 +47661,44 @@ export class RoomPreview
     this[pointerLiteralSymbol] = pointer;
     this[destructorGuardSymbol] =
       uniffiTypeRoomPreviewObjectFactory.bless(pointer);
+  }
+
+  /**
+   * Forget the room if we had access to it, and it was left or banned.
+   */
+  public async forget(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roompreview_forget(
+            uniffiTypeRoomPreviewObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   /**
@@ -37183,6 +47762,9 @@ export class RoomPreview
    * Leave the room if the room preview state is either joined, invited or
    * knocked.
    *
+   * If rejecting an invite then also forget it as an extra layer of
+   * protection against spam attacks.
+   *
    * Will return an error otherwise.
    */
   public async leave(asyncOpts_?: {
@@ -37211,6 +47793,43 @@ export class RoomPreview
         /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
           FfiConverterTypeClientError
         )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Get the membership details for the current user.
+   */
+  public async ownMembershipDetails(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<RoomMemberWithSenderInfo | undefined> {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_roompreview_own_membership_details(
+            uniffiTypeRoomPreviewObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterOptionalTypeRoomMemberWithSenderInfo.lift.bind(
+          FfiConverterOptionalTypeRoomMemberWithSenderInfo
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_
       );
     } catch (__error: any) {
       if (uniffiIsDebug && __error instanceof Error) {
@@ -37482,6 +48101,179 @@ const FfiConverterTypeSendAttachmentJoinHandle = new FfiConverterObject(
   uniffiTypeSendAttachmentJoinHandleObjectFactory
 );
 
+export interface SendGalleryJoinHandleInterface {
+  /**
+   * Cancel the current sending task.
+   *
+   * A subsequent call to [`Self::join`] will return immediately.
+   */
+  cancel(): void;
+  /**
+   * Wait until the gallery has been sent.
+   *
+   * If the sending had been cancelled, will return immediately.
+   */
+  join(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
+}
+
+export class SendGalleryJoinHandle
+  extends UniffiAbstractObject
+  implements SendGalleryJoinHandleInterface
+{
+  readonly [uniffiTypeNameSymbol] = 'SendGalleryJoinHandle';
+  readonly [destructorGuardSymbol]: UniffiRustArcPtr;
+  readonly [pointerLiteralSymbol]: UnsafeMutableRawPointer;
+  // No primary constructor declared for this class.
+  private constructor(pointer: UnsafeMutableRawPointer) {
+    super();
+    this[pointerLiteralSymbol] = pointer;
+    this[destructorGuardSymbol] =
+      uniffiTypeSendGalleryJoinHandleObjectFactory.bless(pointer);
+  }
+
+  /**
+   * Cancel the current sending task.
+   *
+   * A subsequent call to [`Self::join`] will return immediately.
+   */
+  public cancel(): void {
+    uniffiCaller.rustCall(
+      /*caller:*/ (callStatus) => {
+        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sendgalleryjoinhandle_cancel(
+          uniffiTypeSendGalleryJoinHandleObjectFactory.clonePointer(this),
+          callStatus
+        );
+      },
+      /*liftString:*/ FfiConverterString.lift
+    );
+  }
+
+  /**
+   * Wait until the gallery has been sent.
+   *
+   * If the sending had been cancelled, will return immediately.
+   */
+  public async join(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sendgalleryjoinhandle_join(
+            uniffiTypeSendGalleryJoinHandleObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeRoomError.lift.bind(
+          FfiConverterTypeRoomError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
+   */
+  uniffiDestroy(): void {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
+      const pointer =
+        uniffiTypeSendGalleryJoinHandleObjectFactory.pointer(this);
+      uniffiTypeSendGalleryJoinHandleObjectFactory.freePointer(pointer);
+      uniffiTypeSendGalleryJoinHandleObjectFactory.unbless(ptr);
+      delete (this as any)[destructorGuardSymbol];
+    }
+  }
+
+  static instanceOf(obj: any): obj is SendGalleryJoinHandle {
+    return uniffiTypeSendGalleryJoinHandleObjectFactory.isConcreteType(obj);
+  }
+}
+
+const uniffiTypeSendGalleryJoinHandleObjectFactory: UniffiObjectFactory<SendGalleryJoinHandleInterface> =
+  {
+    create(pointer: UnsafeMutableRawPointer): SendGalleryJoinHandleInterface {
+      const instance = Object.create(SendGalleryJoinHandle.prototype);
+      instance[pointerLiteralSymbol] = pointer;
+      instance[destructorGuardSymbol] = this.bless(pointer);
+      instance[uniffiTypeNameSymbol] = 'SendGalleryJoinHandle';
+      return instance;
+    },
+
+    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+      return uniffiCaller.rustCall(
+        /*caller:*/ (status) =>
+          nativeModule().ubrn_uniffi_internal_fn_method_sendgalleryjoinhandle_ffi__bless_pointer(
+            p,
+            status
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
+    },
+
+    pointer(obj: SendGalleryJoinHandleInterface): UnsafeMutableRawPointer {
+      if ((obj as any)[destructorGuardSymbol] === undefined) {
+        throw new UniffiInternalError.UnexpectedNullPointer();
+      }
+      return (obj as any)[pointerLiteralSymbol];
+    },
+
+    clonePointer(obj: SendGalleryJoinHandleInterface): UnsafeMutableRawPointer {
+      const pointer = this.pointer(obj);
+      return uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendgalleryjoinhandle(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    freePointer(pointer: UnsafeMutableRawPointer): void {
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendgalleryjoinhandle(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    isConcreteType(obj: any): obj is SendGalleryJoinHandleInterface {
+      return (
+        obj[destructorGuardSymbol] &&
+        obj[uniffiTypeNameSymbol] === 'SendGalleryJoinHandle'
+      );
+    },
+  };
+// FfiConverter for SendGalleryJoinHandleInterface
+const FfiConverterTypeSendGalleryJoinHandle = new FfiConverterObject(
+  uniffiTypeSendGalleryJoinHandleObjectFactory
+);
+
 /**
  * A handle to perform actions onto a local echo.
  */
@@ -37749,9 +48541,16 @@ export interface SessionVerificationControllerInterface {
   /**
    * Request verification for the current device
    */
-  requestVerification(asyncOpts_?: {
+  requestDeviceVerification(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<void>;
+  /**
+   * Request verification for the given user
+   */
+  requestUserVerification(
+    userId: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
   setDelegate(
     delegate: SessionVerificationControllerDelegate | undefined
   ): void;
@@ -37989,7 +48788,7 @@ export class SessionVerificationController
   /**
    * Request verification for the current device
    */
-  public async requestVerification(asyncOpts_?: {
+  public async requestDeviceVerification(asyncOpts_?: {
     signal: AbortSignal;
   }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
@@ -37997,10 +48796,52 @@ export class SessionVerificationController
       return await uniffiRustCallAsync(
         /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_request_verification(
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_request_device_verification(
             uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
               this
             )
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Request verification for the given user
+   */
+  public async requestUserVerification(
+    userId: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sessionverificationcontroller_request_user_verification(
+            uniffiTypeSessionVerificationControllerObjectFactory.clonePointer(
+              this
+            ),
+            FfiConverterString.lower(userId)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -38695,7 +49536,7 @@ export interface SyncServiceInterface {
   roomListService(): RoomListServiceInterface;
   start(asyncOpts_?: { signal: AbortSignal }): Promise<void>;
   state(listener: SyncServiceStateObserver): TaskHandleInterface;
-  stop(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
+  stop(asyncOpts_?: { signal: AbortSignal }): Promise<void>;
 }
 
 export class SyncService
@@ -38772,9 +49613,7 @@ export class SyncService
     );
   }
 
-  public async stop(asyncOpts_?: {
-    signal: AbortSignal;
-  }): Promise<void> /*throws*/ {
+  public async stop(asyncOpts_?: { signal: AbortSignal }): Promise<void> {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
       return await uniffiRustCallAsync(
@@ -38794,10 +49633,7 @@ export class SyncService
           .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_,
-        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
-          FfiConverterTypeClientError
-        )
+        /*asyncOpts:*/ asyncOpts_
       );
     } catch (__error: any) {
       if (uniffiIsDebug && __error instanceof Error) {
@@ -38897,10 +49733,10 @@ export interface SyncServiceBuilderInterface {
     signal: AbortSignal;
   }) /*throws*/ : Promise<SyncServiceInterface>;
   withCrossProcessLock(): SyncServiceBuilderInterface;
-  withUtdHook(
-    delegate: UnableToDecryptDelegate,
-    asyncOpts_?: { signal: AbortSignal }
-  ): Promise<SyncServiceBuilderInterface>;
+  /**
+   * Enable the "offline" mode for the [`SyncService`].
+   */
+  withOfflineMode(): SyncServiceBuilderInterface;
 }
 
 export class SyncServiceBuilder
@@ -38969,40 +49805,21 @@ export class SyncServiceBuilder
     );
   }
 
-  public async withUtdHook(
-    delegate: UnableToDecryptDelegate,
-    asyncOpts_?: { signal: AbortSignal }
-  ): Promise<SyncServiceBuilderInterface> {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_utd_hook(
+  /**
+   * Enable the "offline" mode for the [`SyncService`].
+   */
+  public withOfflineMode(): SyncServiceBuilderInterface {
+    return FfiConverterTypeSyncServiceBuilder.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_offline_mode(
             uniffiTypeSyncServiceBuilderObjectFactory.clonePointer(this),
-            FfiConverterTypeUnableToDecryptDelegate.lower(delegate)
+            callStatus
           );
         },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_pointer,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_pointer,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_pointer,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_pointer,
-        /*liftFunc:*/ FfiConverterTypeSyncServiceBuilder.lift.bind(
-          FfiConverterTypeSyncServiceBuilder
-        ),
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
   }
 
   /**
@@ -39238,6 +50055,124 @@ const FfiConverterTypeTaskHandle = new FfiConverterObject(
   uniffiTypeTaskHandleObjectFactory
 );
 
+export interface ThreadSummaryInterface {
+  latestEvent(): EmbeddedEventDetails;
+}
+
+export class ThreadSummary
+  extends UniffiAbstractObject
+  implements ThreadSummaryInterface
+{
+  readonly [uniffiTypeNameSymbol] = 'ThreadSummary';
+  readonly [destructorGuardSymbol]: UniffiRustArcPtr;
+  readonly [pointerLiteralSymbol]: UnsafeMutableRawPointer;
+  // No primary constructor declared for this class.
+  private constructor(pointer: UnsafeMutableRawPointer) {
+    super();
+    this[pointerLiteralSymbol] = pointer;
+    this[destructorGuardSymbol] =
+      uniffiTypeThreadSummaryObjectFactory.bless(pointer);
+  }
+
+  public latestEvent(): EmbeddedEventDetails {
+    return FfiConverterTypeEmbeddedEventDetails.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_threadsummary_latest_event(
+            uniffiTypeThreadSummaryObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
+   */
+  uniffiDestroy(): void {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
+      const pointer = uniffiTypeThreadSummaryObjectFactory.pointer(this);
+      uniffiTypeThreadSummaryObjectFactory.freePointer(pointer);
+      uniffiTypeThreadSummaryObjectFactory.unbless(ptr);
+      delete (this as any)[destructorGuardSymbol];
+    }
+  }
+
+  static instanceOf(obj: any): obj is ThreadSummary {
+    return uniffiTypeThreadSummaryObjectFactory.isConcreteType(obj);
+  }
+}
+
+const uniffiTypeThreadSummaryObjectFactory: UniffiObjectFactory<ThreadSummaryInterface> =
+  {
+    create(pointer: UnsafeMutableRawPointer): ThreadSummaryInterface {
+      const instance = Object.create(ThreadSummary.prototype);
+      instance[pointerLiteralSymbol] = pointer;
+      instance[destructorGuardSymbol] = this.bless(pointer);
+      instance[uniffiTypeNameSymbol] = 'ThreadSummary';
+      return instance;
+    },
+
+    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+      return uniffiCaller.rustCall(
+        /*caller:*/ (status) =>
+          nativeModule().ubrn_uniffi_internal_fn_method_threadsummary_ffi__bless_pointer(
+            p,
+            status
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
+    },
+
+    pointer(obj: ThreadSummaryInterface): UnsafeMutableRawPointer {
+      if ((obj as any)[destructorGuardSymbol] === undefined) {
+        throw new UniffiInternalError.UnexpectedNullPointer();
+      }
+      return (obj as any)[pointerLiteralSymbol];
+    },
+
+    clonePointer(obj: ThreadSummaryInterface): UnsafeMutableRawPointer {
+      const pointer = this.pointer(obj);
+      return uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_threadsummary(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    freePointer(pointer: UnsafeMutableRawPointer): void {
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_threadsummary(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
+
+    isConcreteType(obj: any): obj is ThreadSummaryInterface {
+      return (
+        obj[destructorGuardSymbol] &&
+        obj[uniffiTypeNameSymbol] === 'ThreadSummary'
+      );
+    },
+  };
+// FfiConverter for ThreadSummaryInterface
+const FfiConverterTypeThreadSummary = new FfiConverterObject(
+  uniffiTypeThreadSummaryObjectFactory
+);
+
 export interface TimelineInterface {
   addListener(
     listener: TimelineListener,
@@ -39268,21 +50203,16 @@ export interface TimelineInterface {
     newContent: EditedContent,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
-  endPoll(pollStartEventId: string, text: string) /*throws*/ : void;
+  endPoll(
+    pollStartEventId: string,
+    text: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<void>;
   fetchDetailsForEvent(
     eventId: string,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   fetchMembers(asyncOpts_?: { signal: AbortSignal }): Promise<void>;
-  /**
-   * Paginate forwards, when in focused mode.
-   *
-   * Returns whether we hit the end of the timeline or not.
-   */
-  focusedPaginateForwards(
-    numEvents: /*u16*/ number,
-    asyncOpts_?: { signal: AbortSignal }
-  ) /*throws*/ : Promise<boolean>;
   /**
    * Get the current timeline item for the given event ID, if any.
    *
@@ -39322,9 +50252,18 @@ export interface TimelineInterface {
   /**
    * Paginate backwards, whether we are in focused mode or in live mode.
    *
-   * Returns whether we hit the end of the timeline or not.
+   * Returns whether we hit the start of the timeline or not.
    */
   paginateBackwards(
+    numEvents: /*u16*/ number,
+    asyncOpts_?: { signal: AbortSignal }
+  ) /*throws*/ : Promise<boolean>;
+  /**
+   * Paginate forwards, whether we are in focused mode or in live mode.
+   *
+   * Returns whether we hit the end of the timeline or not.
+   */
+  paginateForwards(
     numEvents: /*u16*/ number,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<boolean>;
@@ -39368,30 +50307,25 @@ export interface TimelineInterface {
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<SendHandleInterface>;
   sendAudio(
-    url: string,
+    params: UploadParameters,
     audioInfo: AudioInfo,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface;
+    progressWatcher: ProgressWatcher | undefined
+  ) /*throws*/ : SendAttachmentJoinHandleInterface;
   sendFile(
-    url: string,
+    params: UploadParameters,
     fileInfo: FileInfo,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface;
+    progressWatcher: ProgressWatcher | undefined
+  ) /*throws*/ : SendAttachmentJoinHandleInterface;
+  sendGallery(
+    params: GalleryUploadParameters,
+    itemInfos: Array<GalleryItemInfo>
+  ) /*throws*/ : SendGalleryJoinHandleInterface;
   sendImage(
-    url: string,
-    thumbnailUrl: string | undefined,
+    params: UploadParameters,
+    thumbnailPath: string | undefined,
     imageInfo: ImageInfo,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface;
+    progressWatcher: ProgressWatcher | undefined
+  ) /*throws*/ : SendAttachmentJoinHandleInterface;
   sendLocation(
     body: string,
     geoUri: string,
@@ -39410,29 +50344,30 @@ export interface TimelineInterface {
     eventId: string,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
+  /**
+   * Send a reply.
+   *
+   * If the replied to event has a thread relation, it is forwarded on the
+   * reply so that clients that support threads can render the reply
+   * inside the thread.
+   */
   sendReply(
     msg: RoomMessageEventContentWithoutRelationInterface,
-    eventId: string,
+    replyParams: ReplyParameters,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   sendVideo(
-    url: string,
-    thumbnailUrl: string | undefined,
+    params: UploadParameters,
+    thumbnailPath: string | undefined,
     videoInfo: VideoInfo,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface;
+    progressWatcher: ProgressWatcher | undefined
+  ) /*throws*/ : SendAttachmentJoinHandleInterface;
   sendVoiceMessage(
-    url: string,
+    params: UploadParameters,
     audioInfo: AudioInfo,
     waveform: Array</*u16*/ number>,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface;
+    progressWatcher: ProgressWatcher | undefined
+  ) /*throws*/ : SendAttachmentJoinHandleInterface;
   subscribeToBackPaginationStatus(
     listener: PaginationStatusListener,
     asyncOpts_?: { signal: AbortSignal }
@@ -39628,21 +50563,43 @@ export class Timeline
     }
   }
 
-  public endPoll(pollStartEventId: string, text: string): void /*throws*/ {
-    uniffiCaller.rustCallWithError(
-      /*liftError:*/ FfiConverterTypeClientError.lift.bind(
-        FfiConverterTypeClientError
-      ),
-      /*caller:*/ (callStatus) => {
-        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_end_poll(
-          uniffiTypeTimelineObjectFactory.clonePointer(this),
-          FfiConverterString.lower(pollStartEventId),
-          FfiConverterString.lower(text),
-          callStatus
-        );
-      },
-      /*liftString:*/ FfiConverterString.lift
-    );
+  public async endPoll(
+    pollStartEventId: string,
+    text: string,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_end_poll(
+            uniffiTypeTimelineObjectFactory.clonePointer(this),
+            FfiConverterString.lower(pollStartEventId),
+            FfiConverterString.lower(text)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   public async fetchDetailsForEvent(
@@ -39705,48 +50662,6 @@ export class Timeline
         /*liftFunc:*/ (_v) => {},
         /*liftString:*/ FfiConverterString.lift,
         /*asyncOpts:*/ asyncOpts_
-      );
-    } catch (__error: any) {
-      if (uniffiIsDebug && __error instanceof Error) {
-        __error.stack = __stack;
-      }
-      throw __error;
-    }
-  }
-
-  /**
-   * Paginate forwards, when in focused mode.
-   *
-   * Returns whether we hit the end of the timeline or not.
-   */
-  public async focusedPaginateForwards(
-    numEvents: /*u16*/ number,
-    asyncOpts_?: { signal: AbortSignal }
-  ): Promise<boolean> /*throws*/ {
-    const __stack = uniffiIsDebug ? new Error().stack : undefined;
-    try {
-      return await uniffiRustCallAsync(
-        /*rustCaller:*/ uniffiCaller,
-        /*rustFutureFunc:*/ () => {
-          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_focused_paginate_forwards(
-            uniffiTypeTimelineObjectFactory.clonePointer(this),
-            FfiConverterUInt16.lower(numEvents)
-          );
-        },
-        /*pollFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
-        /*cancelFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
-        /*completeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
-        /*freeFunc:*/ nativeModule()
-          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
-        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
-        /*liftString:*/ FfiConverterString.lift,
-        /*asyncOpts:*/ asyncOpts_,
-        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
-          FfiConverterTypeClientError
-        )
       );
     } catch (__error: any) {
       if (uniffiIsDebug && __error instanceof Error) {
@@ -39898,7 +50813,7 @@ export class Timeline
   /**
    * Paginate backwards, whether we are in focused mode or in live mode.
    *
-   * Returns whether we hit the end of the timeline or not.
+   * Returns whether we hit the start of the timeline or not.
    */
   public async paginateBackwards(
     numEvents: /*u16*/ number,
@@ -39910,6 +50825,48 @@ export class Timeline
         /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_paginate_backwards(
+            uniffiTypeTimelineObjectFactory.clonePointer(this),
+            FfiConverterUInt16.lower(numEvents)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_i8,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_i8,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_i8,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_i8,
+        /*liftFunc:*/ FfiConverterBool.lift.bind(FfiConverterBool),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Paginate forwards, whether we are in focused mode or in live mode.
+   *
+   * Returns whether we hit the end of the timeline or not.
+   */
+  public async paginateForwards(
+    numEvents: /*u16*/ number,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<boolean> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_paginate_forwards(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterUInt16.lower(numEvents)
           );
@@ -40091,24 +51048,21 @@ export class Timeline
   }
 
   public sendAudio(
-    url: string,
+    params: UploadParameters,
     audioInfo: AudioInfo,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface {
+    progressWatcher: ProgressWatcher | undefined
+  ): SendAttachmentJoinHandleInterface /*throws*/ {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      uniffiCaller.rustCall(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeRoomError.lift.bind(
+          FfiConverterTypeRoomError
+        ),
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_audio(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
-            FfiConverterString.lower(url),
+            FfiConverterTypeUploadParameters.lower(params),
             FfiConverterTypeAudioInfo.lower(audioInfo),
-            FfiConverterOptionalString.lower(caption),
-            FfiConverterOptionalTypeFormattedBody.lower(formattedCaption),
             FfiConverterOptionalTypeProgressWatcher.lower(progressWatcher),
-            FfiConverterBool.lower(useSendQueue),
             callStatus
           );
         },
@@ -40118,24 +51072,43 @@ export class Timeline
   }
 
   public sendFile(
-    url: string,
+    params: UploadParameters,
     fileInfo: FileInfo,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface {
+    progressWatcher: ProgressWatcher | undefined
+  ): SendAttachmentJoinHandleInterface /*throws*/ {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      uniffiCaller.rustCall(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeRoomError.lift.bind(
+          FfiConverterTypeRoomError
+        ),
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_file(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
-            FfiConverterString.lower(url),
+            FfiConverterTypeUploadParameters.lower(params),
             FfiConverterTypeFileInfo.lower(fileInfo),
-            FfiConverterOptionalString.lower(caption),
-            FfiConverterOptionalTypeFormattedBody.lower(formattedCaption),
             FfiConverterOptionalTypeProgressWatcher.lower(progressWatcher),
-            FfiConverterBool.lower(useSendQueue),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  public sendGallery(
+    params: GalleryUploadParameters,
+    itemInfos: Array<GalleryItemInfo>
+  ): SendGalleryJoinHandleInterface /*throws*/ {
+    return FfiConverterTypeSendGalleryJoinHandle.lift(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeRoomError.lift.bind(
+          FfiConverterTypeRoomError
+        ),
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_gallery(
+            uniffiTypeTimelineObjectFactory.clonePointer(this),
+            FfiConverterTypeGalleryUploadParameters.lower(params),
+            FfiConverterArrayTypeGalleryItemInfo.lower(itemInfos),
             callStatus
           );
         },
@@ -40145,26 +51118,23 @@ export class Timeline
   }
 
   public sendImage(
-    url: string,
-    thumbnailUrl: string | undefined,
+    params: UploadParameters,
+    thumbnailPath: string | undefined,
     imageInfo: ImageInfo,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface {
+    progressWatcher: ProgressWatcher | undefined
+  ): SendAttachmentJoinHandleInterface /*throws*/ {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      uniffiCaller.rustCall(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeRoomError.lift.bind(
+          FfiConverterTypeRoomError
+        ),
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_image(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
-            FfiConverterString.lower(url),
-            FfiConverterOptionalString.lower(thumbnailUrl),
+            FfiConverterTypeUploadParameters.lower(params),
+            FfiConverterOptionalString.lower(thumbnailPath),
             FfiConverterTypeImageInfo.lower(imageInfo),
-            FfiConverterOptionalString.lower(caption),
-            FfiConverterOptionalTypeFormattedBody.lower(formattedCaption),
             FfiConverterOptionalTypeProgressWatcher.lower(progressWatcher),
-            FfiConverterBool.lower(useSendQueue),
             callStatus
           );
         },
@@ -40293,9 +51263,16 @@ export class Timeline
     }
   }
 
+  /**
+   * Send a reply.
+   *
+   * If the replied to event has a thread relation, it is forwarded on the
+   * reply so that clients that support threads can render the reply
+   * inside the thread.
+   */
   public async sendReply(
     msg: RoomMessageEventContentWithoutRelationInterface,
-    eventId: string,
+    replyParams: ReplyParameters,
     asyncOpts_?: { signal: AbortSignal }
   ): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
@@ -40306,7 +51283,7 @@ export class Timeline
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_reply(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
             FfiConverterTypeRoomMessageEventContentWithoutRelation.lower(msg),
-            FfiConverterString.lower(eventId)
+            FfiConverterTypeReplyParameters.lower(replyParams)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -40333,26 +51310,23 @@ export class Timeline
   }
 
   public sendVideo(
-    url: string,
-    thumbnailUrl: string | undefined,
+    params: UploadParameters,
+    thumbnailPath: string | undefined,
     videoInfo: VideoInfo,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface {
+    progressWatcher: ProgressWatcher | undefined
+  ): SendAttachmentJoinHandleInterface /*throws*/ {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      uniffiCaller.rustCall(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeRoomError.lift.bind(
+          FfiConverterTypeRoomError
+        ),
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_video(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
-            FfiConverterString.lower(url),
-            FfiConverterOptionalString.lower(thumbnailUrl),
+            FfiConverterTypeUploadParameters.lower(params),
+            FfiConverterOptionalString.lower(thumbnailPath),
             FfiConverterTypeVideoInfo.lower(videoInfo),
-            FfiConverterOptionalString.lower(caption),
-            FfiConverterOptionalTypeFormattedBody.lower(formattedCaption),
             FfiConverterOptionalTypeProgressWatcher.lower(progressWatcher),
-            FfiConverterBool.lower(useSendQueue),
             callStatus
           );
         },
@@ -40362,26 +51336,23 @@ export class Timeline
   }
 
   public sendVoiceMessage(
-    url: string,
+    params: UploadParameters,
     audioInfo: AudioInfo,
     waveform: Array</*u16*/ number>,
-    caption: string | undefined,
-    formattedCaption: FormattedBody | undefined,
-    progressWatcher: ProgressWatcher | undefined,
-    useSendQueue: boolean
-  ): SendAttachmentJoinHandleInterface {
+    progressWatcher: ProgressWatcher | undefined
+  ): SendAttachmentJoinHandleInterface /*throws*/ {
     return FfiConverterTypeSendAttachmentJoinHandle.lift(
-      uniffiCaller.rustCall(
+      uniffiCaller.rustCallWithError(
+        /*liftError:*/ FfiConverterTypeRoomError.lift.bind(
+          FfiConverterTypeRoomError
+        ),
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timeline_send_voice_message(
             uniffiTypeTimelineObjectFactory.clonePointer(this),
-            FfiConverterString.lower(url),
+            FfiConverterTypeUploadParameters.lower(params),
             FfiConverterTypeAudioInfo.lower(audioInfo),
             FfiConverterArrayUInt16.lower(waveform),
-            FfiConverterOptionalString.lower(caption),
-            FfiConverterOptionalTypeFormattedBody.lower(formattedCaption),
             FfiConverterOptionalTypeProgressWatcher.lower(progressWatcher),
-            FfiConverterBool.lower(useSendQueue),
             callStatus
           );
         },
@@ -40851,7 +51822,7 @@ export interface TimelineEventInterface {
   eventId(): string;
   eventType() /*throws*/ : TimelineEventType;
   senderId(): string;
-  timestamp(): /*u64*/ bigint;
+  timestamp(): Timestamp;
 }
 
 export class TimelineEvent
@@ -40914,8 +51885,8 @@ export class TimelineEvent
     );
   }
 
-  public timestamp(): /*u64*/ bigint {
-    return FfiConverterUInt64.lift(
+  public timestamp(): Timestamp {
+    return FfiConverterTypeTimestamp.lift(
       uniffiCaller.rustCall(
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_timelineevent_timestamp(
@@ -41477,6 +52448,10 @@ const FfiConverterTypeUnreadNotificationsCount = new FfiConverterObject(
  */
 export interface UserIdentityInterface {
   /**
+   * Was this identity previously verified, and is no longer?
+   */
+  hasVerificationViolation(): boolean;
+  /**
    * Is the user identity considered to be verified.
    *
    * If the identity belongs to another user, our own user identity needs to
@@ -41509,6 +52484,23 @@ export interface UserIdentityInterface {
    * which is not verified and is in pin violation.
    */
   pin(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
+  /**
+   * True if we verified this identity at some point in the past.
+   *
+   * To reset this latch back to `false`, one must call
+   * [`UserIdentity::withdraw_verification()`].
+   */
+  wasPreviouslyVerified(): boolean;
+  /**
+   * Remove the requirement for this identity to be verified.
+   *
+   * If an identity was previously verified and is not anymore it will be
+   * reported to the user. In order to remove this notice users have to
+   * verify again or to withdraw the verification requirement.
+   */
+  withdrawVerification(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<void>;
 }
 
 /**
@@ -41527,6 +52519,23 @@ export class UserIdentity
     this[pointerLiteralSymbol] = pointer;
     this[destructorGuardSymbol] =
       uniffiTypeUserIdentityObjectFactory.bless(pointer);
+  }
+
+  /**
+   * Was this identity previously verified, and is no longer?
+   */
+  public hasVerificationViolation(): boolean {
+    return FfiConverterBool.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_useridentity_has_verification_violation(
+            uniffiTypeUserIdentityObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
   }
 
   /**
@@ -41596,6 +52605,68 @@ export class UserIdentity
         /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_useridentity_pin(
+            uniffiTypeUserIdentityObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * True if we verified this identity at some point in the past.
+   *
+   * To reset this latch back to `false`, one must call
+   * [`UserIdentity::withdraw_verification()`].
+   */
+  public wasPreviouslyVerified(): boolean {
+    return FfiConverterBool.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_useridentity_was_previously_verified(
+            uniffiTypeUserIdentityObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Remove the requirement for this identity to be verified.
+   *
+   * If an identity was previously verified and is not anymore it will be
+   * reported to the user. In order to remove this notice users have to
+   * verify again or to withdraw the verification requirement.
+   */
+  public async withdrawVerification(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_useridentity_withdraw_verification(
             uniffiTypeUserIdentityObjectFactory.clonePointer(this)
           );
         },
@@ -42154,6 +53225,11 @@ const FfiConverterOptionalTypeMatrixEntity = new FfiConverterOptional(
   FfiConverterTypeMatrixEntity
 );
 
+// FfiConverter for MediaPreviewConfig | undefined
+const FfiConverterOptionalTypeMediaPreviewConfig = new FfiConverterOptional(
+  FfiConverterTypeMediaPreviewConfig
+);
+
 // FfiConverter for Mentions | undefined
 const FfiConverterOptionalTypeMentions = new FfiConverterOptional(
   FfiConverterTypeMentions
@@ -42168,9 +53244,24 @@ const FfiConverterOptionalTypeNotificationItem = new FfiConverterOptional(
 const FfiConverterOptionalTypeNotificationPowerLevels =
   new FfiConverterOptional(FfiConverterTypeNotificationPowerLevels);
 
+// FfiConverter for PassPhrase | undefined
+const FfiConverterOptionalTypePassPhrase = new FfiConverterOptional(
+  FfiConverterTypePassPhrase
+);
+
 // FfiConverter for PowerLevels | undefined
 const FfiConverterOptionalTypePowerLevels = new FfiConverterOptional(
   FfiConverterTypePowerLevels
+);
+
+// FfiConverter for PredecessorRoom | undefined
+const FfiConverterOptionalTypePredecessorRoom = new FfiConverterOptional(
+  FfiConverterTypePredecessorRoom
+);
+
+// FfiConverter for ReplyParameters | undefined
+const FfiConverterOptionalTypeReplyParameters = new FfiConverterOptional(
+  FfiConverterTypeReplyParameters
 );
 
 // FfiConverter for ResolvedRoomAlias | undefined
@@ -42183,9 +53274,18 @@ const FfiConverterOptionalTypeRoomMember = new FfiConverterOptional(
   FfiConverterTypeRoomMember
 );
 
+// FfiConverter for RoomMemberWithSenderInfo | undefined
+const FfiConverterOptionalTypeRoomMemberWithSenderInfo =
+  new FfiConverterOptional(FfiConverterTypeRoomMemberWithSenderInfo);
+
 // FfiConverter for SetData | undefined
 const FfiConverterOptionalTypeSetData = new FfiConverterOptional(
   FfiConverterTypeSetData
+);
+
+// FfiConverter for SuccessorRoom | undefined
+const FfiConverterOptionalTypeSuccessorRoom = new FfiConverterOptional(
+  FfiConverterTypeSuccessorRoom
 );
 
 // FfiConverter for ThumbnailInfo | undefined
@@ -42214,6 +53314,9 @@ const FfiConverterOptionalTypeVideoInfo = new FfiConverterOptional(
 // FfiConverter for string | undefined
 const FfiConverterOptionalString = new FfiConverterOptional(FfiConverterString);
 
+// FfiConverter for /*u16*/number | undefined
+const FfiConverterOptionalUInt16 = new FfiConverterOptional(FfiConverterUInt16);
+
 // FfiConverter for /*u32*/number | undefined
 const FfiConverterOptionalUInt32 = new FfiConverterOptional(FfiConverterUInt32);
 
@@ -42228,6 +53331,11 @@ const FfiConverterArrayArrayBuffer = new FfiConverterArray(
   FfiConverterArrayBuffer
 );
 
+// FfiConverter for Array<ConditionalPushRule>
+const FfiConverterArrayTypeConditionalPushRule = new FfiConverterArray(
+  FfiConverterTypeConditionalPushRule
+);
+
 // FfiConverter for Array<IdentityStatusChange>
 const FfiConverterArrayTypeIdentityStatusChange = new FfiConverterArray(
   FfiConverterTypeIdentityStatusChange
@@ -42236,6 +53344,21 @@ const FfiConverterArrayTypeIdentityStatusChange = new FfiConverterArray(
 // FfiConverter for Array<KnockRequest>
 const FfiConverterArrayTypeKnockRequest = new FfiConverterArray(
   FfiConverterTypeKnockRequest
+);
+
+// FfiConverter for Array<LiveLocationShare>
+const FfiConverterArrayTypeLiveLocationShare = new FfiConverterArray(
+  FfiConverterTypeLiveLocationShare
+);
+
+// FfiConverter for Array<NotificationItemsRequest>
+const FfiConverterArrayTypeNotificationItemsRequest = new FfiConverterArray(
+  FfiConverterTypeNotificationItemsRequest
+);
+
+// FfiConverter for Array<PatternedPushRule>
+const FfiConverterArrayTypePatternedPushRule = new FfiConverterArray(
+  FfiConverterTypePatternedPushRule
 );
 
 // FfiConverter for Array<PollAnswer>
@@ -42268,6 +53391,11 @@ const FfiConverterArrayTypeRoomMember = new FfiConverterArray(
   FfiConverterTypeRoomMember
 );
 
+// FfiConverter for Array<SimplePushRule>
+const FfiConverterArrayTypeSimplePushRule = new FfiConverterArray(
+  FfiConverterTypeSimplePushRule
+);
+
 // FfiConverter for Array<UserPowerLevelUpdate>
 const FfiConverterArrayTypeUserPowerLevelUpdate = new FfiConverterArray(
   FfiConverterTypeUserPowerLevelUpdate
@@ -42284,10 +53412,21 @@ const FfiConverterArrayString = new FfiConverterArray(FfiConverterString);
 // FfiConverter for Array</*u16*/number>
 const FfiConverterArrayUInt16 = new FfiConverterArray(FfiConverterUInt16);
 
+// FfiConverter for Map<TagName, TagInfo>
+const FfiConverterMapTypeTagNameTypeTagInfo = new FfiConverterMap(
+  FfiConverterTypeTagName,
+  FfiConverterTypeTagInfo
+);
+
 // FfiConverter for Map<string, Array<string>>
 const FfiConverterMapStringArrayString = new FfiConverterMap(
   FfiConverterString,
   FfiConverterArrayString
+);
+
+// FfiConverter for Timestamp | undefined
+const FfiConverterOptionalTypeTimestamp = new FfiConverterOptional(
+  FfiConverterTypeTimestamp
 );
 
 // FfiConverter for AccountManagementAction | undefined
@@ -42309,9 +53448,24 @@ const FfiConverterOptionalTypeEventSendState = new FfiConverterOptional(
   FfiConverterTypeEventSendState
 );
 
+// FfiConverter for Intent | undefined
+const FfiConverterOptionalTypeIntent = new FfiConverterOptional(
+  FfiConverterTypeIntent
+);
+
+// FfiConverter for InviteAvatars | undefined
+const FfiConverterOptionalTypeInviteAvatars = new FfiConverterOptional(
+  FfiConverterTypeInviteAvatars
+);
+
 // FfiConverter for JoinRule | undefined
 const FfiConverterOptionalTypeJoinRule = new FfiConverterOptional(
   FfiConverterTypeJoinRule
+);
+
+// FfiConverter for MediaPreviews | undefined
+const FfiConverterOptionalTypeMediaPreviews = new FfiConverterOptional(
+  FfiConverterTypeMediaPreviews
 );
 
 // FfiConverter for Membership | undefined
@@ -42324,6 +53478,11 @@ const FfiConverterOptionalTypeMembershipChange = new FfiConverterOptional(
   FfiConverterTypeMembershipChange
 );
 
+// FfiConverter for OidcPrompt | undefined
+const FfiConverterOptionalTypeOidcPrompt = new FfiConverterOptional(
+  FfiConverterTypeOidcPrompt
+);
+
 // FfiConverter for PublicRoomJoinRule | undefined
 const FfiConverterOptionalTypePublicRoomJoinRule = new FfiConverterOptional(
   FfiConverterTypePublicRoomJoinRule
@@ -42332,6 +53491,11 @@ const FfiConverterOptionalTypePublicRoomJoinRule = new FfiConverterOptional(
 // FfiConverter for PushFormat | undefined
 const FfiConverterOptionalTypePushFormat = new FfiConverterOptional(
   FfiConverterTypePushFormat
+);
+
+// FfiConverter for RoomHistoryVisibility | undefined
+const FfiConverterOptionalTypeRoomHistoryVisibility = new FfiConverterOptional(
+  FfiConverterTypeRoomHistoryVisibility
 );
 
 // FfiConverter for RoomNotificationMode | undefined
@@ -42390,9 +53554,10 @@ const FfiConverterOptionalTypeTaskHandle = new FfiConverterOptional(
   FfiConverterTypeTaskHandle
 );
 
-// FfiConverter for TimelineEventTypeFilterInterface | undefined
-const FfiConverterOptionalTypeTimelineEventTypeFilter =
-  new FfiConverterOptional(FfiConverterTypeTimelineEventTypeFilter);
+// FfiConverter for ThreadSummaryInterface | undefined
+const FfiConverterOptionalTypeThreadSummary = new FfiConverterOptional(
+  FfiConverterTypeThreadSummary
+);
 
 // FfiConverter for TimelineItemInterface | undefined
 const FfiConverterOptionalTypeTimelineItem = new FfiConverterOptional(
@@ -42419,6 +53584,11 @@ const FfiConverterOptionalArrayString = new FfiConverterOptional(
   FfiConverterArrayString
 );
 
+// FfiConverter for Array<Action>
+const FfiConverterArrayTypeAction = new FfiConverterArray(
+  FfiConverterTypeAction
+);
+
 // FfiConverter for Array<AllowRule>
 const FfiConverterArrayTypeAllowRule = new FfiConverterArray(
   FfiConverterTypeAllowRule
@@ -42429,6 +53599,16 @@ const FfiConverterArrayTypeFilterTimelineEventType = new FfiConverterArray(
   FfiConverterTypeFilterTimelineEventType
 );
 
+// FfiConverter for Array<GalleryItemInfo>
+const FfiConverterArrayTypeGalleryItemInfo = new FfiConverterArray(
+  FfiConverterTypeGalleryItemInfo
+);
+
+// FfiConverter for Array<GalleryItemType>
+const FfiConverterArrayTypeGalleryItemType = new FfiConverterArray(
+  FfiConverterTypeGalleryItemType
+);
+
 // FfiConverter for Array<Membership>
 const FfiConverterArrayTypeMembership = new FfiConverterArray(
   FfiConverterTypeMembership
@@ -42437,6 +53617,11 @@ const FfiConverterArrayTypeMembership = new FfiConverterArray(
 // FfiConverter for Array<OidcPrompt>
 const FfiConverterArrayTypeOidcPrompt = new FfiConverterArray(
   FfiConverterTypeOidcPrompt
+);
+
+// FfiConverter for Array<PushCondition>
+const FfiConverterArrayTypePushCondition = new FfiConverterArray(
+  FfiConverterTypePushCondition
 );
 
 // FfiConverter for Array<RoomDirectorySearchEntryUpdate>
@@ -42462,6 +53647,11 @@ const FfiConverterArrayTypeSlidingSyncVersion = new FfiConverterArray(
   FfiConverterTypeSlidingSyncVersion
 );
 
+// FfiConverter for Array<TraceLogPacks>
+const FfiConverterArrayTypeTraceLogPacks = new FfiConverterArray(
+  FfiConverterTypeTraceLogPacks
+);
+
 // FfiConverter for Array<WidgetEventFilter>
 const FfiConverterArrayTypeWidgetEventFilter = new FfiConverterArray(
   FfiConverterTypeWidgetEventFilter
@@ -42469,11 +53659,6 @@ const FfiConverterArrayTypeWidgetEventFilter = new FfiConverterArray(
 
 // FfiConverter for Array<RoomInterface>
 const FfiConverterArrayTypeRoom = new FfiConverterArray(FfiConverterTypeRoom);
-
-// FfiConverter for Array<RoomListItemInterface>
-const FfiConverterArrayTypeRoomListItem = new FfiConverterArray(
-  FfiConverterTypeRoomListItem
-);
 
 // FfiConverter for Array<SessionVerificationEmojiInterface>
 const FfiConverterArrayTypeSessionVerificationEmoji = new FfiConverterArray(
@@ -42527,10 +53712,18 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_create_caption_edit() !==
-    49747
+    33992
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_func_create_caption_edit'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_enable_sentry_logging() !==
+    53125
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_func_enable_sentry_logging'
     );
   }
   if (
@@ -42543,7 +53736,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_generate_webview_url() !==
-    6844
+    48529
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_func_generate_webview_url'
@@ -42555,6 +53748,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_func_get_element_call_required_permissions'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_init_platform() !==
+    11113
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_func_init_platform'
     );
   }
   if (
@@ -42678,14 +53879,6 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_setup_tracing() !==
-    45018
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_func_setup_tracing'
-    );
-  }
-  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_func_suggested_power_level_for_role() !==
     61777
   ) {
@@ -42703,7 +53896,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_abort_oidc_auth() !==
-    6754
+    53440
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_abort_oidc_auth'
@@ -42751,7 +53944,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_cached_avatar_url() !==
-    58990
+    50226
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_cached_avatar_url'
@@ -42766,19 +53959,19 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_clear_caches() !==
+    65177
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_clear_caches'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_create_room() !==
     52700
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_create_room'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_create_room_alias() !==
-    54261
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_client_create_room_alias'
     );
   }
   if (
@@ -42838,11 +54031,35 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_fetch_media_preview_config() !==
+    15595
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_fetch_media_preview_config'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_dm_room() !==
     5137
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_get_dm_room'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_invite_avatars_display_policy() !==
+    46953
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_get_invite_avatars_display_policy'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_max_media_upload_size() !==
+    12661
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_get_max_media_upload_size'
     );
   }
   if (
@@ -42862,6 +54079,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_media_preview_display_policy() !==
+    19264
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_get_media_preview_display_policy'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_media_thumbnail() !==
     52601
   ) {
@@ -42871,7 +54096,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_notification_settings() !==
-    6359
+    49769
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_get_notification_settings'
@@ -42891,6 +54116,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_get_recently_visited_rooms'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_get_room() !==
+    30376
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_get_room'
     );
   }
   if (
@@ -42958,6 +54191,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_is_report_room_api_supported() !==
+    17934
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_is_report_room_api_supported'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_is_room_alias_available() !==
     23322
   ) {
@@ -43007,7 +54248,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_login_with_oidc_callback() !==
-    35005
+    32591
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_login_with_oidc_callback'
@@ -43015,7 +54256,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_logout() !==
-    7576
+    42911
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_logout'
@@ -43027,6 +54268,22 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_notification_client'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_observe_account_data_event() !==
+    13906
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_observe_account_data_event'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_observe_room_account_data_event() !==
+    15699
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_observe_room_account_data_event'
     );
   }
   if (
@@ -43055,10 +54312,18 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_restore_session() !==
-    40455
+    56125
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_restore_session'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_restore_session_with() !==
+    20927
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_restore_session_with'
     );
   }
   if (
@@ -43119,7 +54384,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_delegate() !==
-    59796
+    46437
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_set_delegate'
@@ -43134,11 +54399,43 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_invite_avatars_display_policy() !==
+    48457
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_set_invite_avatars_display_policy'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_media_preview_display_policy() !==
+    24080
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_set_media_preview_display_policy'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_media_retention_policy() !==
+    2414
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_set_media_retention_policy'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_pusher() !==
     41975
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_set_pusher'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_utd_delegate() !==
+    37720
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_set_utd_delegate'
     );
   }
   if (
@@ -43163,6 +54460,22 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_ignored_users'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_media_preview_config() !==
+    47047
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_media_preview_config'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_room_info() !==
+    41103
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_room_info'
     );
   }
   if (
@@ -43215,7 +54528,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oidc() !==
-    30079
+    28386
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oidc'
@@ -43279,7 +54592,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build_with_qr_code() !==
-    51905
+    42452
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build_with_qr_code'
@@ -43326,19 +54639,19 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_share_history_on_invite() !==
+    3856
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_share_history_on_invite'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_homeserver_url() !==
     28347
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_homeserver_url'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_passphrase() !==
-    14286
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_passphrase'
     );
   }
   if (
@@ -43390,11 +54703,43 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_cache_size() !==
+    32604
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_cache_size'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_journal_size_limit() !==
+    21378
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_journal_size_limit'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_passphrase() !==
+    55403
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_passphrase'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_paths() !==
     54230
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_paths'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_pool_max_size() !==
+    6011
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_pool_max_size'
     );
   }
   if (
@@ -43414,11 +54759,11 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_use_event_cache_persistent_storage() !==
-    58836
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_system_is_memory_constrained() !==
+    6898
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_use_event_cache_persistent_storage'
+      'uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_system_is_memory_constrained'
     );
   }
   if (
@@ -43663,7 +55008,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event() !==
-    51792
+    36106
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event'
@@ -43707,6 +55052,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_mark_as_seen'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_contains_only_emojis() !==
+    5211
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_contains_only_emojis'
     );
   }
   if (
@@ -43771,6 +55124,22 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notification'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notifications() !==
+    30600
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notifications'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_room() !==
+    26581
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_room'
     );
   }
   if (
@@ -43878,6 +55247,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_custom_push_rule() !==
+    465
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_custom_push_rule'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_default_room_notification_mode() !==
     9426
   ) {
@@ -43931,6 +55308,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_unmute_room'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_qrcodedata_server_name() !==
+    30173
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_qrcodedata_server_name'
     );
   }
   if (
@@ -44102,6 +55487,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_enable_encryption() !==
+    14669
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_enable_encryption'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_enable_send_queue() !==
     23914
   ) {
@@ -44110,11 +55503,35 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_encryption_state() !==
+    9101
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_encryption_state'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_forget() !==
+    37840
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_forget'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_get_power_levels() !==
     54094
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_get_power_levels'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_get_room_visibility() !==
+    412
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_get_room_visibility'
     );
   }
   if (
@@ -44175,7 +55592,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_inviter() !==
-    49874
+    18103
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_inviter'
@@ -44183,7 +55600,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_direct() !==
-    16947
+    10462
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_is_direct'
@@ -44191,7 +55608,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_encrypted() !==
-    55158
+    63995
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_is_encrypted'
@@ -44222,14 +55639,6 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_is_tombstoned() !==
-    49186
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_room_is_tombstoned'
-    );
-  }
-  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_join() !==
     9240
   ) {
@@ -44254,6 +55663,22 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_latest_encryption_state() !==
+    16843
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_latest_encryption_state'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_latest_event() !==
+    39083
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_latest_event'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_leave() !==
     63688
   ) {
@@ -44271,7 +55696,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_mark_as_read() !==
-    16004
+    57806
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_mark_as_read'
@@ -44318,6 +55743,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_member_with_sender_info() !==
+    64964
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_member_with_sender_info'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_members() !==
     42691
   ) {
@@ -44335,18 +55768,10 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_membership() !==
-    26065
+    45951
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_membership'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_message_filtered_timeline() !==
-    32258
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_room_message_filtered_timeline'
     );
   }
   if (
@@ -44358,11 +55783,27 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_pinned_events_timeline() !==
-    29596
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_predecessor_room() !==
+    22093
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_room_pinned_events_timeline'
+      'uniffi_matrix_sdk_ffi_checksum_method_room_predecessor_room'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_preview_room() !==
+    60431
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_preview_room'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_publish_room_alias_in_room_directory() !==
+    13924
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_publish_room_alias_in_room_directory'
     );
   }
   if (
@@ -44390,11 +55831,27 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_remove_room_alias_from_room_directory() !==
+    16926
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_remove_room_alias_from_room_directory'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_report_content() !==
     16529
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_report_content'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_report_room() !==
+    8059
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_report_room'
     );
   }
   if (
@@ -44439,10 +55896,18 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_send_call_notification_if_needed() !==
-    53551
+    52926
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_send_call_notification_if_needed'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_send_live_location() !==
+    34248
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_send_live_location'
     );
   }
   if (
@@ -44494,8 +55959,24 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_start_live_location_share() !==
+    11488
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_start_live_location_share'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_stop_live_location_share() !==
+    19983
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_stop_live_location_share'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes() !==
-    14290
+    8526
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes'
@@ -44507,6 +55988,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_knock_requests'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_live_location_shares() !==
+    57037
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_live_location_shares'
     );
   }
   if (
@@ -44526,6 +56015,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_successor_room() !==
+    27360
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_successor_room'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_suggested_role_for_user() !==
     47787
   ) {
@@ -44535,18 +56032,18 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_timeline() !==
-    701
+    51477
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_timeline'
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_timeline_focused_on_event() !==
-    27319
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_timeline_with_configuration() !==
+    35159
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_room_timeline_focused_on_event'
+      'uniffi_matrix_sdk_ffi_checksum_method_room_timeline_with_configuration'
     );
   }
   if (
@@ -44574,11 +56071,43 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_update_canonical_alias() !==
+    25065
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_update_canonical_alias'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_update_history_visibility() !==
+    26248
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_update_history_visibility'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_update_join_rules() !==
+    49303
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_update_join_rules'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_update_power_levels_for_users() !==
     52057
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_room_update_power_levels_for_users'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_room_update_room_visibility() !==
+    64724
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_room_update_room_visibility'
     );
   }
   if (
@@ -44655,7 +56184,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlist_room() !==
-    8801
+    62491
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_roomlist_room'
@@ -44702,118 +56231,6 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_avatar_url() !==
-    39097
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_avatar_url'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_canonical_alias() !==
-    63300
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_canonical_alias'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_display_name() !==
-    8651
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_display_name'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_full_room() !==
-    17298
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_full_room'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_id() !==
-    41176
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_id'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_init_timeline() !==
-    61817
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_init_timeline'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_invited_room() !==
-    44344
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_invited_room'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_direct() !==
-    46873
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_direct'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_encrypted() !==
-    65150
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_encrypted'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_timeline_initialized() !==
-    46855
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_is_timeline_initialized'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_latest_event() !==
-    38259
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_latest_event'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_membership() !==
-    1596
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_membership'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_preview_room() !==
-    32277
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_preview_room'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_room_info() !==
-    32985
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_roomlistitem_room_info'
-    );
-  }
-  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_all_rooms() !==
     49704
   ) {
@@ -44823,7 +56240,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_room() !==
-    5185
+    60695
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_room'
@@ -44878,6 +56295,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roompreview_forget() !==
+    18179
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_roompreview_forget'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roompreview_info() !==
     9145
   ) {
@@ -44895,10 +56320,18 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roompreview_leave() !==
-    5096
+    21886
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_roompreview_leave'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roompreview_own_membership_details() !==
+    46321
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_roompreview_own_membership_details'
     );
   }
   if (
@@ -44915,6 +56348,22 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_join'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sendgalleryjoinhandle_cancel() !==
+    7014
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_sendgalleryjoinhandle_cancel'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sendgalleryjoinhandle_join() !==
+    57901
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_sendgalleryjoinhandle_join'
     );
   }
   if (
@@ -44974,11 +56423,19 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_verification() !==
-    17229
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_device_verification() !==
+    4777
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_verification'
+      'uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_device_verification'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_user_verification() !==
+    26149
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_user_verification'
     );
   }
   if (
@@ -45079,7 +56536,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservice_stop() !==
-    23138
+    42435
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_syncservice_stop'
@@ -45102,11 +56559,11 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_utd_hook() !==
-    9029
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode() !==
+    16958
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_utd_hook'
+      'uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode'
     );
   }
   if (
@@ -45123,6 +56580,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_taskhandle_is_finished'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_threadsummary_latest_event() !==
+    52917
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_threadsummary_latest_event'
     );
   }
   if (
@@ -45159,7 +56624,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_end_poll() !==
-    61329
+    32659
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_end_poll'
@@ -45179,14 +56644,6 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_fetch_members'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_focused_paginate_forwards() !==
-    51003
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_timeline_focused_paginate_forwards'
     );
   }
   if (
@@ -45215,10 +56672,18 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_backwards() !==
-    65175
+    36829
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_backwards'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_forwards() !==
+    30268
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_forwards'
     );
   }
   if (
@@ -45255,7 +56720,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_audio() !==
-    43163
+    22559
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_send_audio'
@@ -45263,15 +56728,23 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_file() !==
-    37925
+    4588
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_send_file'
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_gallery() !==
+    61071
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_timeline_send_gallery'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_image() !==
-    45681
+    25436
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_send_image'
@@ -45303,7 +56776,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_reply() !==
-    64747
+    31468
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_send_reply'
@@ -45311,7 +56784,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_video() !==
-    22670
+    1445
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_send_video'
@@ -45319,7 +56792,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timeline_send_voice_message() !==
-    58509
+    50042
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timeline_send_voice_message'
@@ -45447,7 +56920,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_timelineevent_timestamp() !==
-    58123
+    50929
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_timelineevent_timestamp'
@@ -45510,6 +56983,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_useridentity_has_verification_violation() !==
+    2948
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_useridentity_has_verification_violation'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_useridentity_is_verified() !==
     61954
   ) {
@@ -45531,6 +57012,22 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_useridentity_was_previously_verified() !==
+    41686
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_useridentity_was_previously_verified'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_useridentity_withdraw_verification() !==
+    3578
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_useridentity_withdraw_verification'
     );
   }
   if (
@@ -45622,6 +57119,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_accountdatalistener_on_change() !==
+    16189
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_accountdatalistener_on_change'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_backupstatelistener_on_update() !==
     12849
   ) {
@@ -45643,14 +57148,6 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_did_receive_auth_error'
-    );
-  }
-  if (
-    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_did_refresh_tokens() !==
-    16325
-  ) {
-    throw new UniffiInternalError.ApiChecksumMismatch(
-      'uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_did_refresh_tokens'
     );
   }
   if (
@@ -45702,6 +57199,22 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_livelocationsharelistener_call() !==
+    34519
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_livelocationsharelistener_call'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_mediapreviewconfiglistener_on_change() !==
+    14770
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_mediapreviewconfiglistener_on_change'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_notificationsettingsdelegate_settings_did_change() !==
     51708
   ) {
@@ -45711,7 +57224,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_paginationstatuslistener_on_update() !==
-    29884
+    65318
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_paginationstatuslistener_on_update'
@@ -45739,6 +57252,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_recoverystatelistener_on_update'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_roomaccountdatalistener_on_change() !==
+    58105
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_roomaccountdatalistener_on_change'
     );
   }
   if (
@@ -45902,6 +57423,7 @@ function uniffiEnsureInitialized() {
     );
   }
 
+  uniffiCallbackInterfaceAccountDataListener.register();
   uniffiCallbackInterfaceBackupStateListener.register();
   uniffiCallbackInterfaceBackupSteadyStateListener.register();
   uniffiCallbackInterfaceClientDelegate.register();
@@ -45910,11 +57432,14 @@ function uniffiEnsureInitialized() {
   uniffiCallbackInterfaceIdentityStatusChangeListener.register();
   uniffiCallbackInterfaceIgnoredUsersListener.register();
   uniffiCallbackInterfaceKnockRequestsListener.register();
+  uniffiCallbackInterfaceLiveLocationShareListener.register();
+  uniffiCallbackInterfaceMediaPreviewConfigListener.register();
   uniffiCallbackInterfaceNotificationSettingsDelegate.register();
   uniffiCallbackInterfacePaginationStatusListener.register();
   uniffiCallbackInterfaceProgressWatcher.register();
   uniffiCallbackInterfaceQrLoginProgressListener.register();
   uniffiCallbackInterfaceRecoveryStateListener.register();
+  uniffiCallbackInterfaceRoomAccountDataListener.register();
   uniffiCallbackInterfaceRoomDirectorySearchEntriesListener.register();
   uniffiCallbackInterfaceRoomInfoListener.register();
   uniffiCallbackInterfaceRoomListEntriesListener.register();
@@ -45934,7 +57459,10 @@ function uniffiEnsureInitialized() {
 export default Object.freeze({
   initialize: uniffiEnsureInitialized,
   converters: {
+    FfiConverterTypeAccountDataEvent,
+    FfiConverterTypeAccountDataEventType,
     FfiConverterTypeAccountManagementAction,
+    FfiConverterTypeAction,
     FfiConverterTypeAllowRule,
     FfiConverterTypeAssetType,
     FfiConverterTypeAudioInfo,
@@ -45946,19 +57474,23 @@ export default Object.freeze({
     FfiConverterTypeClient,
     FfiConverterTypeClientBuilder,
     FfiConverterTypeClientProperties,
+    FfiConverterTypeComparisonOperator,
     FfiConverterTypeComposerDraft,
     FfiConverterTypeComposerDraftType,
+    FfiConverterTypeConditionalPushRule,
     FfiConverterTypeCreateRoomParameters,
     FfiConverterTypeCrossSigningResetAuthType,
     FfiConverterTypeDateDividerMode,
     FfiConverterTypeEditedContent,
     FfiConverterTypeElementCallWellKnown,
     FfiConverterTypeElementWellKnown,
+    FfiConverterTypeEmbeddedEventDetails,
     FfiConverterTypeEmoteMessageContent,
     FfiConverterTypeEnableRecoveryProgress,
     FfiConverterTypeEncryptedMessage,
     FfiConverterTypeEncryption,
     FfiConverterTypeEncryptionSystem,
+    FfiConverterTypeErrorKind,
     FfiConverterTypeEventOrTransactionId,
     FfiConverterTypeEventSendState,
     FfiConverterTypeEventTimelineItem,
@@ -45967,23 +57499,36 @@ export default Object.freeze({
     FfiConverterTypeFileMessageContent,
     FfiConverterTypeFilterTimelineEventType,
     FfiConverterTypeFormattedBody,
+    FfiConverterTypeGalleryItemInfo,
+    FfiConverterTypeGalleryItemType,
+    FfiConverterTypeGalleryMessageContent,
+    FfiConverterTypeGalleryUploadParameters,
     FfiConverterTypeHomeserverLoginDetails,
     FfiConverterTypeHttpPusherData,
     FfiConverterTypeIdentityResetHandle,
     FfiConverterTypeIdentityStatusChange,
+    FfiConverterTypeIgnoredUser,
     FfiConverterTypeImageInfo,
     FfiConverterTypeImageMessageContent,
     FfiConverterTypeInReplyToDetails,
     FfiConverterTypeInsertData,
+    FfiConverterTypeIntent,
+    FfiConverterTypeInviteAvatars,
     FfiConverterTypeJoinRule,
+    FfiConverterTypeJsonValue,
+    FfiConverterTypeKeyDerivationAlgorithm,
     FfiConverterTypeKnockRequest,
     FfiConverterTypeKnockRequestActions,
+    FfiConverterTypeLastLocation,
     FfiConverterTypeLazyTimelineItemProvider,
+    FfiConverterTypeLiveLocationShare,
     FfiConverterTypeLocationContent,
     FfiConverterTypeLogLevel,
     FfiConverterTypeMatrixEntity,
     FfiConverterTypeMatrixId,
     FfiConverterTypeMediaFileHandle,
+    FfiConverterTypeMediaPreviewConfig,
+    FfiConverterTypeMediaPreviews,
     FfiConverterTypeMediaSource,
     FfiConverterTypeMembership,
     FfiConverterTypeMembershipChange,
@@ -45994,10 +57539,13 @@ export default Object.freeze({
     FfiConverterTypeMessageLikeEventContent,
     FfiConverterTypeMessageLikeEventType,
     FfiConverterTypeMessageType,
+    FfiConverterTypeMsgLikeContent,
+    FfiConverterTypeMsgLikeKind,
     FfiConverterTypeNoticeMessageContent,
     FfiConverterTypeNotificationClient,
     FfiConverterTypeNotificationEvent,
     FfiConverterTypeNotificationItem,
+    FfiConverterTypeNotificationItemsRequest,
     FfiConverterTypeNotificationPowerLevels,
     FfiConverterTypeNotificationProcessSetup,
     FfiConverterTypeNotificationRoomInfo,
@@ -46008,12 +57556,16 @@ export default Object.freeze({
     FfiConverterTypeOidcCrossSigningResetInfo,
     FfiConverterTypeOidcPrompt,
     FfiConverterTypeOtherState,
+    FfiConverterTypePassPhrase,
+    FfiConverterTypePatternedPushRule,
     FfiConverterTypePollAnswer,
     FfiConverterTypePollData,
     FfiConverterTypePollKind,
     FfiConverterTypePowerLevels,
+    FfiConverterTypePredecessorRoom,
     FfiConverterTypeProfileDetails,
     FfiConverterTypePublicRoomJoinRule,
+    FfiConverterTypePushCondition,
     FfiConverterTypePushFormat,
     FfiConverterTypePusherIdentifiers,
     FfiConverterTypePusherKind,
@@ -46025,15 +57577,18 @@ export default Object.freeze({
     FfiConverterTypeReceipt,
     FfiConverterTypeReceiptType,
     FfiConverterTypeRecoveryState,
-    FfiConverterTypeRepliedToEventDetails,
+    FfiConverterTypeReplyParameters,
     FfiConverterTypeRequestConfig,
     FfiConverterTypeResolvedRoomAlias,
     FfiConverterTypeRoom,
+    FfiConverterTypeRoomAccountDataEvent,
+    FfiConverterTypeRoomAccountDataEventType,
     FfiConverterTypeRoomDescription,
     FfiConverterTypeRoomDirectorySearch,
     FfiConverterTypeRoomDirectorySearchEntriesResult,
     FfiConverterTypeRoomDirectorySearchEntryUpdate,
     FfiConverterTypeRoomHero,
+    FfiConverterTypeRoomHistoryVisibility,
     FfiConverterTypeRoomInfo,
     FfiConverterTypeRoomList,
     FfiConverterTypeRoomListDynamicEntriesController,
@@ -46041,13 +57596,14 @@ export default Object.freeze({
     FfiConverterTypeRoomListEntriesUpdate,
     FfiConverterTypeRoomListEntriesWithDynamicAdaptersResult,
     FfiConverterTypeRoomListFilterCategory,
-    FfiConverterTypeRoomListItem,
     FfiConverterTypeRoomListLoadingState,
     FfiConverterTypeRoomListLoadingStateResult,
     FfiConverterTypeRoomListService,
     FfiConverterTypeRoomListServiceState,
     FfiConverterTypeRoomListServiceSyncIndicator,
+    FfiConverterTypeRoomLoadSettings,
     FfiConverterTypeRoomMember,
+    FfiConverterTypeRoomMemberWithSenderInfo,
     FfiConverterTypeRoomMembersIterator,
     FfiConverterTypeRoomMessageEventContentWithoutRelation,
     FfiConverterTypeRoomMessageEventMessageType,
@@ -46060,8 +57616,13 @@ export default Object.freeze({
     FfiConverterTypeRoomType,
     FfiConverterTypeRoomVisibility,
     FfiConverterTypeRtcApplicationType,
+    FfiConverterTypeRuleKind,
+    FfiConverterTypeRuleset,
     FfiConverterTypeSearchUsersResults,
+    FfiConverterTypeSecretStorageEncryptionAlgorithm,
+    FfiConverterTypeSecretStorageV1AesHmacSha2Properties,
     FfiConverterTypeSendAttachmentJoinHandle,
+    FfiConverterTypeSendGalleryJoinHandle,
     FfiConverterTypeSendHandle,
     FfiConverterTypeSession,
     FfiConverterTypeSessionVerificationController,
@@ -46070,37 +57631,51 @@ export default Object.freeze({
     FfiConverterTypeSessionVerificationRequestDetails,
     FfiConverterTypeSetData,
     FfiConverterTypeShieldState,
+    FfiConverterTypeSimplePushRule,
     FfiConverterTypeSlidingSyncVersion,
     FfiConverterTypeSlidingSyncVersionBuilder,
     FfiConverterTypeSpan,
     FfiConverterTypeSsoHandler,
     FfiConverterTypeStateEventContent,
     FfiConverterTypeStateEventType,
+    FfiConverterTypeSuccessorRoom,
     FfiConverterTypeSyncService,
     FfiConverterTypeSyncServiceBuilder,
     FfiConverterTypeSyncServiceState,
+    FfiConverterTypeTagInfo,
+    FfiConverterTypeTagName,
     FfiConverterTypeTaskHandle,
     FfiConverterTypeTextMessageContent,
+    FfiConverterTypeThreadSummary,
     FfiConverterTypeThumbnailInfo,
     FfiConverterTypeTimeline,
     FfiConverterTypeTimelineChange,
+    FfiConverterTypeTimelineConfiguration,
     FfiConverterTypeTimelineDiff,
     FfiConverterTypeTimelineEvent,
     FfiConverterTypeTimelineEventType,
     FfiConverterTypeTimelineEventTypeFilter,
+    FfiConverterTypeTimelineFilter,
+    FfiConverterTypeTimelineFocus,
     FfiConverterTypeTimelineItem,
     FfiConverterTypeTimelineItemContent,
     FfiConverterTypeTimelineUniqueId,
+    FfiConverterTypeTimestamp,
+    FfiConverterTypeTraceLogPacks,
     FfiConverterTypeTracingConfiguration,
     FfiConverterTypeTracingFileConfiguration,
     FfiConverterTypeTransmissionProgress,
+    FfiConverterTypeTweak,
     FfiConverterTypeUnableToDecryptInfo,
     FfiConverterTypeUnreadNotificationsCount,
     FfiConverterTypeUnstableAudioDetailsContent,
     FfiConverterTypeUnstableVoiceContent,
+    FfiConverterTypeUploadParameters,
+    FfiConverterTypeUploadSource,
     FfiConverterTypeUserIdentity,
     FfiConverterTypeUserPowerLevelUpdate,
     FfiConverterTypeUserProfile,
+    FfiConverterTypeUserTagName,
     FfiConverterTypeVerificationState,
     FfiConverterTypeVideoInfo,
     FfiConverterTypeVideoMessageContent,

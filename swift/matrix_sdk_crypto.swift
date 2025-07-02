@@ -400,30 +400,6 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-fileprivate struct FfiConverterBool : FfiConverter {
-    typealias FfiType = Int8
-    typealias SwiftType = Bool
-
-    public static func lift(_ value: Int8) throws -> Bool {
-        return value != 0
-    }
-
-    public static func lower(_ value: Bool) -> Int8 {
-        return value ? 1 : 0
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Bool {
-        return try lift(readInt(&buf))
-    }
-
-    public static func write(_ value: Bool, into buf: inout [UInt8]) {
-        writeInt(&buf, lower(value))
-    }
-}
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -547,39 +523,42 @@ public func FfiConverterTypeDecryptionSettings_lower(_ value: DecryptionSettings
 public enum CollectStrategy {
     
     /**
-     * Device based sharing strategy.
+     * Share with all (unblacklisted) devices.
      */
-    case deviceBasedStrategy(
-        /**
-         * If `true`, devices that are not trusted will be excluded from the
-         * conversation. A device is trusted if any of the following is true:
-         * - It was manually marked as trusted.
-         * - It was marked as verified via interactive verification.
-         * - It is signed by its owner identity, and this identity has been
-         * trusted via interactive verification.
-         * - It is the current own device of the user.
-         */onlyAllowTrustedDevices: Bool, 
-        /**
-         * If `true`, and a verified user has an unsigned device, key sharing
-         * will fail with a
-         * [`SessionRecipientCollectionError::VerifiedUserHasUnsignedDevice`].
-         *
-         * If `true`, and a verified user has replaced their identity, key
-         * sharing will fail with a
-         * [`SessionRecipientCollectionError::VerifiedUserChangedIdentity`].
-         *
-         * Otherwise, keys are shared with unsigned devices as normal.
-         *
-         * Once the problematic devices are blacklisted or whitelisted the
-         * caller can retry to share a second time.
-         */errorOnVerifiedUserProblem: Bool
-    )
+    case allDevices
+    /**
+     * Share with all devices, except errors for *verified* users cause sharing
+     * to fail with an error.
+     *
+     * In this strategy, if a verified user has an unsigned device,
+     * key sharing will fail with a
+     * [`SessionRecipientCollectionError::VerifiedUserHasUnsignedDevice`].
+     * If a verified user has replaced their identity, key
+     * sharing will fail with a
+     * [`SessionRecipientCollectionError::VerifiedUserChangedIdentity`].
+     *
+     * Otherwise, keys are shared with unsigned devices as normal.
+     *
+     * Once the problematic devices are blacklisted or whitelisted the
+     * caller can retry to share a second time.
+     */
+    case errorOnVerifiedUserProblem
     /**
      * Share based on identity. Only distribute to devices signed by their
      * owner. If a user has no published identity he will not receive
      * any room keys.
      */
     case identityBasedStrategy
+    /**
+     * Only share keys with devices that we "trust". A device is trusted if any
+     * of the following is true:
+     * - It was manually marked as trusted.
+     * - It was marked as verified via interactive verification.
+     * - It is signed by its owner identity, and this identity has been
+     * trusted via interactive verification.
+     * - It is the current own device of the user.
+     */
+    case onlyTrustedDevices
 }
 
 
@@ -597,10 +576,13 @@ public struct FfiConverterTypeCollectStrategy: FfiConverterRustBuffer {
         let variant: Int32 = try readInt(&buf)
         switch variant {
         
-        case 1: return .deviceBasedStrategy(onlyAllowTrustedDevices: try FfiConverterBool.read(from: &buf), errorOnVerifiedUserProblem: try FfiConverterBool.read(from: &buf)
-        )
+        case 1: return .allDevices
         
-        case 2: return .identityBasedStrategy
+        case 2: return .errorOnVerifiedUserProblem
+        
+        case 3: return .identityBasedStrategy
+        
+        case 4: return .onlyTrustedDevices
         
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -610,14 +592,20 @@ public struct FfiConverterTypeCollectStrategy: FfiConverterRustBuffer {
         switch value {
         
         
-        case let .deviceBasedStrategy(onlyAllowTrustedDevices,errorOnVerifiedUserProblem):
+        case .allDevices:
             writeInt(&buf, Int32(1))
-            FfiConverterBool.write(onlyAllowTrustedDevices, into: &buf)
-            FfiConverterBool.write(errorOnVerifiedUserProblem, into: &buf)
-            
+        
+        
+        case .errorOnVerifiedUserProblem:
+            writeInt(&buf, Int32(2))
+        
         
         case .identityBasedStrategy:
-            writeInt(&buf, Int32(2))
+            writeInt(&buf, Int32(3))
+        
+        
+        case .onlyTrustedDevices:
+            writeInt(&buf, Int32(4))
         
         }
     }

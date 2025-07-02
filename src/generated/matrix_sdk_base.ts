@@ -32,10 +32,18 @@ import nativeModule, {
 } from './matrix_sdk_base-ffi';
 import {
   type UniffiByteArray,
+  type UniffiDuration,
+  AbstractFfiConverterByteArray,
+  FfiConverterBool,
+  FfiConverterDuration,
+  FfiConverterInt32,
+  FfiConverterOptional,
+  FfiConverterUInt64,
   RustBuffer,
   UniffiInternalError,
   UniffiRustCaller,
   uniffiCreateFfiConverterString,
+  uniffiCreateRecord,
 } from 'uniffi-bindgen-react-native';
 
 // Get converters from the other files, if any.
@@ -48,6 +56,130 @@ const uniffiIsDebug =
   process?.env?.NODE_ENV !== 'production' ||
   false;
 // Public interface members begin here.
+
+/**
+ * The retention policy for media content used by the [`EventCacheStore`].
+ *
+ * [`EventCacheStore`]: crate::event_cache::store::EventCacheStore
+ */
+export type MediaRetentionPolicy = {
+  /**
+   * The maximum authorized size of the overall media cache, in bytes.
+   *
+   * The cache size is defined as the sum of the sizes of all the (possibly
+   * encrypted) media contents in the cache, excluding any metadata
+   * associated with them.
+   *
+   * If this is set and the cache size is bigger than this value, the oldest
+   * media contents in the cache will be removed during a cleanup until the
+   * cache size is below this threshold.
+   *
+   * Note that it is possible for the cache size to temporarily exceed this
+   * value between two cleanups.
+   *
+   * Defaults to 400 MiB.
+   */
+  maxCacheSize: /*u64*/ bigint | undefined;
+  /**
+   * The maximum authorized size of a single media content, in bytes.
+   *
+   * The size of a media content is the size taken by the content in the
+   * database, after it was possibly encrypted, so it might differ from the
+   * initial size of the content.
+   *
+   * The maximum authorized size of a single media content is actually the
+   * lowest value between `max_cache_size` and `max_file_size`.
+   *
+   * If it is set, media content bigger than the maximum size will not be
+   * cached. If the maximum size changed after media content that exceeds the
+   * new value was cached, the corresponding content will be removed
+   * during a cleanup.
+   *
+   * Defaults to 20 MiB.
+   */
+  maxFileSize: /*u64*/ bigint | undefined;
+  /**
+   * The duration after which unaccessed media content is considered
+   * expired.
+   *
+   * If this is set, media content whose last access is older than this
+   * duration will be removed from the media cache during a cleanup.
+   *
+   * Defaults to 60 days.
+   */
+  lastAccessExpiry: UniffiDuration | undefined;
+  /**
+   * The duration between two automatic media cache cleanups.
+   *
+   * If this is set, a cleanup will be triggered after the given duration
+   * is elapsed, at the next call to the media cache API. If this is set to
+   * zero, each call to the media cache API will trigger a cleanup. If this
+   * is `None`, cleanups will only occur if they are triggered manually.
+   *
+   * Defaults to running cleanups daily.
+   */
+  cleanupFrequency: UniffiDuration | undefined;
+};
+
+/**
+ * Generated factory for {@link MediaRetentionPolicy} record objects.
+ */
+export const MediaRetentionPolicy = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      MediaRetentionPolicy,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link MediaRetentionPolicy}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_base} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link MediaRetentionPolicy}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_base} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_base} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<MediaRetentionPolicy>,
+  });
+})();
+
+const FfiConverterTypeMediaRetentionPolicy = (() => {
+  type TypeName = MediaRetentionPolicy;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        maxCacheSize: FfiConverterOptionalUInt64.read(from),
+        maxFileSize: FfiConverterOptionalUInt64.read(from),
+        lastAccessExpiry: FfiConverterOptionalDuration.read(from),
+        cleanupFrequency: FfiConverterOptionalDuration.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterOptionalUInt64.write(value.maxCacheSize, into);
+      FfiConverterOptionalUInt64.write(value.maxFileSize, into);
+      FfiConverterOptionalDuration.write(value.lastAccessExpiry, into);
+      FfiConverterOptionalDuration.write(value.cleanupFrequency, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterOptionalUInt64.allocationSize(value.maxCacheSize) +
+        FfiConverterOptionalUInt64.allocationSize(value.maxFileSize) +
+        FfiConverterOptionalDuration.allocationSize(value.lastAccessExpiry) +
+        FfiConverterOptionalDuration.allocationSize(value.cleanupFrequency)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
 
 const stringConverter = {
   stringToBytes: (s: string) =>
@@ -75,6 +207,66 @@ const stringConverter = {
 const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
 
 /**
+ * Represents the state of a room encryption.
+ */
+export enum EncryptionState {
+  /**
+   * The room is encrypted.
+   */
+  Encrypted,
+  /**
+   * The room is not encrypted.
+   */
+  NotEncrypted,
+  /**
+   * The state of the room encryption is unknown, probably because the
+   * `/sync` did not provide all data needed to decide.
+   */
+  Unknown,
+}
+
+const FfiConverterTypeEncryptionState = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = EncryptionState;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return EncryptionState.Encrypted;
+        case 2:
+          return EncryptionState.NotEncrypted;
+        case 3:
+          return EncryptionState.Unknown;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case EncryptionState.Encrypted:
+          return ordinalConverter.write(1, into);
+        case EncryptionState.NotEncrypted:
+          return ordinalConverter.write(2, into);
+        case EncryptionState.Unknown:
+          return ordinalConverter.write(3, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+// FfiConverter for UniffiDuration | undefined
+const FfiConverterOptionalDuration = new FfiConverterOptional(
+  FfiConverterDuration
+);
+
+// FfiConverter for /*u64*/bigint | undefined
+const FfiConverterOptionalUInt64 = new FfiConverterOptional(FfiConverterUInt64);
+
+/**
  * This should be called before anything else.
  *
  * It is likely that this is being done for you by the library's `index.ts`.
@@ -100,4 +292,8 @@ function uniffiEnsureInitialized() {
 
 export default Object.freeze({
   initialize: uniffiEnsureInitialized,
+  converters: {
+    FfiConverterTypeEncryptionState,
+    FfiConverterTypeMediaRetentionPolicy,
+  },
 });
