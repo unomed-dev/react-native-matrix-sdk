@@ -9451,9 +9451,12 @@ namespace uniffi::matrix_sdk_ffi::cb::callbackinterfaceclientsessiondelegatemeth
             }
 
             
+            // return type is MutReference(RustBuffer(Some(ExternalFfiMetadata { name: "Session", module_path: "matrix_sdk_ffi" })))
             // Finally, we need to copy the return value back into the Rust pointer.
             *rs_uniffiOutReturn =
-                uniffi::matrix_sdk_ffi::Bridging<ReferenceHolder<RustBuffer>>::fromJs(
+                uniffi::matrix_sdk_ffi::Bridging<
+                    ReferenceHolder<RustBuffer>
+                >::fromJs(
                     rt, callInvoker, uniffiResult
                 );
         } catch (const jsi::JSError &error) {
@@ -13726,9 +13729,12 @@ namespace uniffi::matrix_sdk_ffi::cb::callbackinterfacewidgetcapabilitiesprovide
             }
 
             
+            // return type is MutReference(RustBuffer(Some(ExternalFfiMetadata { name: "WidgetCapabilities", module_path: "matrix_sdk_ffi" })))
             // Finally, we need to copy the return value back into the Rust pointer.
             *rs_uniffiOutReturn =
-                uniffi::matrix_sdk_ffi::Bridging<ReferenceHolder<RustBuffer>>::fromJs(
+                uniffi::matrix_sdk_ffi::Bridging<
+                    ReferenceHolder<RustBuffer>
+                >::fromJs(
                     rt, callInvoker, uniffiResult
                 );
         } catch (const jsi::JSError &error) {
@@ -18803,6 +18809,254 @@ NativeMatrixSdkFfi::NativeMatrixSdkFfi(
             return this->cpp_uniffi_matrix_sdk_ffi_fn_method_widgetdriverhandle_send(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider"),
+        1,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_matrix_sdk_ffi_fn_func_content_without_relation_from_message"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_func_content_without_relation_from_message"),
@@ -23137,254 +23391,6 @@ NativeMatrixSdkFfi::NativeMatrixSdkFfi(
         0,
         [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
             return this->cpp_ffi_matrix_sdk_ffi_uniffi_contract_version(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(rt, thisVal, args, count);
-        }
-    );
-    props["ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider"] = jsi::Function::createFromHostFunction(
-        rt,
-        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider"),
-        1,
-        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(rt, thisVal, args, count);
         }
     );
     props["ubrn_uniffi_internal_fn_method_client_ffi__bless_pointer"] = jsi::Function::createFromHostFunction(
@@ -28437,6 +28443,533 @@ jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_method_widgetdriverh
         
         return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
 }
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceAccountDataListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceAccountDataListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceBackupStateListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceBackupStateListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceBackupSteadyStateListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceBackupSteadyStateListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceClientDelegate>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceClientDelegate",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceClientSessionDelegate>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceClientSessionDelegate",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceEnableRecoveryProgressListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceEnableRecoveryProgressListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceIdentityStatusChangeListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceIdentityStatusChangeListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceIgnoredUsersListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceIgnoredUsersListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceKnockRequestsListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceKnockRequestsListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceLiveLocationShareListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceLiveLocationShareListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceMediaPreviewConfigListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceMediaPreviewConfigListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceNotificationSettingsDelegate>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceNotificationSettingsDelegate",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfacePaginationStatusListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfacePaginationStatusListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceProgressWatcher>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceProgressWatcher",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceQrLoginProgressListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceQrLoginProgressListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRecoveryStateListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceRecoveryStateListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomAccountDataListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceRoomAccountDataListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomDirectorySearchEntriesListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceRoomDirectorySearchEntriesListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomInfoListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceRoomInfoListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomListEntriesListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceRoomListEntriesListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomListLoadingStateListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceRoomListLoadingStateListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomListServiceStateListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceRoomListServiceStateListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomListServiceSyncIndicatorListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceRoomListServiceSyncIndicatorListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceSendQueueRoomErrorListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceSendQueueRoomErrorListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceSessionVerificationControllerDelegate>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceSessionVerificationControllerDelegate",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceSyncServiceStateObserver>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceSyncServiceStateObserver",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceTimelineListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceTimelineListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceTypingNotificationsListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceTypingNotificationsListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceUnableToDecryptDelegate>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceUnableToDecryptDelegate",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceVerificationStateListener>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceVerificationStateListener",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+    auto vtableInstance =
+        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider>::fromJs(
+            rt,
+            callInvoker,
+            args[0]
+        );
+
+    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
+    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(
+        uniffi::matrix_sdk_ffi::registry::putTable(
+            "UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider",
+            vtableInstance
+        )
+    );
+    return jsi::Value::undefined();
+}
 jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_func_content_without_relation_from_message(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         RustCallStatus status = uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::rustSuccess(rt);
         auto value = uniffi_matrix_sdk_ffi_fn_func_content_without_relation_from_message(uniffi::matrix_sdk_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[0]), 
@@ -32336,531 +32869,4 @@ jsi::Value NativeMatrixSdkFfi::cpp_ffi_matrix_sdk_ffi_uniffi_contract_version(js
 
         
         return uniffi_jsi::Bridging<uint32_t>::toJs(rt, callInvoker, value);
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceAccountDataListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceAccountDataListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceBackupStateListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceBackupStateListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceBackupSteadyStateListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceBackupSteadyStateListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceClientDelegate>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceClientDelegate",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceClientSessionDelegate>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceClientSessionDelegate",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceEnableRecoveryProgressListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceEnableRecoveryProgressListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceIdentityStatusChangeListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceIdentityStatusChangeListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceIgnoredUsersListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceIgnoredUsersListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceKnockRequestsListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceKnockRequestsListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceLiveLocationShareListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceLiveLocationShareListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceMediaPreviewConfigListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceMediaPreviewConfigListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceNotificationSettingsDelegate>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceNotificationSettingsDelegate",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfacePaginationStatusListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfacePaginationStatusListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceProgressWatcher>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceProgressWatcher",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceQrLoginProgressListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceQrLoginProgressListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRecoveryStateListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceRecoveryStateListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomAccountDataListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceRoomAccountDataListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomDirectorySearchEntriesListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceRoomDirectorySearchEntriesListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomInfoListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceRoomInfoListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomListEntriesListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceRoomListEntriesListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomListLoadingStateListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceRoomListLoadingStateListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomListServiceStateListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceRoomListServiceStateListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceRoomListServiceSyncIndicatorListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceRoomListServiceSyncIndicatorListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceSendQueueRoomErrorListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceSendQueueRoomErrorListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceSessionVerificationControllerDelegate>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceSessionVerificationControllerDelegate",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceSyncServiceStateObserver>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceSyncServiceStateObserver",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceTimelineListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceTimelineListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceTypingNotificationsListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceTypingNotificationsListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceUnableToDecryptDelegate>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceUnableToDecryptDelegate",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceVerificationStateListener>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceVerificationStateListener",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
-}
-jsi::Value NativeMatrixSdkFfi::cpp_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-    auto vtableInstance =
-        uniffi::matrix_sdk_ffi::Bridging<UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider>::fromJs(
-            rt,
-            callInvoker,
-            args[0]
-        );
-
-    std::lock_guard<std::mutex> lock(uniffi::matrix_sdk_ffi::registry::vtableMutex);
-    uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(
-        uniffi::matrix_sdk_ffi::registry::putTable(
-            "UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider",
-            vtableInstance
-        )
-    );
-    return jsi::Value::undefined();
 }

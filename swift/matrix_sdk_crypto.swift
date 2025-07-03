@@ -631,6 +631,9 @@ extension CollectStrategy: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -736,6 +739,9 @@ extension IdentityState: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -833,10 +839,13 @@ extension LocalTrust: Equatable, Hashable {}
 
 
 
+
+
+
 /**
  * Error type for the decoding of the [`QrCodeData`].
  */
-public enum LoginQrCodeDecodeError {
+public enum LoginQrCodeDecodeError: Swift.Error {
 
     
     
@@ -972,11 +981,14 @@ extension LoginQrCodeDecodeError: Equatable, Hashable {}
 
 
 
+
 extension LoginQrCodeDecodeError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -1077,6 +1089,9 @@ extension SignatureState: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -1162,6 +1177,9 @@ public func FfiConverterTypeTrustRequirement_lower(_ value: TrustRequirement) ->
 
 
 extension TrustRequirement: Equatable, Hashable {}
+
+
+
 
 
 
@@ -1354,6 +1372,9 @@ public func FfiConverterTypeUtdCause_lower(_ value: UtdCause) -> RustBuffer {
 
 
 extension UtdCause: Equatable, Hashable {}
+
+
+
 
 
 

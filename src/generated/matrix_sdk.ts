@@ -58,7 +58,7 @@ import {
 } from 'uniffi-bindgen-react-native';
 
 // Get converters from the other files, if any.
-const uniffiCaller = new UniffiRustCaller();
+const uniffiCaller = new UniffiRustCaller(() => ({ code: 0 }));
 
 const uniffiIsDebug =
   // @ts-ignore -- The process global might not be defined
@@ -962,69 +962,73 @@ export class OAuthAuthorizationData
 }
 
 const uniffiTypeOAuthAuthorizationDataObjectFactory: UniffiObjectFactory<OAuthAuthorizationDataInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): OAuthAuthorizationDataInterface {
-      const instance = Object.create(OAuthAuthorizationData.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'OAuthAuthorizationData';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): OAuthAuthorizationDataInterface {
+        const instance = Object.create(OAuthAuthorizationData.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'OAuthAuthorizationData';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_oauthauthorizationdata_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_oauthauthorizationdata_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: OAuthAuthorizationDataInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: OAuthAuthorizationDataInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: OAuthAuthorizationDataInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_fn_clone_oauthauthorizationdata(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: OAuthAuthorizationDataInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_fn_clone_oauthauthorizationdata(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_fn_free_oauthauthorizationdata(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_fn_free_oauthauthorizationdata(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is OAuthAuthorizationDataInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'OAuthAuthorizationData'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is OAuthAuthorizationDataInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'OAuthAuthorizationData'
+        );
+      },
+    };
+  })();
 // FfiConverter for OAuthAuthorizationDataInterface
 const FfiConverterTypeOAuthAuthorizationData = new FfiConverterObject(
   uniffiTypeOAuthAuthorizationDataObjectFactory

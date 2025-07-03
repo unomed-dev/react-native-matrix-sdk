@@ -534,6 +534,9 @@ extension EventItemOrigin: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -617,6 +620,9 @@ public func FfiConverterTypeRoomPinnedEventsChange_lower(_ value: RoomPinnedEven
 
 
 extension RoomPinnedEventsChange: Equatable, Hashable {}
+
+
+
 
 
 

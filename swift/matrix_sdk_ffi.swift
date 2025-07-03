@@ -395,7 +395,13 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 
 
 // Public interface members begin here.
-
+// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+private let IDX_CALLBACK_FREE: Int32 = 0
+// Callback return codes
+private let UNIFFI_CALLBACK_SUCCESS: Int32 = 0
+private let UNIFFI_CALLBACK_ERROR: Int32 = 1
+private let UNIFFI_CALLBACK_UNEXPECTED_ERROR: Int32 = 2
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -623,7 +629,7 @@ fileprivate struct FfiConverterDuration: FfiConverterRustBuffer {
 
 
 
-public protocol ClientProtocol: AnyObject {
+public protocol ClientProtocol: AnyObject, Sendable {
     
     /**
      * Aborts an existing OIDC login operation that might have been cancelled,
@@ -1110,6 +1116,9 @@ open class Client: ClientProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -1186,7 +1195,7 @@ open func accountData(eventType: String)async throws  -> String?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1203,7 +1212,7 @@ open func accountUrl(action: AccountManagementAction?)async throws  -> String?  
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1251,7 +1260,7 @@ open func avatarUrl()async throws  -> String?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1275,7 +1284,7 @@ open func awaitRoomRemoteEcho(roomId: String)async throws  -> Room  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoom_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1295,7 +1304,7 @@ open func cachedAvatarUrl()async throws  -> String?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1340,7 +1349,7 @@ open func clearCaches()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1357,7 +1366,7 @@ open func createRoom(request: CreateRoomParameters)async throws  -> String  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1379,7 +1388,7 @@ open func customLoginWithJwt(jwt: String, initialDeviceName: String?, deviceId: 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1408,7 +1417,7 @@ open func deactivateAccount(authData: AuthData?, eraseData: Bool)async throws   
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1428,7 +1437,7 @@ open func deletePusher(identifiers: PusherIdentifiers)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1452,7 +1461,7 @@ open func displayName()async throws  -> String  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1506,7 +1515,7 @@ open func fetchMediaPreviewConfig()async throws  -> MediaPreviewConfig?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeMediaPreviewConfig.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1535,7 +1544,7 @@ open func getInviteAvatarsDisplayPolicy()async throws  -> InviteAvatars?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeInviteAvatars.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1556,7 +1565,7 @@ open func getMaxMediaUploadSize()async throws  -> UInt64  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_u64,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_u64,
             liftFunc: FfiConverterUInt64.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1573,7 +1582,7 @@ open func getMediaContent(mediaSource: MediaSource)async throws  -> Data  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterData.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1590,7 +1599,7 @@ open func getMediaFile(mediaSource: MediaSource, filename: String?, mimeType: St
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeMediaFileHandle_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1611,7 +1620,7 @@ open func getMediaPreviewDisplayPolicy()async throws  -> MediaPreviews?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeMediaPreviews.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1628,7 +1637,7 @@ open func getMediaThumbnail(mediaSource: MediaSource, width: UInt64, height: UIn
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterData.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1663,7 +1672,7 @@ open func getProfile(userId: String)async throws  -> UserProfile  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeUserProfile_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1680,7 +1689,7 @@ open func getRecentlyVisitedRooms()async throws  -> [String]  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1721,7 +1730,7 @@ open func getRoomPreviewFromRoomAlias(roomAlias: String)async throws  -> RoomPre
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoomPreview_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1745,7 +1754,7 @@ open func getRoomPreviewFromRoomId(roomId: String, viaServers: [String])async th
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoomPreview_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1762,7 +1771,7 @@ open func getSessionVerificationController()async throws  -> SessionVerification
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeSessionVerificationController_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1783,7 +1792,7 @@ open func getUrl(url: String)async throws  -> String  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1831,7 +1840,7 @@ open func ignoreUser(userId: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1848,7 +1857,7 @@ open func ignoredUsers()async throws  -> [String]  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1868,7 +1877,7 @@ open func isReportRoomApiSupported()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1894,7 +1903,7 @@ open func isRoomAliasAvailable(alias: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1918,7 +1927,7 @@ open func joinRoomById(roomId: String)async throws  -> Room  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoom_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1943,7 +1952,7 @@ open func joinRoomByIdOrAlias(roomIdOrAlias: String, serverNames: [String])async
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoom_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1963,7 +1972,7 @@ open func knock(roomIdOrAlias: String, reason: String?, serverNames: [String])as
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoom_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -1983,7 +1992,7 @@ open func login(username: String, password: String, initialDeviceName: String?, 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2003,7 +2012,7 @@ open func loginWithEmail(email: String, password: String, initialDeviceName: Str
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2023,7 +2032,7 @@ open func loginWithOidcCallback(callbackUrl: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeOidcError.lift
+            errorHandler: FfiConverterTypeOidcError_lift
         )
 }
     
@@ -2043,7 +2052,7 @@ open func logout()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2060,7 +2069,7 @@ open func notificationClient(processSetup: NotificationProcessSetup)async throws
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeNotificationClient_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2110,7 +2119,7 @@ open func removeAvatar()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2134,7 +2143,7 @@ open func resetServerCapabilities()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2155,7 +2164,7 @@ open func resolveRoomAlias(roomAlias: String)async throws  -> ResolvedRoomAlias?
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeResolvedRoomAlias.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2180,7 +2189,7 @@ open func restoreSession(session: Session)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2202,7 +2211,7 @@ open func restoreSessionWith(session: Session, roomLoadSettings: RoomLoadSetting
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2222,7 +2231,7 @@ open func roomAliasExists(roomAlias: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2253,7 +2262,7 @@ open func searchUsers(searchTerm: String, limit: UInt64)async throws  -> SearchU
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeSearchUsersResults_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2302,7 +2311,7 @@ open func setAccountData(eventType: String, content: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2331,7 +2340,7 @@ open func setDisplayName(name: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2351,7 +2360,7 @@ open func setInviteAvatarsDisplayPolicy(policy: InviteAvatars)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2371,7 +2380,7 @@ open func setMediaPreviewDisplayPolicy(policy: MediaPreviews)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2391,7 +2400,7 @@ open func setMediaRetentionPolicy(policy: MediaRetentionPolicy)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2411,7 +2420,7 @@ open func setPusher(identifiers: PusherIdentifiers, kind: PusherKind, appDisplay
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2432,7 +2441,7 @@ open func setUtdDelegate(utdDelegate: UnableToDecryptDelegate)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2462,7 +2471,7 @@ open func startSsoLogin(redirectUrl: String, idpId: String?)async throws  -> Sso
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeSsoHandler_lift,
-            errorHandler: FfiConverterTypeSsoError.lift
+            errorHandler: FfiConverterTypeSsoError_lift
         )
 }
     
@@ -2490,7 +2499,7 @@ open func subscribeToMediaPreviewConfig(listener: MediaPreviewConfigListener)asy
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeTaskHandle_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2519,7 +2528,7 @@ open func subscribeToRoomInfo(roomId: String, listener: RoomInfoListener)async t
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeTaskHandle_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2558,7 +2567,7 @@ open func trackRecentlyVisitedRoom(room: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2575,7 +2584,7 @@ open func unignoreUser(userId: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2592,7 +2601,7 @@ open func uploadAvatar(mimeType: String, data: Data)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2609,7 +2618,7 @@ open func uploadMedia(mimeType: String, data: Data, progressWatcher: ProgressWat
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -2649,7 +2658,7 @@ open func urlForOidc(oidcConfiguration: OidcConfiguration, prompt: OidcPrompt?, 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeOAuthAuthorizationData_lift,
-            errorHandler: FfiConverterTypeOidcError.lift
+            errorHandler: FfiConverterTypeOidcError_lift
         )
 }
     
@@ -2728,7 +2737,7 @@ public func FfiConverterTypeClient_lower(_ value: Client) -> UnsafeMutableRawPoi
 
 
 
-public protocol ClientBuilderProtocol: AnyObject {
+public protocol ClientBuilderProtocol: AnyObject, Sendable {
     
     func addRootCertificates(certificates: [Data])  -> ClientBuilder
     
@@ -2902,6 +2911,9 @@ open class ClientBuilder: ClientBuilderProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -2998,7 +3010,7 @@ open func build()async throws  -> Client  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeClient_lift,
-            errorHandler: FfiConverterTypeClientBuildError.lift
+            errorHandler: FfiConverterTypeClientBuildError_lift
         )
 }
     
@@ -3029,7 +3041,7 @@ open func buildWithQrCode(qrCodeData: QrCodeData, oidcConfiguration: OidcConfigu
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeClient_lift,
-            errorHandler: FfiConverterTypeHumanQrLoginError.lift
+            errorHandler: FfiConverterTypeHumanQrLoginError_lift
         )
 }
     
@@ -3347,7 +3359,7 @@ public func FfiConverterTypeClientBuilder_lower(_ value: ClientBuilder) -> Unsaf
 
 
 
-public protocol EncryptionProtocol: AnyObject {
+public protocol EncryptionProtocol: AnyObject, Sendable {
     
     /**
      * Does a backup exist on the server?
@@ -3449,6 +3461,9 @@ open class Encryption: EncryptionProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -3508,7 +3523,7 @@ open func backupExistsOnServer()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -3562,7 +3577,7 @@ open func disableRecovery()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeRecoveryError.lift
+            errorHandler: FfiConverterTypeRecoveryError_lift
         )
 }
     
@@ -3601,7 +3616,7 @@ open func enableBackups()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeRecoveryError.lift
+            errorHandler: FfiConverterTypeRecoveryError_lift
         )
 }
     
@@ -3618,7 +3633,7 @@ open func enableRecovery(waitForBackupsToUpload: Bool, passphrase: String?, prog
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeRecoveryError.lift
+            errorHandler: FfiConverterTypeRecoveryError_lift
         )
 }
     
@@ -3635,7 +3650,7 @@ open func isLastDevice()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeRecoveryError.lift
+            errorHandler: FfiConverterTypeRecoveryError_lift
         )
 }
     
@@ -3652,7 +3667,7 @@ open func recover(recoveryKey: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeRecoveryError.lift
+            errorHandler: FfiConverterTypeRecoveryError_lift
         )
 }
     
@@ -3669,7 +3684,7 @@ open func recoverAndReset(oldRecoveryKey: String)async throws  -> String  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeRecoveryError.lift
+            errorHandler: FfiConverterTypeRecoveryError_lift
         )
 }
     
@@ -3705,7 +3720,7 @@ open func resetIdentity()async throws  -> IdentityResetHandle?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeIdentityResetHandle.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -3722,7 +3737,7 @@ open func resetRecoveryKey()async throws  -> String  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeRecoveryError.lift
+            errorHandler: FfiConverterTypeRecoveryError_lift
         )
 }
     
@@ -3757,7 +3772,7 @@ open func userIdentity(userId: String)async throws  -> UserIdentity?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeUserIdentity.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -3789,7 +3804,7 @@ open func waitForBackupUploadSteadyState(progressListener: BackupSteadyStateList
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeSteadyStateError.lift
+            errorHandler: FfiConverterTypeSteadyStateError_lift
         )
 }
     
@@ -3873,7 +3888,7 @@ public func FfiConverterTypeEncryption_lower(_ value: Encryption) -> UnsafeMutab
 
 
 
-public protocol HomeserverLoginDetailsProtocol: AnyObject {
+public protocol HomeserverLoginDetailsProtocol: AnyObject, Sendable {
     
     /**
      * The sliding sync version.
@@ -3916,6 +3931,9 @@ open class HomeserverLoginDetails: HomeserverLoginDetailsProtocol, @unchecked Se
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -4060,7 +4078,7 @@ public func FfiConverterTypeHomeserverLoginDetails_lower(_ value: HomeserverLogi
 
 
 
-public protocol IdentityResetHandleProtocol: AnyObject {
+public protocol IdentityResetHandleProtocol: AnyObject, Sendable {
     
     /**
      * Get the underlying [`CrossSigningResetAuthType`] this identity reset
@@ -4096,6 +4114,9 @@ open class IdentityResetHandle: IdentityResetHandleProtocol, @unchecked Sendable
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -4182,7 +4203,7 @@ open func reset(auth: AuthData?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -4244,7 +4265,7 @@ public func FfiConverterTypeIdentityResetHandle_lower(_ value: IdentityResetHand
 
 
 
-public protocol InReplyToDetailsProtocol: AnyObject {
+public protocol InReplyToDetailsProtocol: AnyObject, Sendable {
     
     func event()  -> EmbeddedEventDetails
     
@@ -4265,6 +4286,9 @@ open class InReplyToDetails: InReplyToDetailsProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -4375,7 +4399,7 @@ public func FfiConverterTypeInReplyToDetails_lower(_ value: InReplyToDetails) ->
 /**
  * A set of actions to perform for a knock request.
  */
-public protocol KnockRequestActionsProtocol: AnyObject {
+public protocol KnockRequestActionsProtocol: AnyObject, Sendable {
     
     /**
      * Accepts the knock request by inviting the user to the room.
@@ -4420,6 +4444,9 @@ open class KnockRequestActions: KnockRequestActionsProtocol, @unchecked Sendable
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -4471,7 +4498,7 @@ open func accept()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -4492,7 +4519,7 @@ open func decline(reason: String?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -4513,7 +4540,7 @@ open func declineAndBan(reason: String?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -4536,7 +4563,7 @@ open func markAsSeen()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -4601,7 +4628,7 @@ public func FfiConverterTypeKnockRequestActions_lower(_ value: KnockRequestActio
 /**
  * Wrapper to retrieve some timeline item info lazily.
  */
-public protocol LazyTimelineItemProviderProtocol: AnyObject {
+public protocol LazyTimelineItemProviderProtocol: AnyObject, Sendable {
     
     func containsOnlyEmojis()  -> Bool
     
@@ -4639,6 +4666,9 @@ open class LazyTimelineItemProvider: LazyTimelineItemProviderProtocol, @unchecke
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -4775,7 +4805,7 @@ public func FfiConverterTypeLazyTimelineItemProvider_lower(_ value: LazyTimeline
  * A file handle that takes ownership of a media file on disk. When the handle
  * is dropped, the file will be removed from the disk.
  */
-public protocol MediaFileHandleProtocol: AnyObject {
+public protocol MediaFileHandleProtocol: AnyObject, Sendable {
     
     /**
      * Get the media file's path.
@@ -4803,6 +4833,9 @@ open class MediaFileHandle: MediaFileHandleProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -4914,7 +4947,7 @@ public func FfiConverterTypeMediaFileHandle_lower(_ value: MediaFileHandle) -> U
 
 
 
-public protocol MediaSourceProtocol: AnyObject {
+public protocol MediaSourceProtocol: AnyObject, Sendable {
     
     func toJson()  -> String
     
@@ -4935,6 +4968,9 @@ open class MediaSource: MediaSourceProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -5058,7 +5094,7 @@ public func FfiConverterTypeMediaSource_lower(_ value: MediaSource) -> UnsafeMut
 
 
 
-public protocol NotificationClientProtocol: AnyObject {
+public protocol NotificationClientProtocol: AnyObject, Sendable {
     
     /**
      * See also documentation of
@@ -5099,6 +5135,9 @@ open class NotificationClient: NotificationClientProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -5151,7 +5190,7 @@ open func getNotification(roomId: String, eventId: String)async throws  -> Notif
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeNotificationItem.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -5176,7 +5215,7 @@ open func getNotifications(requests: [NotificationItemsRequest])async throws  ->
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterDictionaryStringTypeNotificationItem.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -5252,7 +5291,7 @@ public func FfiConverterTypeNotificationClient_lower(_ value: NotificationClient
 
 
 
-public protocol NotificationSettingsProtocol: AnyObject {
+public protocol NotificationSettingsProtocol: AnyObject, Sendable {
     
     /**
      * Check whether [MSC 4028 push rule][rule] is enabled on the homeserver.
@@ -5405,6 +5444,9 @@ open class NotificationSettings: NotificationSettingsProtocol, @unchecked Sendab
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -5560,7 +5602,7 @@ open func getRoomNotificationSettings(roomId: String, isEncrypted: Bool, isOneTo
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRoomNotificationSettings_lift,
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5601,7 +5643,7 @@ open func getUserDefinedRoomNotificationMode(roomId: String)async throws  -> Roo
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeRoomNotificationMode.lift,
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5621,7 +5663,7 @@ open func isCallEnabled()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5641,7 +5683,7 @@ open func isInviteForMeEnabled()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5661,7 +5703,7 @@ open func isRoomMentionEnabled()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5681,7 +5723,7 @@ open func isUserMentionEnabled()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5701,7 +5743,7 @@ open func restoreDefaultRoomNotificationMode(roomId: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5721,7 +5763,7 @@ open func setCallEnabled(enabled: Bool)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5741,7 +5783,7 @@ open func setCustomPushRule(ruleId: String, ruleKind: RuleKind, actions: [Action
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5768,7 +5810,7 @@ open func setDefaultRoomNotificationMode(isEncrypted: Bool, isOneToOne: Bool, mo
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5795,7 +5837,7 @@ open func setInviteForMeEnabled(enabled: Bool)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5815,7 +5857,7 @@ open func setRoomMentionEnabled(enabled: Bool)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5835,7 +5877,7 @@ open func setRoomNotificationMode(roomId: String, mode: RoomNotificationMode)asy
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5855,7 +5897,7 @@ open func setUserMentionEnabled(enabled: Bool)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5882,7 +5924,7 @@ open func unmuteRoom(roomId: String, isEncrypted: Bool, isOneToOne: Bool)async t
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeNotificationSettingsError.lift
+            errorHandler: FfiConverterTypeNotificationSettingsError_lift
         )
 }
     
@@ -5950,7 +5992,7 @@ public func FfiConverterTypeNotificationSettings_lower(_ value: NotificationSett
  * The [`QrCodeData`] can be serialized and encoded as a QR code or it can be
  * decoded from a QR code.
  */
-public protocol QrCodeDataProtocol: AnyObject {
+public protocol QrCodeDataProtocol: AnyObject, Sendable {
     
     /**
      * The server name contained within the scanned QR code data.
@@ -5982,6 +6024,9 @@ open class QrCodeData: QrCodeDataProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -6102,7 +6147,7 @@ public func FfiConverterTypeQrCodeData_lower(_ value: QrCodeData) -> UnsafeMutab
 
 
 
-public protocol RoomProtocol: AnyObject {
+public protocol RoomProtocol: AnyObject, Sendable {
     
     func activeMembersCount()  -> UInt64
     
@@ -6661,6 +6706,9 @@ open class Room: RoomProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -6740,7 +6788,7 @@ open func applyPowerLevelChanges(changes: RoomPowerLevelChanges)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6764,7 +6812,7 @@ open func banUser(userId: String, reason: String?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6781,7 +6829,7 @@ open func canUserBan(userId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6798,7 +6846,7 @@ open func canUserInvite(userId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6815,7 +6863,7 @@ open func canUserKick(userId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6832,7 +6880,7 @@ open func canUserPinUnpin(userId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6849,7 +6897,7 @@ open func canUserRedactOther(userId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6866,7 +6914,7 @@ open func canUserRedactOwn(userId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6883,7 +6931,7 @@ open func canUserSendMessage(userId: String, message: MessageLikeEventType)async
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6900,7 +6948,7 @@ open func canUserSendState(userId: String, stateEvent: StateEventType)async thro
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6917,7 +6965,7 @@ open func canUserTriggerRoomNotification(userId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6944,7 +6992,7 @@ open func clearComposerDraft()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6967,7 +7015,7 @@ open func clearEventCacheStorage()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -6993,7 +7041,7 @@ open func discardRoomKey()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7028,7 +7076,7 @@ open func edit(eventId: String, newContent: RoomMessageEventContentWithoutRelati
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7048,7 +7096,7 @@ open func enableEncryption()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7089,7 +7137,7 @@ open func forget()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7106,7 +7154,7 @@ open func getPowerLevels()async throws  -> RoomPowerLevels  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRoomPowerLevels_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7129,7 +7177,7 @@ open func getRoomVisibility()async throws  -> RoomVisibility  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRoomVisibility_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7186,7 +7234,7 @@ open func ignoreDeviceTrustAndResend(devices: [String: [String]], sendHandle: Se
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7210,7 +7258,7 @@ open func ignoreUser(userId: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7227,7 +7275,7 @@ open func inviteUserById(userId: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7254,7 +7302,7 @@ open func inviter()async throws  -> RoomMember?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeRoomMember.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7343,7 +7391,7 @@ open func join()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7367,7 +7415,7 @@ open func kickUser(userId: String, reason: String?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7384,7 +7432,7 @@ open func latestEncryptionState()async throws  -> EncryptionState  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeEncryptionState_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7424,7 +7472,7 @@ open func leave()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7444,7 +7492,7 @@ open func loadComposerDraft()async throws  -> ComposerDraft?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeComposerDraft.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7467,7 +7515,7 @@ open func markAsRead(receiptType: ReceiptType)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7484,7 +7532,7 @@ open func matrixToEventPermalink(eventId: String)async throws  -> String  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7501,7 +7549,7 @@ open func matrixToPermalink()async throws  -> String  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7518,7 +7566,7 @@ open func member(userId: String)async throws  -> RoomMember  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRoomMember_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7535,7 +7583,7 @@ open func memberAvatarUrl(userId: String)async throws  -> String?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7552,7 +7600,7 @@ open func memberDisplayName(userId: String)async throws  -> String?  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7579,7 +7627,7 @@ open func memberWithSenderInfo(userId: String)async throws  -> RoomMemberWithSen
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRoomMemberWithSenderInfo_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7596,7 +7644,7 @@ open func members()async throws  -> RoomMembersIterator  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoomMembersIterator_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7613,7 +7661,7 @@ open func membersNoSync()async throws  -> RoomMembersIterator  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoomMembersIterator_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7672,7 +7720,7 @@ open func previewRoom(via: [String])async throws  -> RoomPreview  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoomPreview_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7697,7 +7745,7 @@ open func publishRoomAliasInRoomDirectory(alias: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7734,7 +7782,7 @@ open func redact(eventId: String, reason: String?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7754,7 +7802,7 @@ open func removeAvatar()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7779,7 +7827,7 @@ open func removeRoomAliasFromRoomDirectory(alias: String)async throws  -> Bool  
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7808,7 +7856,7 @@ open func reportContent(eventId: String, score: Int32?, reason: String?)async th
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7837,7 +7885,7 @@ open func reportRoom(reason: String?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7854,7 +7902,7 @@ open func resetPowerLevels()async throws  -> RoomPowerLevels  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRoomPowerLevels_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7875,7 +7923,7 @@ open func roomEventsDebugString()async throws  -> [String]  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceString.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7892,7 +7940,7 @@ open func roomInfo()async throws  -> RoomInfo  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRoomInfo_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7913,7 +7961,7 @@ open func saveComposerDraft(draft: ComposerDraft)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7943,7 +7991,7 @@ open func sendCallNotification(callId: String, application: RtcApplicationType, 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7976,7 +8024,7 @@ open func sendCallNotificationIfNeeded()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -7996,7 +8044,7 @@ open func sendLiveLocation(geoUri: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8022,7 +8070,7 @@ open func sendRaw(eventType: String, content: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8039,7 +8087,7 @@ open func setIsFavourite(isFavourite: Bool, tagOrder: Double?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8056,7 +8104,7 @@ open func setIsLowPriority(isLowPriority: Bool, tagOrder: Double?)async throws  
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8076,7 +8124,7 @@ open func setName(name: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8096,7 +8144,7 @@ open func setTopic(topic: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8117,7 +8165,7 @@ open func setUnreadFlag(newValue: Bool)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8137,7 +8185,7 @@ open func startLiveLocationShare(durationMillis: UInt64)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8157,7 +8205,7 @@ open func stopLiveLocationShare()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8174,7 +8222,7 @@ open func subscribeToIdentityStatusChanges(listener: IdentityStatusChangeListene
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeTaskHandle_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8199,7 +8247,7 @@ open func subscribeToKnockRequests(listener: KnockRequestsListener)async throws 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeTaskHandle_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8263,7 +8311,7 @@ open func suggestedRoleForUser(userId: String)async throws  -> RoomMemberRole  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRoomMemberRole_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8284,7 +8332,7 @@ open func timeline()async throws  -> Timeline  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeTimeline_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8304,7 +8352,7 @@ open func timelineWithConfiguration(configuration: TimelineConfiguration)async t
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeTimeline_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8328,7 +8376,7 @@ open func typingNotice(isTyping: Bool)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8345,7 +8393,7 @@ open func unbanUser(userId: String, reason: String?)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8367,7 +8415,7 @@ open func updateCanonicalAlias(alias: String?, altAliases: [String])async throws
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8387,7 +8435,7 @@ open func updateHistoryVisibility(visibility: RoomHistoryVisibility)async throws
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8407,7 +8455,7 @@ open func updateJoinRules(newRule: JoinRule)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8424,7 +8472,7 @@ open func updatePowerLevelsForUsers(updates: [UserPowerLevelUpdate])async throws
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8444,7 +8492,7 @@ open func updateRoomVisibility(visibility: RoomVisibility)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8476,7 +8524,7 @@ open func uploadAvatar(mimeType: String, data: Data, mediaInfo: ImageInfo?)async
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8505,7 +8553,7 @@ open func withdrawVerificationAndResend(userIds: [String], sendHandle: SendHandl
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8575,7 +8623,7 @@ public func FfiConverterTypeRoom_lower(_ value: Room) -> UnsafeMutableRawPointer
  * 2. Start the room search with [`RoomDirectorySearch::search`].
  * 3. To get more results, use [`RoomDirectorySearch::next_page`].
  */
-public protocol RoomDirectorySearchProtocol: AnyObject {
+public protocol RoomDirectorySearchProtocol: AnyObject, Sendable {
     
     /**
      * Get whether the search is at the last page.
@@ -8635,6 +8683,9 @@ open class RoomDirectorySearch: RoomDirectorySearchProtocol, @unchecked Sendable
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -8686,7 +8737,7 @@ open func isAtLastPage()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8706,7 +8757,7 @@ open func loadedPages()async throws  -> UInt32  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_u32,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_u32,
             liftFunc: FfiConverterUInt32.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8726,7 +8777,7 @@ open func nextPage()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8777,7 +8828,7 @@ open func search(filter: String?, batchSize: UInt32, viaServerName: String?)asyn
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -8839,7 +8890,7 @@ public func FfiConverterTypeRoomDirectorySearch_lower(_ value: RoomDirectorySear
 
 
 
-public protocol RoomListProtocol: AnyObject {
+public protocol RoomListProtocol: AnyObject, Sendable {
     
     func entriesWithDynamicAdapters(pageSize: UInt32, listener: RoomListEntriesListener)  -> RoomListEntriesWithDynamicAdaptersResult
     
@@ -8862,6 +8913,9 @@ open class RoomList: RoomListProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -8980,7 +9034,7 @@ public func FfiConverterTypeRoomList_lower(_ value: RoomList) -> UnsafeMutableRa
 
 
 
-public protocol RoomListDynamicEntriesControllerProtocol: AnyObject {
+public protocol RoomListDynamicEntriesControllerProtocol: AnyObject, Sendable {
     
     func addOnePage() 
     
@@ -9003,6 +9057,9 @@ open class RoomListDynamicEntriesController: RoomListDynamicEntriesControllerPro
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -9116,7 +9173,7 @@ public func FfiConverterTypeRoomListDynamicEntriesController_lower(_ value: Room
 
 
 
-public protocol RoomListEntriesWithDynamicAdaptersResultProtocol: AnyObject {
+public protocol RoomListEntriesWithDynamicAdaptersResultProtocol: AnyObject, Sendable {
     
     func controller()  -> RoomListDynamicEntriesController
     
@@ -9137,6 +9194,9 @@ open class RoomListEntriesWithDynamicAdaptersResult: RoomListEntriesWithDynamicA
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -9244,7 +9304,7 @@ public func FfiConverterTypeRoomListEntriesWithDynamicAdaptersResult_lower(_ val
 
 
 
-public protocol RoomListServiceProtocol: AnyObject {
+public protocol RoomListServiceProtocol: AnyObject, Sendable {
     
     func allRooms() async throws  -> RoomList
     
@@ -9271,6 +9331,9 @@ open class RoomListService: RoomListServiceProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -9319,7 +9382,7 @@ open func allRooms()async throws  -> RoomList  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeRoomList_lift,
-            errorHandler: FfiConverterTypeRoomListError.lift
+            errorHandler: FfiConverterTypeRoomListError_lift
         )
 }
     
@@ -9414,7 +9477,7 @@ public func FfiConverterTypeRoomListService_lower(_ value: RoomListService) -> U
 
 
 
-public protocol RoomMembersIteratorProtocol: AnyObject {
+public protocol RoomMembersIteratorProtocol: AnyObject, Sendable {
     
     func len()  -> UInt32
     
@@ -9435,6 +9498,9 @@ open class RoomMembersIterator: RoomMembersIteratorProtocol, @unchecked Sendable
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -9543,7 +9609,7 @@ public func FfiConverterTypeRoomMembersIterator_lower(_ value: RoomMembersIterat
 
 
 
-public protocol RoomMessageEventContentWithoutRelationProtocol: AnyObject {
+public protocol RoomMessageEventContentWithoutRelationProtocol: AnyObject, Sendable {
     
     func withMentions(mentions: Mentions)  -> RoomMessageEventContentWithoutRelation
     
@@ -9562,6 +9628,9 @@ open class RoomMessageEventContentWithoutRelation: RoomMessageEventContentWithou
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -9667,7 +9736,7 @@ public func FfiConverterTypeRoomMessageEventContentWithoutRelation_lower(_ value
  * A room preview for a room. It's intended to be used to represent rooms that
  * aren't joined yet.
  */
-public protocol RoomPreviewProtocol: AnyObject {
+public protocol RoomPreviewProtocol: AnyObject, Sendable {
     
     /**
      * Forget the room if we had access to it, and it was left or banned.
@@ -9719,6 +9788,9 @@ open class RoomPreview: RoomPreviewProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -9770,7 +9842,7 @@ open func forget()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -9827,7 +9899,7 @@ open func leave()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -9910,7 +9982,7 @@ public func FfiConverterTypeRoomPreview_lower(_ value: RoomPreview) -> UnsafeMut
 
 
 
-public protocol SendAttachmentJoinHandleProtocol: AnyObject {
+public protocol SendAttachmentJoinHandleProtocol: AnyObject, Sendable {
     
     /**
      * Cancel the current sending task.
@@ -9941,6 +10013,9 @@ open class SendAttachmentJoinHandle: SendAttachmentJoinHandleProtocol, @unchecke
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -10005,7 +10080,7 @@ open func join()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeRoomError.lift
+            errorHandler: FfiConverterTypeRoomError_lift
         )
 }
     
@@ -10067,7 +10142,7 @@ public func FfiConverterTypeSendAttachmentJoinHandle_lower(_ value: SendAttachme
 
 
 
-public protocol SendGalleryJoinHandleProtocol: AnyObject {
+public protocol SendGalleryJoinHandleProtocol: AnyObject, Sendable {
     
     /**
      * Cancel the current sending task.
@@ -10098,6 +10173,9 @@ open class SendGalleryJoinHandle: SendGalleryJoinHandleProtocol, @unchecked Send
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -10162,7 +10240,7 @@ open func join()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeRoomError.lift
+            errorHandler: FfiConverterTypeRoomError_lift
         )
 }
     
@@ -10227,7 +10305,7 @@ public func FfiConverterTypeSendGalleryJoinHandle_lower(_ value: SendGalleryJoin
 /**
  * A handle to perform actions onto a local echo.
  */
-public protocol SendHandleProtocol: AnyObject {
+public protocol SendHandleProtocol: AnyObject, Sendable {
     
     /**
      * Try to abort the sending of the current event.
@@ -10275,6 +10353,9 @@ open class SendHandle: SendHandleProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -10333,7 +10414,7 @@ open func abort()async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10364,7 +10445,7 @@ open func tryResend()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10426,7 +10507,7 @@ public func FfiConverterTypeSendHandle_lower(_ value: SendHandle) -> UnsafeMutab
 
 
 
-public protocol SessionVerificationControllerProtocol: AnyObject {
+public protocol SessionVerificationControllerProtocol: AnyObject, Sendable {
     
     /**
      * Accept the previously acknowledged verification request
@@ -10489,6 +10570,9 @@ open class SessionVerificationController: SessionVerificationControllerProtocol,
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -10540,7 +10624,7 @@ open func acceptVerificationRequest()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10563,7 +10647,7 @@ open func acknowledgeVerificationRequest(senderId: String, flowId: String)async 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10583,7 +10667,7 @@ open func approveVerification()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10603,7 +10687,7 @@ open func cancelVerification()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10623,7 +10707,7 @@ open func declineVerification()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10643,7 +10727,7 @@ open func requestDeviceVerification()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10663,7 +10747,7 @@ open func requestUserVerification(userId: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10691,7 +10775,7 @@ open func startSasVerification()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -10753,7 +10837,7 @@ public func FfiConverterTypeSessionVerificationController_lower(_ value: Session
 
 
 
-public protocol SessionVerificationEmojiProtocol: AnyObject {
+public protocol SessionVerificationEmojiProtocol: AnyObject, Sendable {
     
     func description()  -> String
     
@@ -10774,6 +10858,9 @@ open class SessionVerificationEmoji: SessionVerificationEmojiProtocol, @unchecke
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -10881,7 +10968,7 @@ public func FfiConverterTypeSessionVerificationEmoji_lower(_ value: SessionVerif
 
 
 
-public protocol SpanProtocol: AnyObject {
+public protocol SpanProtocol: AnyObject, Sendable {
     
     func enter() 
     
@@ -10904,6 +10991,9 @@ open class Span: SpanProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -11064,7 +11154,7 @@ public func FfiConverterTypeSpan_lower(_ value: Span) -> UnsafeMutableRawPointer
 /**
  * An object encapsulating the SSO login flow
  */
-public protocol SsoHandlerProtocol: AnyObject {
+public protocol SsoHandlerProtocol: AnyObject, Sendable {
     
     /**
      * Completes the SSO login process.
@@ -11096,6 +11186,9 @@ open class SsoHandler: SsoHandlerProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -11147,7 +11240,7 @@ open func finish(callbackUrl: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeSsoError.lift
+            errorHandler: FfiConverterTypeSsoError_lift
         )
 }
     
@@ -11221,7 +11314,7 @@ public func FfiConverterTypeSsoHandler_lower(_ value: SsoHandler) -> UnsafeMutab
 
 
 
-public protocol SyncServiceProtocol: AnyObject {
+public protocol SyncServiceProtocol: AnyObject, Sendable {
     
     func roomListService()  -> RoomListService
     
@@ -11246,6 +11339,9 @@ open class SyncService: SyncServiceProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -11390,7 +11486,7 @@ public func FfiConverterTypeSyncService_lower(_ value: SyncService) -> UnsafeMut
 
 
 
-public protocol SyncServiceBuilderProtocol: AnyObject {
+public protocol SyncServiceBuilderProtocol: AnyObject, Sendable {
     
     func finish() async throws  -> SyncService
     
@@ -11416,6 +11512,9 @@ open class SyncServiceBuilder: SyncServiceBuilderProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -11464,7 +11563,7 @@ open func finish()async throws  -> SyncService  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeSyncService_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -11549,7 +11648,7 @@ public func FfiConverterTypeSyncServiceBuilder_lower(_ value: SyncServiceBuilder
  *
  * It's a thin wrapper around [`JoinHandle`].
  */
-public protocol TaskHandleProtocol: AnyObject {
+public protocol TaskHandleProtocol: AnyObject, Sendable {
     
     func cancel() 
     
@@ -11579,6 +11678,9 @@ open class TaskHandle: TaskHandleProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -11688,7 +11790,7 @@ public func FfiConverterTypeTaskHandle_lower(_ value: TaskHandle) -> UnsafeMutab
 
 
 
-public protocol ThreadSummaryProtocol: AnyObject {
+public protocol ThreadSummaryProtocol: AnyObject, Sendable {
     
     func latestEvent()  -> EmbeddedEventDetails
     
@@ -11707,6 +11809,9 @@ open class ThreadSummary: ThreadSummaryProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -11807,7 +11912,7 @@ public func FfiConverterTypeThreadSummary_lower(_ value: ThreadSummary) -> Unsaf
 
 
 
-public protocol TimelineProtocol: AnyObject {
+public protocol TimelineProtocol: AnyObject, Sendable {
     
     func addListener(listener: TimelineListener) async  -> TaskHandle
     
@@ -11978,6 +12083,9 @@ open class Timeline: TimelineProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -12052,7 +12160,7 @@ open func createPoll(question: String, answers: [String], maxSelections: UInt8, 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12079,7 +12187,7 @@ open func edit(eventOrTransactionId: EventOrTransactionId, newContent: EditedCon
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12096,7 +12204,7 @@ open func endPoll(pollStartEventId: String, text: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12113,7 +12221,7 @@ open func fetchDetailsForEvent(eventId: String)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12158,7 +12266,7 @@ open func getEventTimelineItemByEventId(eventId: String)async throws  -> EventTi
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeEventTimelineItem_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12181,7 +12289,7 @@ open func loadReplyDetails(eventIdStr: String)async throws  -> InReplyToDetails 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeInReplyToDetails_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12206,7 +12314,7 @@ open func markAsRead(receiptType: ReceiptType)async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12228,7 +12336,7 @@ open func paginateBackwards(numEvents: UInt16)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12250,7 +12358,7 @@ open func paginateForwards(numEvents: UInt16)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12274,7 +12382,7 @@ open func pinEvent(eventId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12302,7 +12410,7 @@ open func redactEvent(eventOrTransactionId: EventOrTransactionId, reason: String
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12333,7 +12441,7 @@ open func send(msg: RoomMessageEventContentWithoutRelation)async throws  -> Send
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeSendHandle_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12408,7 +12516,7 @@ open func sendPollResponse(pollStartEventId: String, answers: [String])async thr
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12425,7 +12533,7 @@ open func sendReadReceipt(receiptType: ReceiptType, eventId: String)async throws
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12449,7 +12557,7 @@ open func sendReply(msg: RoomMessageEventContentWithoutRelation, replyParams: Re
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12488,7 +12596,7 @@ open func subscribeToBackPaginationStatus(listener: PaginationStatusListener)asy
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeTaskHandle_lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12518,7 +12626,7 @@ open func toggleReaction(itemId: EventOrTransactionId, key: String)async throws 
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12542,7 +12650,7 @@ open func unpinEvent(eventId: String)async throws  -> Bool  {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
             liftFunc: FfiConverterBool.lift,
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -12604,7 +12712,7 @@ public func FfiConverterTypeTimeline_lower(_ value: Timeline) -> UnsafeMutableRa
 
 
 
-public protocol TimelineDiffProtocol: AnyObject {
+public protocol TimelineDiffProtocol: AnyObject, Sendable {
     
     func append()  -> [TimelineItem]?
     
@@ -12639,6 +12747,9 @@ open class TimelineDiff: TimelineDiffProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -12795,7 +12906,7 @@ public func FfiConverterTypeTimelineDiff_lower(_ value: TimelineDiff) -> UnsafeM
 
 
 
-public protocol TimelineEventProtocol: AnyObject {
+public protocol TimelineEventProtocol: AnyObject, Sendable {
     
     func eventId()  -> String
     
@@ -12820,6 +12931,9 @@ open class TimelineEvent: TimelineEventProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -12941,7 +13055,7 @@ public func FfiConverterTypeTimelineEvent_lower(_ value: TimelineEvent) -> Unsaf
 
 
 
-public protocol TimelineEventTypeFilterProtocol: AnyObject {
+public protocol TimelineEventTypeFilterProtocol: AnyObject, Sendable {
     
 }
 open class TimelineEventTypeFilter: TimelineEventTypeFilterProtocol, @unchecked Sendable {
@@ -12958,6 +13072,9 @@ open class TimelineEventTypeFilter: TimelineEventTypeFilterProtocol, @unchecked 
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -13067,7 +13184,7 @@ public func FfiConverterTypeTimelineEventTypeFilter_lower(_ value: TimelineEvent
 
 
 
-public protocol TimelineItemProtocol: AnyObject {
+public protocol TimelineItemProtocol: AnyObject, Sendable {
     
     func asEvent()  -> EventTimelineItem?
     
@@ -13095,6 +13212,9 @@ open class TimelineItem: TimelineItemProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -13219,7 +13339,7 @@ public func FfiConverterTypeTimelineItem_lower(_ value: TimelineItem) -> UnsafeM
 
 
 
-public protocol UnreadNotificationsCountProtocol: AnyObject {
+public protocol UnreadNotificationsCountProtocol: AnyObject, Sendable {
     
     func hasNotifications()  -> Bool
     
@@ -13242,6 +13362,9 @@ open class UnreadNotificationsCount: UnreadNotificationsCountProtocol, @unchecke
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -13359,7 +13482,7 @@ public func FfiConverterTypeUnreadNotificationsCount_lower(_ value: UnreadNotifi
 /**
  * The E2EE identity of a user.
  */
-public protocol UserIdentityProtocol: AnyObject {
+public protocol UserIdentityProtocol: AnyObject, Sendable {
     
     /**
      * Was this identity previously verified, and is no longer?
@@ -13437,6 +13560,9 @@ open class UserIdentity: UserIdentityProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -13539,7 +13665,7 @@ open func pin()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -13576,7 +13702,7 @@ open func withdrawVerification()async throws   {
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_void,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_void,
             liftFunc: { $0 },
-            errorHandler: FfiConverterTypeClientError.lift
+            errorHandler: FfiConverterTypeClientError_lift
         )
 }
     
@@ -13642,7 +13768,7 @@ public func FfiConverterTypeUserIdentity_lower(_ value: UserIdentity) -> UnsafeM
  * An object that handles all interactions of a widget living inside a webview
  * or IFrame with the Matrix world.
  */
-public protocol WidgetDriverProtocol: AnyObject {
+public protocol WidgetDriverProtocol: AnyObject, Sendable {
     
     func run(room: Room, capabilitiesProvider: WidgetCapabilitiesProvider) async 
     
@@ -13665,6 +13791,9 @@ open class WidgetDriver: WidgetDriverProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -13780,7 +13909,7 @@ public func FfiConverterTypeWidgetDriver_lower(_ value: WidgetDriver) -> UnsafeM
  * A handle that encapsulates the communication between a widget driver and the
  * corresponding widget (inside a webview or IFrame).
  */
-public protocol WidgetDriverHandleProtocol: AnyObject {
+public protocol WidgetDriverHandleProtocol: AnyObject, Sendable {
     
     /**
      * Receive a message from the widget driver.
@@ -13816,6 +13945,9 @@ open class WidgetDriverHandle: WidgetDriverHandleProtocol, @unchecked Sendable {
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -23261,6 +23393,9 @@ extension AccountDataEvent: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -23380,6 +23515,9 @@ extension AccountDataEventType: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -23481,6 +23619,9 @@ extension AccountManagementAction: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -23557,6 +23698,9 @@ public func FfiConverterTypeAction_lower(_ value: Action) -> RustBuffer {
 
 
 extension Action: Equatable, Hashable {}
+
+
+
 
 
 
@@ -23644,6 +23788,9 @@ extension AllowRule: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -23711,6 +23858,9 @@ extension AssetType: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -23774,6 +23924,9 @@ public func FfiConverterTypeAuthData_lower(_ value: AuthData) -> RustBuffer {
 
 
 extension AuthData: Equatable, Hashable {}
+
+
+
 
 
 
@@ -23879,6 +24032,9 @@ extension BackupState: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -23965,7 +24121,10 @@ extension BackupUploadState: Equatable, Hashable {}
 
 
 
-public enum ClientBuildError {
+
+
+
+public enum ClientBuildError: Swift.Error {
 
     
     
@@ -24094,6 +24253,7 @@ extension ClientBuildError: Equatable, Hashable {}
 
 
 
+
 extension ClientBuildError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
@@ -24102,7 +24262,9 @@ extension ClientBuildError: Foundation.LocalizedError {
 
 
 
-public enum ClientError {
+
+
+public enum ClientError: Swift.Error {
 
     
     
@@ -24185,11 +24347,14 @@ extension ClientError: Equatable, Hashable {}
 
 
 
+
 extension ClientError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -24295,6 +24460,9 @@ extension ComparisonOperator: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -24393,6 +24561,9 @@ extension ComposerDraftType: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -24466,6 +24637,9 @@ extension CrossSigningResetAuthType: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -24534,6 +24708,9 @@ public func FfiConverterTypeDateDividerMode_lower(_ value: DateDividerMode) -> R
 
 
 extension DateDividerMode: Equatable, Hashable {}
+
+
+
 
 
 
@@ -24616,6 +24793,8 @@ public func FfiConverterTypeEditedContent_lift(_ buf: RustBuffer) throws -> Edit
 public func FfiConverterTypeEditedContent_lower(_ value: EditedContent) -> RustBuffer {
     return FfiConverterTypeEditedContent.lower(value)
 }
+
+
 
 
 
@@ -24703,6 +24882,8 @@ public func FfiConverterTypeEmbeddedEventDetails_lift(_ buf: RustBuffer) throws 
 public func FfiConverterTypeEmbeddedEventDetails_lower(_ value: EmbeddedEventDetails) -> RustBuffer {
     return FfiConverterTypeEmbeddedEventDetails.lower(value)
 }
+
+
 
 
 
@@ -24809,6 +24990,9 @@ extension EnableRecoveryProgress: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -24897,6 +25081,9 @@ public func FfiConverterTypeEncryptedMessage_lower(_ value: EncryptedMessage) ->
 
 
 extension EncryptedMessage: Equatable, Hashable {}
+
+
+
 
 
 
@@ -24993,6 +25180,9 @@ public func FfiConverterTypeEncryptionSystem_lower(_ value: EncryptionSystem) ->
 
 
 extension EncryptionSystem: Equatable, Hashable {}
+
+
+
 
 
 
@@ -25752,6 +25942,9 @@ extension ErrorKind: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -25826,6 +26019,9 @@ public func FfiConverterTypeEventOrTransactionId_lower(_ value: EventOrTransacti
 
 
 extension EventOrTransactionId: Equatable, Hashable {}
+
+
+
 
 
 
@@ -25933,6 +26129,9 @@ extension EventSendState: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -26007,7 +26206,10 @@ extension FilterTimelineEventType: Equatable, Hashable {}
 
 
 
-public enum FocusEventError {
+
+
+
+public enum FocusEventError: Swift.Error {
 
     
     
@@ -26094,11 +26296,14 @@ extension FocusEventError: Equatable, Hashable {}
 
 
 
+
 extension FocusEventError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -26206,6 +26411,8 @@ public func FfiConverterTypeGalleryItemInfo_lower(_ value: GalleryItemInfo) -> R
 
 
 
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -26309,7 +26516,9 @@ public func FfiConverterTypeGalleryItemType_lower(_ value: GalleryItemType) -> R
 
 
 
-public enum HumanQrLoginError {
+
+
+public enum HumanQrLoginError: Swift.Error {
 
     
     
@@ -26418,11 +26627,14 @@ extension HumanQrLoginError: Equatable, Hashable {}
 
 
 
+
 extension HumanQrLoginError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -26503,6 +26715,9 @@ extension Intent: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -26576,6 +26791,9 @@ public func FfiConverterTypeInviteAvatars_lower(_ value: InviteAvatars) -> RustB
 
 
 extension InviteAvatars: Equatable, Hashable {}
+
+
+
 
 
 
@@ -26724,6 +26942,9 @@ extension JoinRule: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -26826,6 +27047,9 @@ extension JsonValue: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -26889,6 +27113,9 @@ public func FfiConverterTypeKeyDerivationAlgorithm_lower(_ value: KeyDerivationA
 
 
 extension KeyDerivationAlgorithm: Equatable, Hashable {}
+
+
+
 
 
 
@@ -26977,6 +27204,9 @@ public func FfiConverterTypeLogLevel_lower(_ value: LogLevel) -> RustBuffer {
 
 
 extension LogLevel: Equatable, Hashable {}
+
+
+
 
 
 
@@ -27089,7 +27319,10 @@ extension MatrixId: Equatable, Hashable {}
 
 
 
-public enum MediaInfoError {
+
+
+
+public enum MediaInfoError: Swift.Error {
 
     
     
@@ -27162,11 +27395,14 @@ extension MediaInfoError: Equatable, Hashable {}
 
 
 
+
 extension MediaInfoError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -27255,6 +27491,9 @@ extension MediaPreviews: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -27340,6 +27579,9 @@ public func FfiConverterTypeMembership_lower(_ value: Membership) -> RustBuffer 
 
 
 extension Membership: Equatable, Hashable {}
+
+
+
 
 
 
@@ -27515,6 +27757,9 @@ extension MembershipChange: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -27631,6 +27876,9 @@ extension MembershipState: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -27698,6 +27946,9 @@ public func FfiConverterTypeMessageFormat_lower(_ value: MessageFormat) -> RustB
 
 
 extension MessageFormat: Equatable, Hashable {}
+
+
+
 
 
 
@@ -27891,6 +28142,8 @@ public func FfiConverterTypeMessageLikeEventContent_lift(_ buf: RustBuffer) thro
 public func FfiConverterTypeMessageLikeEventContent_lower(_ value: MessageLikeEventContent) -> RustBuffer {
     return FfiConverterTypeMessageLikeEventContent.lower(value)
 }
+
+
 
 
 
@@ -28109,6 +28362,9 @@ extension MessageLikeEventType: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -28261,6 +28517,8 @@ public func FfiConverterTypeMessageType_lower(_ value: MessageType) -> RustBuffe
 
 
 
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -28382,6 +28640,8 @@ public func FfiConverterTypeMsgLikeKind_lower(_ value: MsgLikeKind) -> RustBuffe
 
 
 
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -28449,6 +28709,8 @@ public func FfiConverterTypeNotificationEvent_lift(_ buf: RustBuffer) throws -> 
 public func FfiConverterTypeNotificationEvent_lower(_ value: NotificationEvent) -> RustBuffer {
     return FfiConverterTypeNotificationEvent.lower(value)
 }
+
+
 
 
 
@@ -28522,7 +28784,9 @@ public func FfiConverterTypeNotificationProcessSetup_lower(_ value: Notification
 
 
 
-public enum NotificationSettingsError {
+
+
+public enum NotificationSettingsError: Swift.Error {
 
     
     
@@ -28662,11 +28926,14 @@ extension NotificationSettingsError: Equatable, Hashable {}
 
 
 
+
 extension NotificationSettingsError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -28737,7 +29004,10 @@ extension NotifyType: Equatable, Hashable {}
 
 
 
-public enum OidcError {
+
+
+
+public enum OidcError: Swift.Error {
 
     
     
@@ -28834,11 +29104,14 @@ extension OidcError: Equatable, Hashable {}
 
 
 
+
 extension OidcError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -28939,6 +29212,9 @@ public func FfiConverterTypeOidcPrompt_lower(_ value: OidcPrompt) -> RustBuffer 
 
 
 extension OidcPrompt: Equatable, Hashable {}
+
+
+
 
 
 
@@ -29165,7 +29441,10 @@ extension OtherState: Equatable, Hashable {}
 
 
 
-public enum ParseError {
+
+
+
+public enum ParseError: Swift.Error {
 
     
     
@@ -29310,11 +29589,14 @@ extension ParseError: Equatable, Hashable {}
 
 
 
+
 extension ParseError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -29381,6 +29663,9 @@ public func FfiConverterTypePollKind_lower(_ value: PollKind) -> RustBuffer {
 
 
 extension PollKind: Equatable, Hashable {}
+
+
+
 
 
 
@@ -29473,6 +29758,9 @@ extension ProfileDetails: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -29537,6 +29825,9 @@ public func FfiConverterTypePublicRoomJoinRule_lower(_ value: PublicRoomJoinRule
 
 
 extension PublicRoomJoinRule: Equatable, Hashable {}
+
+
+
 
 
 
@@ -29709,6 +30000,9 @@ extension PushCondition: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -29766,6 +30060,9 @@ public func FfiConverterTypePushFormat_lower(_ value: PushFormat) -> RustBuffer 
 
 
 extension PushFormat: Equatable, Hashable {}
+
+
+
 
 
 
@@ -29840,10 +30137,13 @@ extension PusherKind: Equatable, Hashable {}
 
 
 
+
+
+
 /**
  * Error type for the decoding of the [`QrCodeData`].
  */
-public enum QrCodeDecodeError {
+public enum QrCodeDecodeError: Swift.Error {
 
     
     
@@ -29908,11 +30208,14 @@ extension QrCodeDecodeError: Equatable, Hashable {}
 
 
 
+
 extension QrCodeDecodeError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -30025,6 +30328,9 @@ public func FfiConverterTypeQrLoginProgress_lower(_ value: QrLoginProgress) -> R
 
 
 extension QrLoginProgress: Equatable, Hashable {}
+
+
+
 
 
 
@@ -30172,6 +30478,9 @@ extension QueueWedgeError: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -30250,7 +30559,10 @@ extension ReceiptType: Equatable, Hashable {}
 
 
 
-public enum RecoveryError {
+
+
+
+public enum RecoveryError: Swift.Error {
 
     
     
@@ -30341,11 +30653,14 @@ extension RecoveryError: Equatable, Hashable {}
 
 
 
+
 extension RecoveryError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -30426,6 +30741,9 @@ public func FfiConverterTypeRecoveryState_lower(_ value: RecoveryState) -> RustB
 
 
 extension RecoveryState: Equatable, Hashable {}
+
+
+
 
 
 
@@ -30546,6 +30864,9 @@ extension RoomAccountDataEvent: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -30639,6 +30960,9 @@ public func FfiConverterTypeRoomAccountDataEventType_lower(_ value: RoomAccountD
 
 
 extension RoomAccountDataEventType: Equatable, Hashable {}
+
+
+
 
 
 
@@ -30799,7 +31123,10 @@ extension RoomDirectorySearchEntryUpdate: Equatable, Hashable {}
 
 
 
-public enum RoomError {
+
+
+
+public enum RoomError: Swift.Error {
 
     
     
@@ -30912,11 +31239,14 @@ extension RoomError: Equatable, Hashable {}
 
 
 
+
 extension RoomError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -31034,6 +31364,9 @@ public func FfiConverterTypeRoomHistoryVisibility_lower(_ value: RoomHistoryVisi
 
 
 extension RoomHistoryVisibility: Equatable, Hashable {}
+
+
+
 
 
 
@@ -31186,6 +31519,9 @@ public func FfiConverterTypeRoomListEntriesDynamicFilterKind_lower(_ value: Room
 
 
 extension RoomListEntriesDynamicFilterKind: Equatable, Hashable {}
+
+
+
 
 
 
@@ -31344,7 +31680,9 @@ public func FfiConverterTypeRoomListEntriesUpdate_lower(_ value: RoomListEntries
 
 
 
-public enum RoomListError {
+
+
+public enum RoomListError: Swift.Error {
 
     
     
@@ -31467,11 +31805,14 @@ extension RoomListError: Equatable, Hashable {}
 
 
 
+
 extension RoomListError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -31538,6 +31879,9 @@ public func FfiConverterTypeRoomListFilterCategory_lower(_ value: RoomListFilter
 
 
 extension RoomListFilterCategory: Equatable, Hashable {}
+
+
+
 
 
 
@@ -31608,6 +31952,9 @@ public func FfiConverterTypeRoomListLoadingState_lower(_ value: RoomListLoadingS
 
 
 extension RoomListLoadingState: Equatable, Hashable {}
+
+
+
 
 
 
@@ -31706,6 +32053,9 @@ extension RoomListServiceState: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -31770,6 +32120,9 @@ public func FfiConverterTypeRoomListServiceSyncIndicator_lower(_ value: RoomList
 
 
 extension RoomListServiceSyncIndicator: Equatable, Hashable {}
+
+
+
 
 
 
@@ -31858,6 +32211,9 @@ public func FfiConverterTypeRoomLoadSettings_lower(_ value: RoomLoadSettings) ->
 
 
 extension RoomLoadSettings: Equatable, Hashable {}
+
+
+
 
 
 
@@ -31998,6 +32354,9 @@ extension RoomMessageEventMessageType: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -32084,6 +32443,9 @@ extension RoomNotificationMode: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -32167,6 +32529,9 @@ public func FfiConverterTypeRoomPreset_lower(_ value: RoomPreset) -> RustBuffer 
 
 
 extension RoomPreset: Equatable, Hashable {}
+
+
+
 
 
 
@@ -32259,6 +32624,9 @@ extension RoomType: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -32345,6 +32713,9 @@ extension RoomVisibility: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -32402,6 +32773,9 @@ public func FfiConverterTypeRtcApplicationType_lower(_ value: RtcApplicationType
 
 
 extension RtcApplicationType: Equatable, Hashable {}
+
+
+
 
 
 
@@ -32518,6 +32892,9 @@ extension RuleKind: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -32590,6 +32967,9 @@ extension SecretStorageEncryptionAlgorithm: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -32658,6 +33038,8 @@ public func FfiConverterTypeSessionVerificationData_lift(_ buf: RustBuffer) thro
 public func FfiConverterTypeSessionVerificationData_lower(_ value: SessionVerificationData) -> RustBuffer {
     return FfiConverterTypeSessionVerificationData.lower(value)
 }
+
+
 
 
 
@@ -32759,6 +33141,9 @@ extension ShieldState: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -32823,6 +33208,9 @@ public func FfiConverterTypeSlidingSyncVersion_lower(_ value: SlidingSyncVersion
 
 
 extension SlidingSyncVersion: Equatable, Hashable {}
+
+
+
 
 
 
@@ -32901,7 +33289,10 @@ extension SlidingSyncVersionBuilder: Equatable, Hashable {}
 
 
 
-public enum SsoError {
+
+
+
+public enum SsoError: Swift.Error {
 
     
     
@@ -32982,11 +33373,14 @@ extension SsoError: Equatable, Hashable {}
 
 
 
+
 extension SsoError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -33193,6 +33587,9 @@ public func FfiConverterTypeStateEventContent_lower(_ value: StateEventContent) 
 
 
 extension StateEventContent: Equatable, Hashable {}
+
+
+
 
 
 
@@ -33404,7 +33801,10 @@ extension StateEventType: Equatable, Hashable {}
 
 
 
-public enum SteadyStateError {
+
+
+
+public enum SteadyStateError: Swift.Error {
 
     
     
@@ -33485,11 +33885,14 @@ extension SteadyStateError: Equatable, Hashable {}
 
 
 
+
 extension SteadyStateError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -33577,6 +33980,9 @@ public func FfiConverterTypeSyncServiceState_lower(_ value: SyncServiceState) ->
 
 
 extension SyncServiceState: Equatable, Hashable {}
+
+
+
 
 
 
@@ -33677,6 +34083,9 @@ public func FfiConverterTypeTagName_lower(_ value: TagName) -> RustBuffer {
 
 
 extension TagName: Equatable, Hashable {}
+
+
+
 
 
 
@@ -33810,6 +34219,9 @@ extension TimelineChange: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -33877,6 +34289,8 @@ public func FfiConverterTypeTimelineEventType_lift(_ buf: RustBuffer) throws -> 
 public func FfiConverterTypeTimelineEventType_lower(_ value: TimelineEventType) -> RustBuffer {
     return FfiConverterTypeTimelineEventType.lower(value)
 }
+
+
 
 
 
@@ -33968,6 +34382,8 @@ public func FfiConverterTypeTimelineFilter_lift(_ buf: RustBuffer) throws -> Tim
 public func FfiConverterTypeTimelineFilter_lower(_ value: TimelineFilter) -> RustBuffer {
     return FfiConverterTypeTimelineFilter.lower(value)
 }
+
+
 
 
 
@@ -34082,6 +34498,9 @@ public func FfiConverterTypeTimelineFocus_lower(_ value: TimelineFocus) -> RustB
 
 
 extension TimelineFocus: Equatable, Hashable {}
+
+
+
 
 
 
@@ -34220,6 +34639,8 @@ public func FfiConverterTypeTimelineItemContent_lower(_ value: TimelineItemConte
 
 
 
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -34304,6 +34725,9 @@ public func FfiConverterTypeTraceLogPacks_lower(_ value: TraceLogPacks) -> RustB
 
 
 extension TraceLogPacks: Equatable, Hashable {}
+
+
+
 
 
 
@@ -34414,6 +34838,9 @@ extension Tweak: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -34506,6 +34933,9 @@ extension UploadSource: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -34577,6 +35007,9 @@ public func FfiConverterTypeVerificationState_lower(_ value: VerificationState) 
 
 
 extension VerificationState: Equatable, Hashable {}
+
+
+
 
 
 
@@ -34671,6 +35104,9 @@ public func FfiConverterTypeVirtualTimelineItem_lower(_ value: VirtualTimelineIt
 
 
 extension VirtualTimelineItem: Equatable, Hashable {}
+
+
+
 
 
 
@@ -34799,10 +35235,13 @@ extension WidgetEventFilter: Equatable, Hashable {}
 
 
 
+
+
+
 /**
  * A listener for changes of global account data events.
  */
-public protocol AccountDataListener: AnyObject {
+public protocol AccountDataListener: AnyObject, Sendable {
     
     /**
      * Called when a global account data event has changed.
@@ -34810,13 +35249,7 @@ public protocol AccountDataListener: AnyObject {
     func onChange(event: AccountDataEvent) 
     
 }
-// Magic number for the Rust proxy to call using the same mechanism as every other method,
-// to free the callback once it's dropped by Rust.
-private let IDX_CALLBACK_FREE: Int32 = 0
-// Callback return codes
-private let UNIFFI_CALLBACK_SUCCESS: Int32 = 0
-private let UNIFFI_CALLBACK_ERROR: Int32 = 1
-private let UNIFFI_CALLBACK_UNEXPECTED_ERROR: Int32 = 2
+
 
 // Put the implementation in a struct so we don't pollute the top-level namespace
 fileprivate struct UniffiCallbackInterfaceAccountDataListener {
@@ -34927,7 +35360,7 @@ public func FfiConverterCallbackInterfaceAccountDataListener_lower(_ v: AccountD
 
 
 
-public protocol BackupStateListener: AnyObject {
+public protocol BackupStateListener: AnyObject, Sendable {
     
     func onUpdate(status: BackupState) 
     
@@ -35043,7 +35476,7 @@ public func FfiConverterCallbackInterfaceBackupStateListener_lower(_ v: BackupSt
 
 
 
-public protocol BackupSteadyStateListener: AnyObject {
+public protocol BackupSteadyStateListener: AnyObject, Sendable {
     
     func onUpdate(status: BackupUploadState) 
     
@@ -35159,7 +35592,7 @@ public func FfiConverterCallbackInterfaceBackupSteadyStateListener_lower(_ v: Ba
 
 
 
-public protocol ClientDelegate: AnyObject {
+public protocol ClientDelegate: AnyObject, Sendable {
     
     func didReceiveAuthError(isSoftLogout: Bool) 
     
@@ -35275,7 +35708,7 @@ public func FfiConverterCallbackInterfaceClientDelegate_lower(_ v: ClientDelegat
 
 
 
-public protocol ClientSessionDelegate: AnyObject {
+public protocol ClientSessionDelegate: AnyObject, Sendable {
     
     func retrieveSessionFromKeychain(userId: String) throws  -> Session
     
@@ -35418,7 +35851,7 @@ public func FfiConverterCallbackInterfaceClientSessionDelegate_lower(_ v: Client
 
 
 
-public protocol EnableRecoveryProgressListener: AnyObject {
+public protocol EnableRecoveryProgressListener: AnyObject, Sendable {
     
     func onUpdate(status: EnableRecoveryProgress) 
     
@@ -35534,7 +35967,7 @@ public func FfiConverterCallbackInterfaceEnableRecoveryProgressListener_lower(_ 
 
 
 
-public protocol IdentityStatusChangeListener: AnyObject {
+public protocol IdentityStatusChangeListener: AnyObject, Sendable {
     
     func call(identityStatusChange: [IdentityStatusChange]) 
     
@@ -35650,7 +36083,7 @@ public func FfiConverterCallbackInterfaceIdentityStatusChangeListener_lower(_ v:
 
 
 
-public protocol IgnoredUsersListener: AnyObject {
+public protocol IgnoredUsersListener: AnyObject, Sendable {
     
     func call(ignoredUserIds: [String]) 
     
@@ -35769,7 +36202,7 @@ public func FfiConverterCallbackInterfaceIgnoredUsersListener_lower(_ v: Ignored
 /**
  * A listener for receiving new requests to a join a room.
  */
-public protocol KnockRequestsListener: AnyObject {
+public protocol KnockRequestsListener: AnyObject, Sendable {
     
     func call(joinRequests: [KnockRequest]) 
     
@@ -35888,7 +36321,7 @@ public func FfiConverterCallbackInterfaceKnockRequestsListener_lower(_ v: KnockR
 /**
  * A listener for receiving new live location shares in a room.
  */
-public protocol LiveLocationShareListener: AnyObject {
+public protocol LiveLocationShareListener: AnyObject, Sendable {
     
     func call(liveLocationShares: [LiveLocationShare]) 
     
@@ -36004,7 +36437,7 @@ public func FfiConverterCallbackInterfaceLiveLocationShareListener_lower(_ v: Li
 
 
 
-public protocol MediaPreviewConfigListener: AnyObject {
+public protocol MediaPreviewConfigListener: AnyObject, Sendable {
     
     func onChange(mediaPreviewConfig: MediaPreviewConfig?) 
     
@@ -36123,7 +36556,7 @@ public func FfiConverterCallbackInterfaceMediaPreviewConfigListener_lower(_ v: M
 /**
  * Delegate to notify of changes in push rules
  */
-public protocol NotificationSettingsDelegate: AnyObject {
+public protocol NotificationSettingsDelegate: AnyObject, Sendable {
     
     func settingsDidChange() 
     
@@ -36237,7 +36670,7 @@ public func FfiConverterCallbackInterfaceNotificationSettingsDelegate_lower(_ v:
 
 
 
-public protocol PaginationStatusListener: AnyObject {
+public protocol PaginationStatusListener: AnyObject, Sendable {
     
     func onUpdate(status: RoomPaginationStatus) 
     
@@ -36353,7 +36786,7 @@ public func FfiConverterCallbackInterfacePaginationStatusListener_lower(_ v: Pag
 
 
 
-public protocol ProgressWatcher: AnyObject {
+public protocol ProgressWatcher: AnyObject, Sendable {
     
     func transmissionProgress(progress: TransmissionProgress) 
     
@@ -36469,7 +36902,7 @@ public func FfiConverterCallbackInterfaceProgressWatcher_lower(_ v: ProgressWatc
 
 
 
-public protocol QrLoginProgressListener: AnyObject {
+public protocol QrLoginProgressListener: AnyObject, Sendable {
     
     func onUpdate(state: QrLoginProgress) 
     
@@ -36585,7 +37018,7 @@ public func FfiConverterCallbackInterfaceQrLoginProgressListener_lower(_ v: QrLo
 
 
 
-public protocol RecoveryStateListener: AnyObject {
+public protocol RecoveryStateListener: AnyObject, Sendable {
     
     func onUpdate(status: RecoveryState) 
     
@@ -36704,7 +37137,7 @@ public func FfiConverterCallbackInterfaceRecoveryStateListener_lower(_ v: Recove
 /**
  * A listener for changes of room account data events.
  */
-public protocol RoomAccountDataListener: AnyObject {
+public protocol RoomAccountDataListener: AnyObject, Sendable {
     
     /**
      * Called when a room account data event was changed.
@@ -36825,7 +37258,7 @@ public func FfiConverterCallbackInterfaceRoomAccountDataListener_lower(_ v: Room
 
 
 
-public protocol RoomDirectorySearchEntriesListener: AnyObject {
+public protocol RoomDirectorySearchEntriesListener: AnyObject, Sendable {
     
     func onUpdate(roomEntriesUpdate: [RoomDirectorySearchEntryUpdate]) 
     
@@ -36941,7 +37374,7 @@ public func FfiConverterCallbackInterfaceRoomDirectorySearchEntriesListener_lowe
 
 
 
-public protocol RoomInfoListener: AnyObject {
+public protocol RoomInfoListener: AnyObject, Sendable {
     
     func call(roomInfo: RoomInfo) 
     
@@ -37057,7 +37490,7 @@ public func FfiConverterCallbackInterfaceRoomInfoListener_lower(_ v: RoomInfoLis
 
 
 
-public protocol RoomListEntriesListener: AnyObject {
+public protocol RoomListEntriesListener: AnyObject, Sendable {
     
     func onUpdate(roomEntriesUpdate: [RoomListEntriesUpdate]) 
     
@@ -37173,7 +37606,7 @@ public func FfiConverterCallbackInterfaceRoomListEntriesListener_lower(_ v: Room
 
 
 
-public protocol RoomListLoadingStateListener: AnyObject {
+public protocol RoomListLoadingStateListener: AnyObject, Sendable {
     
     func onUpdate(state: RoomListLoadingState) 
     
@@ -37289,7 +37722,7 @@ public func FfiConverterCallbackInterfaceRoomListLoadingStateListener_lower(_ v:
 
 
 
-public protocol RoomListServiceStateListener: AnyObject {
+public protocol RoomListServiceStateListener: AnyObject, Sendable {
     
     func onUpdate(state: RoomListServiceState) 
     
@@ -37405,7 +37838,7 @@ public func FfiConverterCallbackInterfaceRoomListServiceStateListener_lower(_ v:
 
 
 
-public protocol RoomListServiceSyncIndicatorListener: AnyObject {
+public protocol RoomListServiceSyncIndicatorListener: AnyObject, Sendable {
     
     func onUpdate(syncIndicator: RoomListServiceSyncIndicator) 
     
@@ -37524,7 +37957,7 @@ public func FfiConverterCallbackInterfaceRoomListServiceSyncIndicatorListener_lo
 /**
  * A listener to the global (client-wide) error reporter of the send queue.
  */
-public protocol SendQueueRoomErrorListener: AnyObject {
+public protocol SendQueueRoomErrorListener: AnyObject, Sendable {
     
     /**
      * Called every time the send queue has ran into an error for a given room,
@@ -37646,7 +38079,7 @@ public func FfiConverterCallbackInterfaceSendQueueRoomErrorListener_lower(_ v: S
 
 
 
-public protocol SessionVerificationControllerDelegate: AnyObject {
+public protocol SessionVerificationControllerDelegate: AnyObject, Sendable {
     
     func didReceiveVerificationRequest(details: SessionVerificationRequestDetails) 
     
@@ -37908,7 +38341,7 @@ public func FfiConverterCallbackInterfaceSessionVerificationControllerDelegate_l
 
 
 
-public protocol SyncServiceStateObserver: AnyObject {
+public protocol SyncServiceStateObserver: AnyObject, Sendable {
     
     func onUpdate(state: SyncServiceState) 
     
@@ -38024,7 +38457,7 @@ public func FfiConverterCallbackInterfaceSyncServiceStateObserver_lower(_ v: Syn
 
 
 
-public protocol TimelineListener: AnyObject {
+public protocol TimelineListener: AnyObject, Sendable {
     
     func onUpdate(diff: [TimelineDiff]) 
     
@@ -38140,7 +38573,7 @@ public func FfiConverterCallbackInterfaceTimelineListener_lower(_ v: TimelineLis
 
 
 
-public protocol TypingNotificationsListener: AnyObject {
+public protocol TypingNotificationsListener: AnyObject, Sendable {
     
     func call(typingUserIds: [String]) 
     
@@ -38256,7 +38689,7 @@ public func FfiConverterCallbackInterfaceTypingNotificationsListener_lower(_ v: 
 
 
 
-public protocol UnableToDecryptDelegate: AnyObject {
+public protocol UnableToDecryptDelegate: AnyObject, Sendable {
     
     func onUtd(info: UnableToDecryptInfo) 
     
@@ -38372,7 +38805,7 @@ public func FfiConverterCallbackInterfaceUnableToDecryptDelegate_lower(_ v: Unab
 
 
 
-public protocol VerificationStateListener: AnyObject {
+public protocol VerificationStateListener: AnyObject, Sendable {
     
     func onUpdate(status: VerificationState) 
     
@@ -38488,7 +38921,7 @@ public func FfiConverterCallbackInterfaceVerificationStateListener_lower(_ v: Ve
 
 
 
-public protocol WidgetCapabilitiesProvider: AnyObject {
+public protocol WidgetCapabilitiesProvider: AnyObject, Sendable {
     
     func acquireCapabilities(capabilities: WidgetCapabilities)  -> WidgetCapabilities
     
@@ -41686,7 +42119,7 @@ public func generateWebviewUrl(widgetSettings: WidgetSettings, room: Room, props
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeParseError.lift
+            errorHandler: FfiConverterTypeParseError_lift
         )
 }
 /**
@@ -43344,11 +43777,11 @@ private let initializationResult: InitializationResult = {
     uniffiCallbackInitUnableToDecryptDelegate()
     uniffiCallbackInitVerificationStateListener()
     uniffiCallbackInitWidgetCapabilitiesProvider()
-    uniffiEnsureMatrixSdkInitialized()
     uniffiEnsureMatrixSdkBaseInitialized()
+    uniffiEnsureMatrixSdkInitialized()
+    uniffiEnsureMatrixSdkCommonInitialized()
     uniffiEnsureMatrixSdkCryptoInitialized()
     uniffiEnsureMatrixSdkUiInitialized()
-    uniffiEnsureMatrixSdkCommonInitialized()
     return InitializationResult.ok
 }()
 

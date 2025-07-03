@@ -150,7 +150,7 @@ const {
   FfiConverterTypeEventItemOrigin,
   FfiConverterTypeRoomPinnedEventsChange,
 } = uniffiMatrixSdkUiModule.converters;
-const uniffiCaller = new UniffiRustCaller();
+const uniffiCaller = new UniffiRustCaller(() => ({ code: 0 }));
 
 const uniffiIsDebug =
   // @ts-ignore -- The process global might not be defined
@@ -37263,64 +37263,69 @@ export class Client extends UniffiAbstractObject implements ClientInterface {
   }
 }
 
-const uniffiTypeClientObjectFactory: UniffiObjectFactory<ClientInterface> = {
-  create(pointer: UnsafeMutableRawPointer): ClientInterface {
-    const instance = Object.create(Client.prototype);
-    instance[pointerLiteralSymbol] = pointer;
-    instance[destructorGuardSymbol] = this.bless(pointer);
-    instance[uniffiTypeNameSymbol] = 'Client';
-    return instance;
-  },
+const uniffiTypeClientObjectFactory: UniffiObjectFactory<ClientInterface> =
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): ClientInterface {
+        const instance = Object.create(Client.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'Client';
+        return instance;
+      },
 
-  bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-    return uniffiCaller.rustCall(
-      /*caller:*/ (status) =>
-        nativeModule().ubrn_uniffi_internal_fn_method_client_ffi__bless_pointer(
-          p,
-          status
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_client_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-  unbless(ptr: UniffiRustArcPtr) {
-    ptr.markDestroyed();
-  },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-  pointer(obj: ClientInterface): UnsafeMutableRawPointer {
-    if ((obj as any)[destructorGuardSymbol] === undefined) {
-      throw new UniffiInternalError.UnexpectedNullPointer();
-    }
-    return (obj as any)[pointerLiteralSymbol];
-  },
+      pointer(obj: ClientInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-  clonePointer(obj: ClientInterface): UnsafeMutableRawPointer {
-    const pointer = this.pointer(obj);
-    return uniffiCaller.rustCall(
-      /*caller:*/ (callStatus) =>
-        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_client(
-          pointer,
-          callStatus
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+      clonePointer(obj: ClientInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_client(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-  freePointer(pointer: UnsafeMutableRawPointer): void {
-    uniffiCaller.rustCall(
-      /*caller:*/ (callStatus) =>
-        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_client(
-          pointer,
-          callStatus
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_client(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-  isConcreteType(obj: any): obj is ClientInterface {
-    return obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Client';
-  },
-};
+      isConcreteType(obj: any): obj is ClientInterface {
+        return (
+          obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Client'
+        );
+      },
+    };
+  })();
 // FfiConverter for ClientInterface
 const FfiConverterTypeClient = new FfiConverterObject(
   uniffiTypeClientObjectFactory
@@ -38132,67 +38137,69 @@ export class ClientBuilder
 }
 
 const uniffiTypeClientBuilderObjectFactory: UniffiObjectFactory<ClientBuilderInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): ClientBuilderInterface {
-      const instance = Object.create(ClientBuilder.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'ClientBuilder';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): ClientBuilderInterface {
+        const instance = Object.create(ClientBuilder.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'ClientBuilder';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_clientbuilder_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_clientbuilder_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: ClientBuilderInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: ClientBuilderInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: ClientBuilderInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_clientbuilder(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: ClientBuilderInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_clientbuilder(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_clientbuilder(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_clientbuilder(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is ClientBuilderInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'ClientBuilder'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is ClientBuilderInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'ClientBuilder'
+        );
+      },
+    };
+  })();
 // FfiConverter for ClientBuilderInterface
 const FfiConverterTypeClientBuilder = new FfiConverterObject(
   uniffiTypeClientBuilderObjectFactory
@@ -38980,66 +38987,69 @@ export class Encryption
 }
 
 const uniffiTypeEncryptionObjectFactory: UniffiObjectFactory<EncryptionInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): EncryptionInterface {
-      const instance = Object.create(Encryption.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'Encryption';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): EncryptionInterface {
+        const instance = Object.create(Encryption.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'Encryption';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_encryption_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_encryption_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: EncryptionInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: EncryptionInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: EncryptionInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_encryption(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: EncryptionInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_encryption(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_encryption(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_encryption(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is EncryptionInterface {
-      return (
-        obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Encryption'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is EncryptionInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'Encryption'
+        );
+      },
+    };
+  })();
 // FfiConverter for EncryptionInterface
 const FfiConverterTypeEncryption = new FfiConverterObject(
   uniffiTypeEncryptionObjectFactory
@@ -39190,69 +39200,73 @@ export class HomeserverLoginDetails
 }
 
 const uniffiTypeHomeserverLoginDetailsObjectFactory: UniffiObjectFactory<HomeserverLoginDetailsInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): HomeserverLoginDetailsInterface {
-      const instance = Object.create(HomeserverLoginDetails.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'HomeserverLoginDetails';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): HomeserverLoginDetailsInterface {
+        const instance = Object.create(HomeserverLoginDetails.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'HomeserverLoginDetails';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_homeserverlogindetails_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_homeserverlogindetails_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: HomeserverLoginDetailsInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: HomeserverLoginDetailsInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: HomeserverLoginDetailsInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_homeserverlogindetails(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: HomeserverLoginDetailsInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_homeserverlogindetails(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_homeserverlogindetails(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_homeserverlogindetails(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is HomeserverLoginDetailsInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'HomeserverLoginDetails'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is HomeserverLoginDetailsInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'HomeserverLoginDetails'
+        );
+      },
+    };
+  })();
 // FfiConverter for HomeserverLoginDetailsInterface
 const FfiConverterTypeHomeserverLoginDetails = new FfiConverterObject(
   uniffiTypeHomeserverLoginDetailsObjectFactory
@@ -39408,67 +39422,69 @@ export class IdentityResetHandle
 }
 
 const uniffiTypeIdentityResetHandleObjectFactory: UniffiObjectFactory<IdentityResetHandleInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): IdentityResetHandleInterface {
-      const instance = Object.create(IdentityResetHandle.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'IdentityResetHandle';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): IdentityResetHandleInterface {
+        const instance = Object.create(IdentityResetHandle.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'IdentityResetHandle';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_identityresethandle_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_identityresethandle_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: IdentityResetHandleInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: IdentityResetHandleInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: IdentityResetHandleInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_identityresethandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: IdentityResetHandleInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_identityresethandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_identityresethandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_identityresethandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is IdentityResetHandleInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'IdentityResetHandle'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is IdentityResetHandleInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'IdentityResetHandle'
+        );
+      },
+    };
+  })();
 // FfiConverter for IdentityResetHandleInterface
 const FfiConverterTypeIdentityResetHandle = new FfiConverterObject(
   uniffiTypeIdentityResetHandleObjectFactory
@@ -39541,67 +39557,69 @@ export class InReplyToDetails
 }
 
 const uniffiTypeInReplyToDetailsObjectFactory: UniffiObjectFactory<InReplyToDetailsInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): InReplyToDetailsInterface {
-      const instance = Object.create(InReplyToDetails.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'InReplyToDetails';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): InReplyToDetailsInterface {
+        const instance = Object.create(InReplyToDetails.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'InReplyToDetails';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_inreplytodetails_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_inreplytodetails_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: InReplyToDetailsInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: InReplyToDetailsInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: InReplyToDetailsInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_inreplytodetails(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: InReplyToDetailsInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_inreplytodetails(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_inreplytodetails(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_inreplytodetails(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is InReplyToDetailsInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'InReplyToDetails'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is InReplyToDetailsInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'InReplyToDetails'
+        );
+      },
+    };
+  })();
 // FfiConverter for InReplyToDetailsInterface
 const FfiConverterTypeInReplyToDetails = new FfiConverterObject(
   uniffiTypeInReplyToDetailsObjectFactory
@@ -39838,67 +39856,69 @@ export class KnockRequestActions
 }
 
 const uniffiTypeKnockRequestActionsObjectFactory: UniffiObjectFactory<KnockRequestActionsInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): KnockRequestActionsInterface {
-      const instance = Object.create(KnockRequestActions.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'KnockRequestActions';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): KnockRequestActionsInterface {
+        const instance = Object.create(KnockRequestActions.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'KnockRequestActions';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_knockrequestactions_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_knockrequestactions_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: KnockRequestActionsInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: KnockRequestActionsInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: KnockRequestActionsInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_knockrequestactions(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: KnockRequestActionsInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_knockrequestactions(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_knockrequestactions(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_knockrequestactions(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is KnockRequestActionsInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'KnockRequestActions'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is KnockRequestActionsInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'KnockRequestActions'
+        );
+      },
+    };
+  })();
 // FfiConverter for KnockRequestActionsInterface
 const FfiConverterTypeKnockRequestActions = new FfiConverterObject(
   uniffiTypeKnockRequestActionsObjectFactory
@@ -40029,71 +40049,73 @@ export class LazyTimelineItemProvider
 }
 
 const uniffiTypeLazyTimelineItemProviderObjectFactory: UniffiObjectFactory<LazyTimelineItemProviderInterface> =
-  {
-    create(
-      pointer: UnsafeMutableRawPointer
-    ): LazyTimelineItemProviderInterface {
-      const instance = Object.create(LazyTimelineItemProvider.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'LazyTimelineItemProvider';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): LazyTimelineItemProviderInterface {
+        const instance = Object.create(LazyTimelineItemProvider.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'LazyTimelineItemProvider';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_lazytimelineitemprovider_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_lazytimelineitemprovider_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: LazyTimelineItemProviderInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: LazyTimelineItemProviderInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: LazyTimelineItemProviderInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_lazytimelineitemprovider(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: LazyTimelineItemProviderInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_lazytimelineitemprovider(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_lazytimelineitemprovider(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_lazytimelineitemprovider(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is LazyTimelineItemProviderInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'LazyTimelineItemProvider'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is LazyTimelineItemProviderInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'LazyTimelineItemProvider'
+        );
+      },
+    };
+  })();
 // FfiConverter for LazyTimelineItemProviderInterface
 const FfiConverterTypeLazyTimelineItemProvider = new FfiConverterObject(
   uniffiTypeLazyTimelineItemProviderObjectFactory
@@ -40187,67 +40209,69 @@ export class MediaFileHandle
 }
 
 const uniffiTypeMediaFileHandleObjectFactory: UniffiObjectFactory<MediaFileHandleInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): MediaFileHandleInterface {
-      const instance = Object.create(MediaFileHandle.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'MediaFileHandle';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): MediaFileHandleInterface {
+        const instance = Object.create(MediaFileHandle.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'MediaFileHandle';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_mediafilehandle_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_mediafilehandle_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: MediaFileHandleInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: MediaFileHandleInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: MediaFileHandleInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_mediafilehandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: MediaFileHandleInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_mediafilehandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_mediafilehandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_mediafilehandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is MediaFileHandleInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'MediaFileHandle'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is MediaFileHandleInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'MediaFileHandle'
+        );
+      },
+    };
+  })();
 // FfiConverter for MediaFileHandleInterface
 const FfiConverterTypeMediaFileHandle = new FfiConverterObject(
   uniffiTypeMediaFileHandleObjectFactory
@@ -40354,67 +40378,69 @@ export class MediaSource
 }
 
 const uniffiTypeMediaSourceObjectFactory: UniffiObjectFactory<MediaSourceInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): MediaSourceInterface {
-      const instance = Object.create(MediaSource.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'MediaSource';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): MediaSourceInterface {
+        const instance = Object.create(MediaSource.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'MediaSource';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_mediasource_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_mediasource_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: MediaSourceInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: MediaSourceInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: MediaSourceInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_mediasource(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: MediaSourceInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_mediasource(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_mediasource(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_mediasource(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is MediaSourceInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'MediaSource'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is MediaSourceInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'MediaSource'
+        );
+      },
+    };
+  })();
 // FfiConverter for MediaSourceInterface
 const FfiConverterTypeMediaSource = new FfiConverterObject(
   uniffiTypeMediaSourceObjectFactory
@@ -40601,67 +40627,69 @@ export class NotificationClient
 }
 
 const uniffiTypeNotificationClientObjectFactory: UniffiObjectFactory<NotificationClientInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): NotificationClientInterface {
-      const instance = Object.create(NotificationClient.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'NotificationClient';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): NotificationClientInterface {
+        const instance = Object.create(NotificationClient.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'NotificationClient';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_notificationclient_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_notificationclient_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: NotificationClientInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: NotificationClientInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: NotificationClientInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_notificationclient(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: NotificationClientInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_notificationclient(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_notificationclient(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_notificationclient(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is NotificationClientInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'NotificationClient'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is NotificationClientInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'NotificationClient'
+        );
+      },
+    };
+  })();
 // FfiConverter for NotificationClientInterface
 const FfiConverterTypeNotificationClient = new FfiConverterObject(
   uniffiTypeNotificationClientObjectFactory
@@ -41729,67 +41757,71 @@ export class NotificationSettings
 }
 
 const uniffiTypeNotificationSettingsObjectFactory: UniffiObjectFactory<NotificationSettingsInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): NotificationSettingsInterface {
-      const instance = Object.create(NotificationSettings.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'NotificationSettings';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): NotificationSettingsInterface {
+        const instance = Object.create(NotificationSettings.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'NotificationSettings';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_notificationsettings_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_notificationsettings_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: NotificationSettingsInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: NotificationSettingsInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: NotificationSettingsInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_notificationsettings(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: NotificationSettingsInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_notificationsettings(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_notificationsettings(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_notificationsettings(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is NotificationSettingsInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'NotificationSettings'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is NotificationSettingsInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'NotificationSettings'
+        );
+      },
+    };
+  })();
 // FfiConverter for NotificationSettingsInterface
 const FfiConverterTypeNotificationSettings = new FfiConverterObject(
   uniffiTypeNotificationSettingsObjectFactory
@@ -41895,66 +41927,69 @@ export class QrCodeData
 }
 
 const uniffiTypeQrCodeDataObjectFactory: UniffiObjectFactory<QrCodeDataInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): QrCodeDataInterface {
-      const instance = Object.create(QrCodeData.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'QrCodeData';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): QrCodeDataInterface {
+        const instance = Object.create(QrCodeData.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'QrCodeData';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_qrcodedata_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_qrcodedata_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: QrCodeDataInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: QrCodeDataInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: QrCodeDataInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_qrcodedata(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: QrCodeDataInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_qrcodedata(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_qrcodedata(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_qrcodedata(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is QrCodeDataInterface {
-      return (
-        obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'QrCodeData'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is QrCodeDataInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'QrCodeData'
+        );
+      },
+    };
+  })();
 // FfiConverter for QrCodeDataInterface
 const FfiConverterTypeQrCodeData = new FfiConverterObject(
   uniffiTypeQrCodeDataObjectFactory
@@ -46181,64 +46216,66 @@ export class Room extends UniffiAbstractObject implements RoomInterface {
   }
 }
 
-const uniffiTypeRoomObjectFactory: UniffiObjectFactory<RoomInterface> = {
-  create(pointer: UnsafeMutableRawPointer): RoomInterface {
-    const instance = Object.create(Room.prototype);
-    instance[pointerLiteralSymbol] = pointer;
-    instance[destructorGuardSymbol] = this.bless(pointer);
-    instance[uniffiTypeNameSymbol] = 'Room';
-    return instance;
-  },
+const uniffiTypeRoomObjectFactory: UniffiObjectFactory<RoomInterface> = (() => {
+  return {
+    create(pointer: UnsafeMutableRawPointer): RoomInterface {
+      const instance = Object.create(Room.prototype);
+      instance[pointerLiteralSymbol] = pointer;
+      instance[destructorGuardSymbol] = this.bless(pointer);
+      instance[uniffiTypeNameSymbol] = 'Room';
+      return instance;
+    },
 
-  bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-    return uniffiCaller.rustCall(
-      /*caller:*/ (status) =>
-        nativeModule().ubrn_uniffi_internal_fn_method_room_ffi__bless_pointer(
-          p,
-          status
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+      return uniffiCaller.rustCall(
+        /*caller:*/ (status) =>
+          nativeModule().ubrn_uniffi_internal_fn_method_room_ffi__bless_pointer(
+            p,
+            status
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
 
-  unbless(ptr: UniffiRustArcPtr) {
-    ptr.markDestroyed();
-  },
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
+    },
 
-  pointer(obj: RoomInterface): UnsafeMutableRawPointer {
-    if ((obj as any)[destructorGuardSymbol] === undefined) {
-      throw new UniffiInternalError.UnexpectedNullPointer();
-    }
-    return (obj as any)[pointerLiteralSymbol];
-  },
+    pointer(obj: RoomInterface): UnsafeMutableRawPointer {
+      if ((obj as any)[destructorGuardSymbol] === undefined) {
+        throw new UniffiInternalError.UnexpectedNullPointer();
+      }
+      return (obj as any)[pointerLiteralSymbol];
+    },
 
-  clonePointer(obj: RoomInterface): UnsafeMutableRawPointer {
-    const pointer = this.pointer(obj);
-    return uniffiCaller.rustCall(
-      /*caller:*/ (callStatus) =>
-        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_room(
-          pointer,
-          callStatus
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+    clonePointer(obj: RoomInterface): UnsafeMutableRawPointer {
+      const pointer = this.pointer(obj);
+      return uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_room(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
 
-  freePointer(pointer: UnsafeMutableRawPointer): void {
-    uniffiCaller.rustCall(
-      /*caller:*/ (callStatus) =>
-        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_room(
-          pointer,
-          callStatus
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+    freePointer(pointer: UnsafeMutableRawPointer): void {
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_room(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
 
-  isConcreteType(obj: any): obj is RoomInterface {
-    return obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Room';
-  },
-};
+    isConcreteType(obj: any): obj is RoomInterface {
+      return obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Room';
+    },
+  };
+})();
 // FfiConverter for RoomInterface
 const FfiConverterTypeRoom = new FfiConverterObject(
   uniffiTypeRoomObjectFactory
@@ -46546,67 +46583,69 @@ export class RoomDirectorySearch
 }
 
 const uniffiTypeRoomDirectorySearchObjectFactory: UniffiObjectFactory<RoomDirectorySearchInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): RoomDirectorySearchInterface {
-      const instance = Object.create(RoomDirectorySearch.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'RoomDirectorySearch';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): RoomDirectorySearchInterface {
+        const instance = Object.create(RoomDirectorySearch.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'RoomDirectorySearch';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roomdirectorysearch_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_roomdirectorysearch_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: RoomDirectorySearchInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: RoomDirectorySearchInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: RoomDirectorySearchInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomdirectorysearch(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: RoomDirectorySearchInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomdirectorysearch(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomdirectorysearch(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomdirectorysearch(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is RoomDirectorySearchInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'RoomDirectorySearch'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is RoomDirectorySearchInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'RoomDirectorySearch'
+        );
+      },
+    };
+  })();
 // FfiConverter for RoomDirectorySearchInterface
 const FfiConverterTypeRoomDirectorySearch = new FfiConverterObject(
   uniffiTypeRoomDirectorySearchObjectFactory
@@ -46714,66 +46753,68 @@ export class RoomList
 }
 
 const uniffiTypeRoomListObjectFactory: UniffiObjectFactory<RoomListInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): RoomListInterface {
-      const instance = Object.create(RoomList.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'RoomList';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): RoomListInterface {
+        const instance = Object.create(RoomList.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'RoomList';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roomlist_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_roomlist_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: RoomListInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: RoomListInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: RoomListInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlist(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: RoomListInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlist(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlist(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlist(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is RoomListInterface {
-      return (
-        obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'RoomList'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is RoomListInterface {
+        return (
+          obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'RoomList'
+        );
+      },
+    };
+  })();
 // FfiConverter for RoomListInterface
 const FfiConverterTypeRoomList = new FfiConverterObject(
   uniffiTypeRoomListObjectFactory
@@ -46869,75 +46910,79 @@ export class RoomListDynamicEntriesController
 }
 
 const uniffiTypeRoomListDynamicEntriesControllerObjectFactory: UniffiObjectFactory<RoomListDynamicEntriesControllerInterface> =
-  {
-    create(
-      pointer: UnsafeMutableRawPointer
-    ): RoomListDynamicEntriesControllerInterface {
-      const instance = Object.create(
-        RoomListDynamicEntriesController.prototype
-      );
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'RoomListDynamicEntriesController';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): RoomListDynamicEntriesControllerInterface {
+        const instance = Object.create(
+          RoomListDynamicEntriesController.prototype
+        );
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'RoomListDynamicEntriesController';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roomlistdynamicentriescontroller_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_roomlistdynamicentriescontroller_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(
-      obj: RoomListDynamicEntriesControllerInterface
-    ): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(
+        obj: RoomListDynamicEntriesControllerInterface
+      ): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: RoomListDynamicEntriesControllerInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistdynamicentriescontroller(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: RoomListDynamicEntriesControllerInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistdynamicentriescontroller(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistdynamicentriescontroller(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistdynamicentriescontroller(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is RoomListDynamicEntriesControllerInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'RoomListDynamicEntriesController'
-      );
-    },
-  };
+      isConcreteType(
+        obj: any
+      ): obj is RoomListDynamicEntriesControllerInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'RoomListDynamicEntriesController'
+        );
+      },
+    };
+  })();
 // FfiConverter for RoomListDynamicEntriesControllerInterface
 const FfiConverterTypeRoomListDynamicEntriesController = new FfiConverterObject(
   uniffiTypeRoomListDynamicEntriesControllerObjectFactory
@@ -47025,78 +47070,81 @@ export class RoomListEntriesWithDynamicAdaptersResult
 }
 
 const uniffiTypeRoomListEntriesWithDynamicAdaptersResultObjectFactory: UniffiObjectFactory<RoomListEntriesWithDynamicAdaptersResultInterface> =
-  {
-    create(
-      pointer: UnsafeMutableRawPointer
-    ): RoomListEntriesWithDynamicAdaptersResultInterface {
-      const instance = Object.create(
-        RoomListEntriesWithDynamicAdaptersResult.prototype
-      );
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] =
-        'RoomListEntriesWithDynamicAdaptersResult';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): RoomListEntriesWithDynamicAdaptersResultInterface {
+        const instance = Object.create(
+          RoomListEntriesWithDynamicAdaptersResult.prototype
+        );
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] =
+          'RoomListEntriesWithDynamicAdaptersResult';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roomlistentrieswithdynamicadaptersresult_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_roomlistentrieswithdynamicadaptersresult_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(
-      obj: RoomListEntriesWithDynamicAdaptersResultInterface
-    ): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(
+        obj: RoomListEntriesWithDynamicAdaptersResultInterface
+      ): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: RoomListEntriesWithDynamicAdaptersResultInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistentrieswithdynamicadaptersresult(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: RoomListEntriesWithDynamicAdaptersResultInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistentrieswithdynamicadaptersresult(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistentrieswithdynamicadaptersresult(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistentrieswithdynamicadaptersresult(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(
-      obj: any
-    ): obj is RoomListEntriesWithDynamicAdaptersResultInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'RoomListEntriesWithDynamicAdaptersResult'
-      );
-    },
-  };
+      isConcreteType(
+        obj: any
+      ): obj is RoomListEntriesWithDynamicAdaptersResultInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] ===
+            'RoomListEntriesWithDynamicAdaptersResult'
+        );
+      },
+    };
+  })();
 // FfiConverter for RoomListEntriesWithDynamicAdaptersResultInterface
 const FfiConverterTypeRoomListEntriesWithDynamicAdaptersResult =
   new FfiConverterObject(
@@ -47260,67 +47308,69 @@ export class RoomListService
 }
 
 const uniffiTypeRoomListServiceObjectFactory: UniffiObjectFactory<RoomListServiceInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): RoomListServiceInterface {
-      const instance = Object.create(RoomListService.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'RoomListService';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): RoomListServiceInterface {
+        const instance = Object.create(RoomListService.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'RoomListService';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roomlistservice_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_roomlistservice_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: RoomListServiceInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: RoomListServiceInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: RoomListServiceInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistservice(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: RoomListServiceInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roomlistservice(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistservice(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roomlistservice(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is RoomListServiceInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'RoomListService'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is RoomListServiceInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'RoomListService'
+        );
+      },
+    };
+  })();
 // FfiConverter for RoomListServiceInterface
 const FfiConverterTypeRoomListService = new FfiConverterObject(
   uniffiTypeRoomListServiceObjectFactory
@@ -47394,67 +47444,69 @@ export class RoomMembersIterator
 }
 
 const uniffiTypeRoomMembersIteratorObjectFactory: UniffiObjectFactory<RoomMembersIteratorInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): RoomMembersIteratorInterface {
-      const instance = Object.create(RoomMembersIterator.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'RoomMembersIterator';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): RoomMembersIteratorInterface {
+        const instance = Object.create(RoomMembersIterator.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'RoomMembersIterator';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roommembersiterator_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_roommembersiterator_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: RoomMembersIteratorInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: RoomMembersIteratorInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: RoomMembersIteratorInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roommembersiterator(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: RoomMembersIteratorInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roommembersiterator(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roommembersiterator(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roommembersiterator(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is RoomMembersIteratorInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'RoomMembersIterator'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is RoomMembersIteratorInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'RoomMembersIterator'
+        );
+      },
+    };
+  })();
 // FfiConverter for RoomMembersIteratorInterface
 const FfiConverterTypeRoomMembersIterator = new FfiConverterObject(
   uniffiTypeRoomMembersIteratorObjectFactory
@@ -47530,77 +47582,80 @@ export class RoomMessageEventContentWithoutRelation
 }
 
 const uniffiTypeRoomMessageEventContentWithoutRelationObjectFactory: UniffiObjectFactory<RoomMessageEventContentWithoutRelationInterface> =
-  {
-    create(
-      pointer: UnsafeMutableRawPointer
-    ): RoomMessageEventContentWithoutRelationInterface {
-      const instance = Object.create(
-        RoomMessageEventContentWithoutRelation.prototype
-      );
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'RoomMessageEventContentWithoutRelation';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): RoomMessageEventContentWithoutRelationInterface {
+        const instance = Object.create(
+          RoomMessageEventContentWithoutRelation.prototype
+        );
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] =
+          'RoomMessageEventContentWithoutRelation';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roommessageeventcontentwithoutrelation_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_roommessageeventcontentwithoutrelation_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(
-      obj: RoomMessageEventContentWithoutRelationInterface
-    ): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(
+        obj: RoomMessageEventContentWithoutRelationInterface
+      ): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: RoomMessageEventContentWithoutRelationInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roommessageeventcontentwithoutrelation(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: RoomMessageEventContentWithoutRelationInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roommessageeventcontentwithoutrelation(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roommessageeventcontentwithoutrelation(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roommessageeventcontentwithoutrelation(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(
-      obj: any
-    ): obj is RoomMessageEventContentWithoutRelationInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'RoomMessageEventContentWithoutRelation'
-      );
-    },
-  };
+      isConcreteType(
+        obj: any
+      ): obj is RoomMessageEventContentWithoutRelationInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'RoomMessageEventContentWithoutRelation'
+        );
+      },
+    };
+  })();
 // FfiConverter for RoomMessageEventContentWithoutRelationInterface
 const FfiConverterTypeRoomMessageEventContentWithoutRelation =
   new FfiConverterObject(
@@ -47858,67 +47913,69 @@ export class RoomPreview
 }
 
 const uniffiTypeRoomPreviewObjectFactory: UniffiObjectFactory<RoomPreviewInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): RoomPreviewInterface {
-      const instance = Object.create(RoomPreview.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'RoomPreview';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): RoomPreviewInterface {
+        const instance = Object.create(RoomPreview.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'RoomPreview';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_roompreview_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_roompreview_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: RoomPreviewInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: RoomPreviewInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: RoomPreviewInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roompreview(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: RoomPreviewInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_roompreview(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roompreview(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_roompreview(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is RoomPreviewInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'RoomPreview'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is RoomPreviewInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'RoomPreview'
+        );
+      },
+    };
+  })();
 // FfiConverter for RoomPreviewInterface
 const FfiConverterTypeRoomPreview = new FfiConverterObject(
   uniffiTypeRoomPreviewObjectFactory
@@ -48031,71 +48088,73 @@ export class SendAttachmentJoinHandle
 }
 
 const uniffiTypeSendAttachmentJoinHandleObjectFactory: UniffiObjectFactory<SendAttachmentJoinHandleInterface> =
-  {
-    create(
-      pointer: UnsafeMutableRawPointer
-    ): SendAttachmentJoinHandleInterface {
-      const instance = Object.create(SendAttachmentJoinHandle.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'SendAttachmentJoinHandle';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): SendAttachmentJoinHandleInterface {
+        const instance = Object.create(SendAttachmentJoinHandle.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SendAttachmentJoinHandle';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_sendattachmentjoinhandle_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_sendattachmentjoinhandle_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: SendAttachmentJoinHandleInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: SendAttachmentJoinHandleInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: SendAttachmentJoinHandleInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendattachmentjoinhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: SendAttachmentJoinHandleInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendattachmentjoinhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendattachmentjoinhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendattachmentjoinhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is SendAttachmentJoinHandleInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'SendAttachmentJoinHandle'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is SendAttachmentJoinHandleInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SendAttachmentJoinHandle'
+        );
+      },
+    };
+  })();
 // FfiConverter for SendAttachmentJoinHandleInterface
 const FfiConverterTypeSendAttachmentJoinHandle = new FfiConverterObject(
   uniffiTypeSendAttachmentJoinHandleObjectFactory
@@ -48208,67 +48267,71 @@ export class SendGalleryJoinHandle
 }
 
 const uniffiTypeSendGalleryJoinHandleObjectFactory: UniffiObjectFactory<SendGalleryJoinHandleInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): SendGalleryJoinHandleInterface {
-      const instance = Object.create(SendGalleryJoinHandle.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'SendGalleryJoinHandle';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): SendGalleryJoinHandleInterface {
+        const instance = Object.create(SendGalleryJoinHandle.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SendGalleryJoinHandle';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_sendgalleryjoinhandle_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_sendgalleryjoinhandle_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: SendGalleryJoinHandleInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: SendGalleryJoinHandleInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: SendGalleryJoinHandleInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendgalleryjoinhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: SendGalleryJoinHandleInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendgalleryjoinhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendgalleryjoinhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendgalleryjoinhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is SendGalleryJoinHandleInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'SendGalleryJoinHandle'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is SendGalleryJoinHandleInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SendGalleryJoinHandle'
+        );
+      },
+    };
+  })();
 // FfiConverter for SendGalleryJoinHandleInterface
 const FfiConverterTypeSendGalleryJoinHandle = new FfiConverterObject(
   uniffiTypeSendGalleryJoinHandleObjectFactory
@@ -48437,66 +48500,69 @@ export class SendHandle
 }
 
 const uniffiTypeSendHandleObjectFactory: UniffiObjectFactory<SendHandleInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): SendHandleInterface {
-      const instance = Object.create(SendHandle.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'SendHandle';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): SendHandleInterface {
+        const instance = Object.create(SendHandle.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SendHandle';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_sendhandle_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_sendhandle_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: SendHandleInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: SendHandleInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: SendHandleInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: SendHandleInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sendhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sendhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is SendHandleInterface {
-      return (
-        obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'SendHandle'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is SendHandleInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SendHandle'
+        );
+      },
+    };
+  })();
 // FfiConverter for SendHandleInterface
 const FfiConverterTypeSendHandle = new FfiConverterObject(
   uniffiTypeSendHandleObjectFactory
@@ -48949,73 +49015,75 @@ export class SessionVerificationController
 }
 
 const uniffiTypeSessionVerificationControllerObjectFactory: UniffiObjectFactory<SessionVerificationControllerInterface> =
-  {
-    create(
-      pointer: UnsafeMutableRawPointer
-    ): SessionVerificationControllerInterface {
-      const instance = Object.create(SessionVerificationController.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'SessionVerificationController';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): SessionVerificationControllerInterface {
+        const instance = Object.create(SessionVerificationController.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SessionVerificationController';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_sessionverificationcontroller_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_sessionverificationcontroller_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(
-      obj: SessionVerificationControllerInterface
-    ): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(
+        obj: SessionVerificationControllerInterface
+      ): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: SessionVerificationControllerInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sessionverificationcontroller(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: SessionVerificationControllerInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sessionverificationcontroller(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sessionverificationcontroller(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sessionverificationcontroller(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is SessionVerificationControllerInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'SessionVerificationController'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is SessionVerificationControllerInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SessionVerificationController'
+        );
+      },
+    };
+  })();
 // FfiConverter for SessionVerificationControllerInterface
 const FfiConverterTypeSessionVerificationController = new FfiConverterObject(
   uniffiTypeSessionVerificationControllerObjectFactory
@@ -49089,71 +49157,73 @@ export class SessionVerificationEmoji
 }
 
 const uniffiTypeSessionVerificationEmojiObjectFactory: UniffiObjectFactory<SessionVerificationEmojiInterface> =
-  {
-    create(
-      pointer: UnsafeMutableRawPointer
-    ): SessionVerificationEmojiInterface {
-      const instance = Object.create(SessionVerificationEmoji.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'SessionVerificationEmoji';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): SessionVerificationEmojiInterface {
+        const instance = Object.create(SessionVerificationEmoji.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SessionVerificationEmoji';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_sessionverificationemoji_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_sessionverificationemoji_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: SessionVerificationEmojiInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: SessionVerificationEmojiInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: SessionVerificationEmojiInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sessionverificationemoji(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: SessionVerificationEmojiInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_sessionverificationemoji(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sessionverificationemoji(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_sessionverificationemoji(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is SessionVerificationEmojiInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'SessionVerificationEmoji'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is SessionVerificationEmojiInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SessionVerificationEmoji'
+        );
+      },
+    };
+  })();
 // FfiConverter for SessionVerificationEmojiInterface
 const FfiConverterTypeSessionVerificationEmoji = new FfiConverterObject(
   uniffiTypeSessionVerificationEmojiObjectFactory
@@ -49289,64 +49359,66 @@ export class Span extends UniffiAbstractObject implements SpanInterface {
   }
 }
 
-const uniffiTypeSpanObjectFactory: UniffiObjectFactory<SpanInterface> = {
-  create(pointer: UnsafeMutableRawPointer): SpanInterface {
-    const instance = Object.create(Span.prototype);
-    instance[pointerLiteralSymbol] = pointer;
-    instance[destructorGuardSymbol] = this.bless(pointer);
-    instance[uniffiTypeNameSymbol] = 'Span';
-    return instance;
-  },
+const uniffiTypeSpanObjectFactory: UniffiObjectFactory<SpanInterface> = (() => {
+  return {
+    create(pointer: UnsafeMutableRawPointer): SpanInterface {
+      const instance = Object.create(Span.prototype);
+      instance[pointerLiteralSymbol] = pointer;
+      instance[destructorGuardSymbol] = this.bless(pointer);
+      instance[uniffiTypeNameSymbol] = 'Span';
+      return instance;
+    },
 
-  bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-    return uniffiCaller.rustCall(
-      /*caller:*/ (status) =>
-        nativeModule().ubrn_uniffi_internal_fn_method_span_ffi__bless_pointer(
-          p,
-          status
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+      return uniffiCaller.rustCall(
+        /*caller:*/ (status) =>
+          nativeModule().ubrn_uniffi_internal_fn_method_span_ffi__bless_pointer(
+            p,
+            status
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
 
-  unbless(ptr: UniffiRustArcPtr) {
-    ptr.markDestroyed();
-  },
+    unbless(ptr: UniffiRustArcPtr) {
+      ptr.markDestroyed();
+    },
 
-  pointer(obj: SpanInterface): UnsafeMutableRawPointer {
-    if ((obj as any)[destructorGuardSymbol] === undefined) {
-      throw new UniffiInternalError.UnexpectedNullPointer();
-    }
-    return (obj as any)[pointerLiteralSymbol];
-  },
+    pointer(obj: SpanInterface): UnsafeMutableRawPointer {
+      if ((obj as any)[destructorGuardSymbol] === undefined) {
+        throw new UniffiInternalError.UnexpectedNullPointer();
+      }
+      return (obj as any)[pointerLiteralSymbol];
+    },
 
-  clonePointer(obj: SpanInterface): UnsafeMutableRawPointer {
-    const pointer = this.pointer(obj);
-    return uniffiCaller.rustCall(
-      /*caller:*/ (callStatus) =>
-        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_span(
-          pointer,
-          callStatus
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+    clonePointer(obj: SpanInterface): UnsafeMutableRawPointer {
+      const pointer = this.pointer(obj);
+      return uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_span(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
 
-  freePointer(pointer: UnsafeMutableRawPointer): void {
-    uniffiCaller.rustCall(
-      /*caller:*/ (callStatus) =>
-        nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_span(
-          pointer,
-          callStatus
-        ),
-      /*liftString:*/ FfiConverterString.lift
-    );
-  },
+    freePointer(pointer: UnsafeMutableRawPointer): void {
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) =>
+          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_span(
+            pointer,
+            callStatus
+          ),
+        /*liftString:*/ FfiConverterString.lift
+      );
+    },
 
-  isConcreteType(obj: any): obj is SpanInterface {
-    return obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Span';
-  },
-};
+    isConcreteType(obj: any): obj is SpanInterface {
+      return obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Span';
+    },
+  };
+})();
 // FfiConverter for SpanInterface
 const FfiConverterTypeSpan = new FfiConverterObject(
   uniffiTypeSpanObjectFactory
@@ -49467,66 +49539,69 @@ export class SsoHandler
 }
 
 const uniffiTypeSsoHandlerObjectFactory: UniffiObjectFactory<SsoHandlerInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): SsoHandlerInterface {
-      const instance = Object.create(SsoHandler.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'SsoHandler';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): SsoHandlerInterface {
+        const instance = Object.create(SsoHandler.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SsoHandler';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_ssohandler_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_ssohandler_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: SsoHandlerInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: SsoHandlerInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: SsoHandlerInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_ssohandler(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: SsoHandlerInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_ssohandler(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_ssohandler(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_ssohandler(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is SsoHandlerInterface {
-      return (
-        obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'SsoHandler'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is SsoHandlerInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SsoHandler'
+        );
+      },
+    };
+  })();
 // FfiConverter for SsoHandlerInterface
 const FfiConverterTypeSsoHandler = new FfiConverterObject(
   uniffiTypeSsoHandlerObjectFactory
@@ -49662,67 +49737,69 @@ export class SyncService
 }
 
 const uniffiTypeSyncServiceObjectFactory: UniffiObjectFactory<SyncServiceInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): SyncServiceInterface {
-      const instance = Object.create(SyncService.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'SyncService';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): SyncServiceInterface {
+        const instance = Object.create(SyncService.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SyncService';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_syncservice_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_syncservice_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: SyncServiceInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: SyncServiceInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: SyncServiceInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_syncservice(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: SyncServiceInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_syncservice(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_syncservice(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_syncservice(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is SyncServiceInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'SyncService'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is SyncServiceInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SyncService'
+        );
+      },
+    };
+  })();
 // FfiConverter for SyncServiceInterface
 const FfiConverterTypeSyncService = new FfiConverterObject(
   uniffiTypeSyncServiceObjectFactory
@@ -49841,67 +49918,69 @@ export class SyncServiceBuilder
 }
 
 const uniffiTypeSyncServiceBuilderObjectFactory: UniffiObjectFactory<SyncServiceBuilderInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): SyncServiceBuilderInterface {
-      const instance = Object.create(SyncServiceBuilder.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'SyncServiceBuilder';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): SyncServiceBuilderInterface {
+        const instance = Object.create(SyncServiceBuilder.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SyncServiceBuilder';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_syncservicebuilder_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_syncservicebuilder_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: SyncServiceBuilderInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: SyncServiceBuilderInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: SyncServiceBuilderInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_syncservicebuilder(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: SyncServiceBuilderInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_syncservicebuilder(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_syncservicebuilder(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_syncservicebuilder(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is SyncServiceBuilderInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'SyncServiceBuilder'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is SyncServiceBuilderInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SyncServiceBuilder'
+        );
+      },
+    };
+  })();
 // FfiConverter for SyncServiceBuilderInterface
 const FfiConverterTypeSyncServiceBuilder = new FfiConverterObject(
   uniffiTypeSyncServiceBuilderObjectFactory
@@ -49990,66 +50069,69 @@ export class TaskHandle
 }
 
 const uniffiTypeTaskHandleObjectFactory: UniffiObjectFactory<TaskHandleInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): TaskHandleInterface {
-      const instance = Object.create(TaskHandle.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'TaskHandle';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): TaskHandleInterface {
+        const instance = Object.create(TaskHandle.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'TaskHandle';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_taskhandle_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_taskhandle_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: TaskHandleInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: TaskHandleInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: TaskHandleInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_taskhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: TaskHandleInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_taskhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_taskhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_taskhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is TaskHandleInterface {
-      return (
-        obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'TaskHandle'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is TaskHandleInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'TaskHandle'
+        );
+      },
+    };
+  })();
 // FfiConverter for TaskHandleInterface
 const FfiConverterTypeTaskHandle = new FfiConverterObject(
   uniffiTypeTaskHandleObjectFactory
@@ -50107,67 +50189,69 @@ export class ThreadSummary
 }
 
 const uniffiTypeThreadSummaryObjectFactory: UniffiObjectFactory<ThreadSummaryInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): ThreadSummaryInterface {
-      const instance = Object.create(ThreadSummary.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'ThreadSummary';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): ThreadSummaryInterface {
+        const instance = Object.create(ThreadSummary.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'ThreadSummary';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_threadsummary_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_threadsummary_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: ThreadSummaryInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: ThreadSummaryInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: ThreadSummaryInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_threadsummary(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: ThreadSummaryInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_threadsummary(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_threadsummary(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_threadsummary(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is ThreadSummaryInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'ThreadSummary'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is ThreadSummaryInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'ThreadSummary'
+        );
+      },
+    };
+  })();
 // FfiConverter for ThreadSummaryInterface
 const FfiConverterTypeThreadSummary = new FfiConverterObject(
   uniffiTypeThreadSummaryObjectFactory
@@ -51515,66 +51599,68 @@ export class Timeline
 }
 
 const uniffiTypeTimelineObjectFactory: UniffiObjectFactory<TimelineInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): TimelineInterface {
-      const instance = Object.create(Timeline.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'Timeline';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): TimelineInterface {
+        const instance = Object.create(Timeline.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'Timeline';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_timeline_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_timeline_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: TimelineInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: TimelineInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: TimelineInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timeline(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: TimelineInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timeline(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timeline(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timeline(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is TimelineInterface {
-      return (
-        obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Timeline'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is TimelineInterface {
+        return (
+          obj[destructorGuardSymbol] && obj[uniffiTypeNameSymbol] === 'Timeline'
+        );
+      },
+    };
+  })();
 // FfiConverter for TimelineInterface
 const FfiConverterTypeTimeline = new FfiConverterObject(
   uniffiTypeTimelineObjectFactory
@@ -51752,67 +51838,69 @@ export class TimelineDiff
 }
 
 const uniffiTypeTimelineDiffObjectFactory: UniffiObjectFactory<TimelineDiffInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): TimelineDiffInterface {
-      const instance = Object.create(TimelineDiff.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'TimelineDiff';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): TimelineDiffInterface {
+        const instance = Object.create(TimelineDiff.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'TimelineDiff';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_timelinediff_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_timelinediff_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: TimelineDiffInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: TimelineDiffInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: TimelineDiffInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelinediff(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: TimelineDiffInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelinediff(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelinediff(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelinediff(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is TimelineDiffInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'TimelineDiff'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is TimelineDiffInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'TimelineDiff'
+        );
+      },
+    };
+  })();
 // FfiConverter for TimelineDiffInterface
 const FfiConverterTypeTimelineDiff = new FfiConverterObject(
   uniffiTypeTimelineDiffObjectFactory
@@ -51918,67 +52006,69 @@ export class TimelineEvent
 }
 
 const uniffiTypeTimelineEventObjectFactory: UniffiObjectFactory<TimelineEventInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): TimelineEventInterface {
-      const instance = Object.create(TimelineEvent.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'TimelineEvent';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): TimelineEventInterface {
+        const instance = Object.create(TimelineEvent.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'TimelineEvent';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_timelineevent_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_timelineevent_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: TimelineEventInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: TimelineEventInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: TimelineEventInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineevent(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: TimelineEventInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineevent(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineevent(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineevent(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is TimelineEventInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'TimelineEvent'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is TimelineEventInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'TimelineEvent'
+        );
+      },
+    };
+  })();
 // FfiConverter for TimelineEventInterface
 const FfiConverterTypeTimelineEvent = new FfiConverterObject(
   uniffiTypeTimelineEventObjectFactory
@@ -52053,69 +52143,73 @@ export class TimelineEventTypeFilter
 }
 
 const uniffiTypeTimelineEventTypeFilterObjectFactory: UniffiObjectFactory<TimelineEventTypeFilterInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): TimelineEventTypeFilterInterface {
-      const instance = Object.create(TimelineEventTypeFilter.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'TimelineEventTypeFilter';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): TimelineEventTypeFilterInterface {
+        const instance = Object.create(TimelineEventTypeFilter.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'TimelineEventTypeFilter';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_timelineeventtypefilter_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_timelineeventtypefilter_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: TimelineEventTypeFilterInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: TimelineEventTypeFilterInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: TimelineEventTypeFilterInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineeventtypefilter(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: TimelineEventTypeFilterInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineeventtypefilter(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineeventtypefilter(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineeventtypefilter(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is TimelineEventTypeFilterInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'TimelineEventTypeFilter'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is TimelineEventTypeFilterInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'TimelineEventTypeFilter'
+        );
+      },
+    };
+  })();
 // FfiConverter for TimelineEventTypeFilterInterface
 const FfiConverterTypeTimelineEventTypeFilter = new FfiConverterObject(
   uniffiTypeTimelineEventTypeFilterObjectFactory
@@ -52224,67 +52318,69 @@ export class TimelineItem
 }
 
 const uniffiTypeTimelineItemObjectFactory: UniffiObjectFactory<TimelineItemInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): TimelineItemInterface {
-      const instance = Object.create(TimelineItem.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'TimelineItem';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): TimelineItemInterface {
+        const instance = Object.create(TimelineItem.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'TimelineItem';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_timelineitem_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_timelineitem_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: TimelineItemInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: TimelineItemInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: TimelineItemInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineitem(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: TimelineItemInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_timelineitem(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineitem(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_timelineitem(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is TimelineItemInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'TimelineItem'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is TimelineItemInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'TimelineItem'
+        );
+      },
+    };
+  })();
 // FfiConverter for TimelineItemInterface
 const FfiConverterTypeTimelineItem = new FfiConverterObject(
   uniffiTypeTimelineItemObjectFactory
@@ -52373,71 +52469,73 @@ export class UnreadNotificationsCount
 }
 
 const uniffiTypeUnreadNotificationsCountObjectFactory: UniffiObjectFactory<UnreadNotificationsCountInterface> =
-  {
-    create(
-      pointer: UnsafeMutableRawPointer
-    ): UnreadNotificationsCountInterface {
-      const instance = Object.create(UnreadNotificationsCount.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'UnreadNotificationsCount';
-      return instance;
-    },
+  (() => {
+    return {
+      create(
+        pointer: UnsafeMutableRawPointer
+      ): UnreadNotificationsCountInterface {
+        const instance = Object.create(UnreadNotificationsCount.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'UnreadNotificationsCount';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_unreadnotificationscount_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_unreadnotificationscount_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: UnreadNotificationsCountInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: UnreadNotificationsCountInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(
-      obj: UnreadNotificationsCountInterface
-    ): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_unreadnotificationscount(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(
+        obj: UnreadNotificationsCountInterface
+      ): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_unreadnotificationscount(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_unreadnotificationscount(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_unreadnotificationscount(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is UnreadNotificationsCountInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'UnreadNotificationsCount'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is UnreadNotificationsCountInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'UnreadNotificationsCount'
+        );
+      },
+    };
+  })();
 // FfiConverter for UnreadNotificationsCountInterface
 const FfiConverterTypeUnreadNotificationsCount = new FfiConverterObject(
   uniffiTypeUnreadNotificationsCountObjectFactory
@@ -52712,67 +52810,69 @@ export class UserIdentity
 }
 
 const uniffiTypeUserIdentityObjectFactory: UniffiObjectFactory<UserIdentityInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): UserIdentityInterface {
-      const instance = Object.create(UserIdentity.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'UserIdentity';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): UserIdentityInterface {
+        const instance = Object.create(UserIdentity.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'UserIdentity';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_useridentity_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_useridentity_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: UserIdentityInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: UserIdentityInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: UserIdentityInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_useridentity(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: UserIdentityInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_useridentity(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_useridentity(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_useridentity(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is UserIdentityInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'UserIdentity'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is UserIdentityInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'UserIdentity'
+        );
+      },
+    };
+  })();
 // FfiConverter for UserIdentityInterface
 const FfiConverterTypeUserIdentity = new FfiConverterObject(
   uniffiTypeUserIdentityObjectFactory
@@ -52866,67 +52966,69 @@ export class WidgetDriver
 }
 
 const uniffiTypeWidgetDriverObjectFactory: UniffiObjectFactory<WidgetDriverInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): WidgetDriverInterface {
-      const instance = Object.create(WidgetDriver.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'WidgetDriver';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): WidgetDriverInterface {
+        const instance = Object.create(WidgetDriver.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'WidgetDriver';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_widgetdriver_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_widgetdriver_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: WidgetDriverInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: WidgetDriverInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: WidgetDriverInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_widgetdriver(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: WidgetDriverInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_widgetdriver(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_widgetdriver(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_widgetdriver(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is WidgetDriverInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'WidgetDriver'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is WidgetDriverInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'WidgetDriver'
+        );
+      },
+    };
+  })();
 // FfiConverter for WidgetDriverInterface
 const FfiConverterTypeWidgetDriver = new FfiConverterObject(
   uniffiTypeWidgetDriverObjectFactory
@@ -53069,67 +53171,69 @@ export class WidgetDriverHandle
 }
 
 const uniffiTypeWidgetDriverHandleObjectFactory: UniffiObjectFactory<WidgetDriverHandleInterface> =
-  {
-    create(pointer: UnsafeMutableRawPointer): WidgetDriverHandleInterface {
-      const instance = Object.create(WidgetDriverHandle.prototype);
-      instance[pointerLiteralSymbol] = pointer;
-      instance[destructorGuardSymbol] = this.bless(pointer);
-      instance[uniffiTypeNameSymbol] = 'WidgetDriverHandle';
-      return instance;
-    },
+  (() => {
+    return {
+      create(pointer: UnsafeMutableRawPointer): WidgetDriverHandleInterface {
+        const instance = Object.create(WidgetDriverHandle.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'WidgetDriverHandle';
+        return instance;
+      },
 
-    bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
-      return uniffiCaller.rustCall(
-        /*caller:*/ (status) =>
-          nativeModule().ubrn_uniffi_internal_fn_method_widgetdriverhandle_ffi__bless_pointer(
-            p,
-            status
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      bless(p: UnsafeMutableRawPointer): UniffiRustArcPtr {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_widgetdriverhandle_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    unbless(ptr: UniffiRustArcPtr) {
-      ptr.markDestroyed();
-    },
+      unbless(ptr: UniffiRustArcPtr) {
+        ptr.markDestroyed();
+      },
 
-    pointer(obj: WidgetDriverHandleInterface): UnsafeMutableRawPointer {
-      if ((obj as any)[destructorGuardSymbol] === undefined) {
-        throw new UniffiInternalError.UnexpectedNullPointer();
-      }
-      return (obj as any)[pointerLiteralSymbol];
-    },
+      pointer(obj: WidgetDriverHandleInterface): UnsafeMutableRawPointer {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
 
-    clonePointer(obj: WidgetDriverHandleInterface): UnsafeMutableRawPointer {
-      const pointer = this.pointer(obj);
-      return uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_widgetdriverhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      clonePointer(obj: WidgetDriverHandleInterface): UnsafeMutableRawPointer {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_clone_widgetdriverhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    freePointer(pointer: UnsafeMutableRawPointer): void {
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) =>
-          nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_widgetdriverhandle(
-            pointer,
-            callStatus
-          ),
-        /*liftString:*/ FfiConverterString.lift
-      );
-    },
+      freePointer(pointer: UnsafeMutableRawPointer): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_free_widgetdriverhandle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
 
-    isConcreteType(obj: any): obj is WidgetDriverHandleInterface {
-      return (
-        obj[destructorGuardSymbol] &&
-        obj[uniffiTypeNameSymbol] === 'WidgetDriverHandle'
-      );
-    },
-  };
+      isConcreteType(obj: any): obj is WidgetDriverHandleInterface {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'WidgetDriverHandle'
+        );
+      },
+    };
+  })();
 // FfiConverter for WidgetDriverHandleInterface
 const FfiConverterTypeWidgetDriverHandle = new FfiConverterObject(
   uniffiTypeWidgetDriverHandleObjectFactory

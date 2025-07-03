@@ -484,7 +484,7 @@ fileprivate struct FfiConverterString: FfiConverter {
 /**
  * The data needed to perform authorization using OAuth 2.0.
  */
-public protocol OAuthAuthorizationDataProtocol: AnyObject {
+public protocol OAuthAuthorizationDataProtocol: AnyObject, Sendable {
     
     /**
      * The login URL to use for authorization.
@@ -509,6 +509,9 @@ open class OAuthAuthorizationData: OAuthAuthorizationDataProtocol, @unchecked Se
     // TODO: We'd like this to be `private` but for Swifty reasons,
     // we can't implement `FfiConverter` without making this `required` and we can't
     // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
@@ -906,6 +909,9 @@ extension BackupDownloadStrategy: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -1004,11 +1010,14 @@ extension PaginatorState: Equatable, Hashable {}
 
 
 
+
+
+
 /**
  * The error type for failures while trying to log in a new device using a QR
  * code.
  */
-public enum QrCodeLoginError {
+public enum QrCodeLoginError: Swift.Error {
 
     
     
@@ -1169,11 +1178,14 @@ extension QrCodeLoginError: Equatable, Hashable {}
 
 
 
+
 extension QrCodeLoginError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
 }
+
+
 
 
 // Note that we don't yet support `indirect` for enums.
@@ -1262,6 +1274,9 @@ extension RoomMemberRole: Equatable, Hashable {}
 
 
 
+
+
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -1342,6 +1357,9 @@ public func FfiConverterTypeRoomPaginationStatus_lower(_ value: RoomPaginationSt
 
 
 extension RoomPaginationStatus: Equatable, Hashable {}
+
+
+
 
 
 
