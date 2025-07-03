@@ -2008,6 +2008,99 @@ interface NativeModuleInterface {
     ptr: bigint,
     msg: Uint8Array
   ): bigint;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(
+    vtable: UniffiVTableCallbackInterfaceAccountDataListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(
+    vtable: UniffiVTableCallbackInterfaceBackupStateListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(
+    vtable: UniffiVTableCallbackInterfaceBackupSteadyStateListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(
+    vtable: UniffiVTableCallbackInterfaceClientDelegate
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(
+    vtable: UniffiVTableCallbackInterfaceClientSessionDelegate
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(
+    vtable: UniffiVTableCallbackInterfaceEnableRecoveryProgressListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
+    vtable: UniffiVTableCallbackInterfaceIdentityStatusChangeListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(
+    vtable: UniffiVTableCallbackInterfaceIgnoredUsersListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(
+    vtable: UniffiVTableCallbackInterfaceKnockRequestsListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(
+    vtable: UniffiVTableCallbackInterfaceLiveLocationShareListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(
+    vtable: UniffiVTableCallbackInterfaceMediaPreviewConfigListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(
+    vtable: UniffiVTableCallbackInterfaceNotificationSettingsDelegate
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(
+    vtable: UniffiVTableCallbackInterfacePaginationStatusListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(
+    vtable: UniffiVTableCallbackInterfaceProgressWatcher
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(
+    vtable: UniffiVTableCallbackInterfaceQrLoginProgressListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(
+    vtable: UniffiVTableCallbackInterfaceRecoveryStateListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(
+    vtable: UniffiVTableCallbackInterfaceRoomAccountDataListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(
+    vtable: UniffiVTableCallbackInterfaceRoomDirectorySearchEntriesListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(
+    vtable: UniffiVTableCallbackInterfaceRoomInfoListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(
+    vtable: UniffiVTableCallbackInterfaceRoomListEntriesListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(
+    vtable: UniffiVTableCallbackInterfaceRoomListLoadingStateListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(
+    vtable: UniffiVTableCallbackInterfaceRoomListServiceStateListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(
+    vtable: UniffiVTableCallbackInterfaceRoomListServiceSyncIndicatorListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(
+    vtable: UniffiVTableCallbackInterfaceSendQueueRoomErrorListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(
+    vtable: UniffiVTableCallbackInterfaceSessionVerificationControllerDelegate
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(
+    vtable: UniffiVTableCallbackInterfaceSyncServiceStateObserver
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(
+    vtable: UniffiVTableCallbackInterfaceTimelineListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(
+    vtable: UniffiVTableCallbackInterfaceTypingNotificationsListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(
+    vtable: UniffiVTableCallbackInterfaceUnableToDecryptDelegate
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(
+    vtable: UniffiVTableCallbackInterfaceVerificationStateListener
+  ): void;
+  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(
+    vtable: UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider
+  ): void;
   ubrn_uniffi_matrix_sdk_ffi_fn_func_content_without_relation_from_message(
     message: Uint8Array,
     uniffi_out_err: UniffiRustCallStatus
@@ -2722,99 +2815,6 @@ interface NativeModuleInterface {
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_verificationstatelistener_on_update(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_widgetcapabilitiesprovider_acquire_capabilities(): number;
   ubrn_ffi_matrix_sdk_ffi_uniffi_contract_version(): number;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_accountdatalistener(
-    vtable: UniffiVTableCallbackInterfaceAccountDataListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupstatelistener(
-    vtable: UniffiVTableCallbackInterfaceBackupStateListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_backupsteadystatelistener(
-    vtable: UniffiVTableCallbackInterfaceBackupSteadyStateListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientdelegate(
-    vtable: UniffiVTableCallbackInterfaceClientDelegate
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_clientsessiondelegate(
-    vtable: UniffiVTableCallbackInterfaceClientSessionDelegate
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_enablerecoveryprogresslistener(
-    vtable: UniffiVTableCallbackInterfaceEnableRecoveryProgressListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_identitystatuschangelistener(
-    vtable: UniffiVTableCallbackInterfaceIdentityStatusChangeListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_ignoreduserslistener(
-    vtable: UniffiVTableCallbackInterfaceIgnoredUsersListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_knockrequestslistener(
-    vtable: UniffiVTableCallbackInterfaceKnockRequestsListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_livelocationsharelistener(
-    vtable: UniffiVTableCallbackInterfaceLiveLocationShareListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_mediapreviewconfiglistener(
-    vtable: UniffiVTableCallbackInterfaceMediaPreviewConfigListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_notificationsettingsdelegate(
-    vtable: UniffiVTableCallbackInterfaceNotificationSettingsDelegate
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_paginationstatuslistener(
-    vtable: UniffiVTableCallbackInterfacePaginationStatusListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_progresswatcher(
-    vtable: UniffiVTableCallbackInterfaceProgressWatcher
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_qrloginprogresslistener(
-    vtable: UniffiVTableCallbackInterfaceQrLoginProgressListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_recoverystatelistener(
-    vtable: UniffiVTableCallbackInterfaceRecoveryStateListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomaccountdatalistener(
-    vtable: UniffiVTableCallbackInterfaceRoomAccountDataListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomdirectorysearchentrieslistener(
-    vtable: UniffiVTableCallbackInterfaceRoomDirectorySearchEntriesListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roominfolistener(
-    vtable: UniffiVTableCallbackInterfaceRoomInfoListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistentrieslistener(
-    vtable: UniffiVTableCallbackInterfaceRoomListEntriesListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistloadingstatelistener(
-    vtable: UniffiVTableCallbackInterfaceRoomListLoadingStateListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicestatelistener(
-    vtable: UniffiVTableCallbackInterfaceRoomListServiceStateListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_roomlistservicesyncindicatorlistener(
-    vtable: UniffiVTableCallbackInterfaceRoomListServiceSyncIndicatorListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sendqueueroomerrorlistener(
-    vtable: UniffiVTableCallbackInterfaceSendQueueRoomErrorListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_sessionverificationcontrollerdelegate(
-    vtable: UniffiVTableCallbackInterfaceSessionVerificationControllerDelegate
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_syncservicestateobserver(
-    vtable: UniffiVTableCallbackInterfaceSyncServiceStateObserver
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_timelinelistener(
-    vtable: UniffiVTableCallbackInterfaceTimelineListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_typingnotificationslistener(
-    vtable: UniffiVTableCallbackInterfaceTypingNotificationsListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_unabletodecryptdelegate(
-    vtable: UniffiVTableCallbackInterfaceUnableToDecryptDelegate
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_verificationstatelistener(
-    vtable: UniffiVTableCallbackInterfaceVerificationStateListener
-  ): void;
-  ubrn_uniffi_matrix_sdk_ffi_fn_init_callback_vtable_widgetcapabilitiesprovider(
-    vtable: UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider
-  ): void;
   ubrn_uniffi_internal_fn_method_client_ffi__bless_pointer(
     pointer: bigint,
     uniffi_out_err: UniffiRustCallStatus

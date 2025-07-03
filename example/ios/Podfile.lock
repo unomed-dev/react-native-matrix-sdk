@@ -1558,10 +1558,7 @@ PODS:
     - React-logger
     - React-perflogger
     - React-utils (= 0.76.9)
-  - SocketRocket (0.7.1)
-  - uniffi-bindgen-react-native (0.29.0-0):
-    - React-Core
-  - unomed-react-native-matrix-sdk (0.5.0):
+  - ReactNativeMatrixSdk (0.5.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1581,8 +1578,11 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - uniffi-bindgen-react-native (= 0.29.0-0)
+    - uniffi-bindgen-react-native (= 0.29.3-0)
     - Yoga
+  - SocketRocket (0.7.1)
+  - uniffi-bindgen-react-native (0.29.3-0):
+    - React-Core
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -1651,7 +1651,7 @@ DEPENDENCIES:
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
-  - unomed-react-native-matrix-sdk (from `../..`)
+  - ReactNativeMatrixSdk (from `../..`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -1787,7 +1787,7 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
-  unomed-react-native-matrix-sdk:
+  ReactNativeMatrixSdk:
     :path: "../.."
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
@@ -1856,9 +1856,9 @@ SPEC CHECKSUMS:
   React-utils: ed818f19ab445000d6b5c4efa9d462449326cc9f
   ReactCodegen: f853a20cc9125c5521c8766b4b49375fec20648b
   ReactCommon: 300d8d9c5cb1a6cd79a67cf5d8f91e4d477195f9
+  ReactNativeMatrixSdk: 4ccb081f54b832bd4d535959329584f97b33fc3d
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  uniffi-bindgen-react-native: ae8f59486efef1c9dd2d0febea3485a388e60fc0
-  unomed-react-native-matrix-sdk: 123d1bca7f5ef43a31caf89b60c5658c932640de
+  uniffi-bindgen-react-native: 89b861f6865083493ec6252a8409053db6d77d2d
   Yoga: feb4910aba9742cfedc059e2b2902e22ffe9954a
 
 PODFILE CHECKSUM: 26c75fa7a8774e3435310ec3d6056a0c49f27cc8
