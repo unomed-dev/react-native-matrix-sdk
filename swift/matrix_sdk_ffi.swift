@@ -43778,10 +43778,10 @@ private let initializationResult: InitializationResult = {
     uniffiCallbackInitVerificationStateListener()
     uniffiCallbackInitWidgetCapabilitiesProvider()
     uniffiEnsureMatrixSdkUiInitialized()
-    uniffiEnsureMatrixSdkCommonInitialized()
-    uniffiEnsureMatrixSdkCryptoInitialized()
-    uniffiEnsureMatrixSdkBaseInitialized()
     uniffiEnsureMatrixSdkInitialized()
+    uniffiEnsureMatrixSdkCryptoInitialized()
+    uniffiEnsureMatrixSdkCommonInitialized()
+    uniffiEnsureMatrixSdkBaseInitialized()
     return InitializationResult.ok
 }()
 

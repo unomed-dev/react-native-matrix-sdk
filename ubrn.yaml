@@ -10,8 +10,6 @@ android:
   targets:
     - arm64-v8a
     - armeabi-v7a
-    - x86
-    - x86_64
 ios:
   cargoExtras: []
   directory: ios
@@ -19,7 +17,6 @@ ios:
   targets:
     - aarch64-apple-ios
     - aarch64-apple-ios-sim
-    - x86_64-apple-ios
   xcodebuildExtras: []
   frameworkName: build/RnMatrixRustSdk
 noOverwrite: []
