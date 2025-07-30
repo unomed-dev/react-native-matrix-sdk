@@ -30,7 +30,7 @@ runs:
       - name: Install cargo-ndk
         if: ${{ inputs.platform == 'android' }}
         shell: bash
-        run: cargo install cargo-ndk
+        run: cargo install cargo-ndk --version 3.5.4
 
       - name: Install clang-format
         if: ${{ inputs.platform == 'ios' }}
