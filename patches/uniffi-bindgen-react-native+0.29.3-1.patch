@@ -1,0 +1,12 @@
+diff --git a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/commands/generate.rs b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/commands/generate.rs
+index 1b13ea1..a5113cc 100644
+--- a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/commands/generate.rs
++++ b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/commands/generate.rs
+@@ -98,6 +98,7 @@ pub(crate) struct GenerateAllArgs {
+     lib_file: Utf8PathBuf,
+ 
+     /// Whether to generate native bindings or not.
++    #[clap(long, default_value = "false")]
+     native_bindings: bool,
+ }
+ 
