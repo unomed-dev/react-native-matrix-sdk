@@ -922,6 +922,7 @@ export default Object.freeze({
     FfiConverterTypeDecryptionSettings,
     FfiConverterTypeIdentityState,
     FfiConverterTypeLocalTrust,
+    FfiConverterTypeLoginQrCodeDecodeError,
     FfiConverterTypeSignatureState,
     FfiConverterTypeTrustRequirement,
     FfiConverterTypeUtdCause,

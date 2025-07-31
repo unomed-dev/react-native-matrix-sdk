@@ -1075,6 +1075,7 @@ export default Object.freeze({
     FfiConverterTypeBackupDownloadStrategy,
     FfiConverterTypeOAuthAuthorizationData,
     FfiConverterTypePaginatorState,
+    FfiConverterTypeQRCodeLoginError,
     FfiConverterTypeRoomMemberRole,
     FfiConverterTypeRoomPaginationStatus,
     FfiConverterTypeRoomPowerLevelChanges,
