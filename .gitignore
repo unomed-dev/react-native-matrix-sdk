@@ -83,3 +83,4 @@ rust_modules/
 # React Native Codegen
 ios/generated
 android/generated
+binaries.tar.gz
