@@ -73,7 +73,8 @@ async function downloadBinaries() {
     console.error('Failed to download binaries:', error.message);
     console.error('You may need to build the binaries locally using:');
     console.error('  yarn generate:release');
-    process.exit(1);
+    // Exit gracefully if binaries do not exist
+    process.exit(0);
   }
 }
 
