@@ -138,7 +138,9 @@
     },
     "github": {
       "release": true,
-      "assets": ["binaries.tar.gz"]
+      "assets": [
+        "binaries.tar.gz"
+      ]
     },
     "hooks": {
       "before:release": "node scripts/package-binaries.js"
