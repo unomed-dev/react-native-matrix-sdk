@@ -24,9 +24,9 @@
     "ios",
     "cpp",
     "*.podspec",
-    "build",
     "react-native.config.js",
     "swift",
+    "scripts",
     "!ios/build",
     "!android/build",
     "!android/gradle",
@@ -59,7 +59,7 @@
     "clean": "del-cli -v android/build example/android/build example/android/app/build example/ios/build lib **/.cxx",
     "prepare": "bob build",
     "release": "release-it",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package && node scripts/download-binaries.js"
   },
   "keywords": [
     "react-native",
@@ -100,6 +100,7 @@
     "react-native": "0.76.9",
     "react-native-builder-bob": "^0.31.0",
     "release-it": "^15.0.0",
+    "tar": "^7.4.3",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2",
     "uniffi-bindgen-react-native": "0.29.3-1"
@@ -136,7 +137,13 @@
       "publish": true
     },
     "github": {
-      "release": true
+      "release": true,
+      "assets": [
+        "binaries.tar.gz"
+      ]
+    },
+    "hooks": {
+      "before:release": "node scripts/package-binaries.js"
     },
     "plugins": {
       "@release-it/conventional-changelog": {
