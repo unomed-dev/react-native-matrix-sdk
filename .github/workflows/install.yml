@@ -9,9 +9,6 @@ jobs:
   install:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Install
         run: |
           mkdir my-app
