@@ -7,6 +7,7 @@
 [![android](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-android.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-android.yml)
 [![ios](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-ios.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-ios.yml)
 [![android](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-release.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/build-release.yml)
+[![NPM install](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/install.yml/badge.svg)](https://github.com/unomed-dev/react-native-matrix-sdk/actions/workflows/install.yml)
 
 Powered by [uniffi-bindgen-react-native] and [create-react-native-library].
 
