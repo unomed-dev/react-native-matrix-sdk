@@ -11,6 +11,7 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
+import org.matrix.rustcomponents.sdk.ClientBuilder
 
 class MainApplication : Application(), ReactApplication {
 

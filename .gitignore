@@ -38,8 +38,6 @@ project.xcworkspace
 local.properties
 android.iml
 *.aar
-android/src/main/java/org
-android/src/main/java/uniffi
 
 # Cocoapods
 example/ios/Pods
@@ -79,6 +77,7 @@ lib/
 # uniffi-bindgen-react-native
 rust_modules/
 *.a
+*.so
 
 # React Native Codegen
 ios/generated
