@@ -43777,11 +43777,11 @@ private let initializationResult: InitializationResult = {
     uniffiCallbackInitUnableToDecryptDelegate()
     uniffiCallbackInitVerificationStateListener()
     uniffiCallbackInitWidgetCapabilitiesProvider()
+    uniffiEnsureMatrixSdkCryptoInitialized()
     uniffiEnsureMatrixSdkUiInitialized()
     uniffiEnsureMatrixSdkBaseInitialized()
-    uniffiEnsureMatrixSdkInitialized()
     uniffiEnsureMatrixSdkCommonInitialized()
-    uniffiEnsureMatrixSdkCryptoInitialized()
+    uniffiEnsureMatrixSdkInitialized()
     return InitializationResult.ok
 }()
 

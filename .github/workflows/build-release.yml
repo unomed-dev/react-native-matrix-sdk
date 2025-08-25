@@ -20,7 +20,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-libs
-          path: android/**/*.a
+          path: android/**/*.so
           if-no-files-found: error
 
   ios:
@@ -42,4 +42,3 @@ jobs:
           name: xcframework
           path: build/*.xcframework
           if-no-files-found: error
-        
