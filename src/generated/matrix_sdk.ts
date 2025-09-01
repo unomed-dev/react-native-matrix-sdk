@@ -38,6 +38,7 @@ import {
   type UnsafeMutableRawPointer,
   AbstractFfiConverterByteArray,
   FfiConverterBool,
+  FfiConverterFloat64,
   FfiConverterInt32,
   FfiConverterInt64,
   FfiConverterObject,
@@ -205,6 +206,240 @@ const FfiConverterTypeRoomPowerLevelChanges = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * Properties to create a new virtual Element Call widget.
+ */
+export type VirtualElementCallWidgetOptions = {
+  /**
+   * The url to the app.
+   *
+   * E.g. <https://call.element.io>, <https://call.element.dev>, <https://call.element.dev/room>
+   */
+  elementCallUrl: string;
+  /**
+   * The widget id.
+   */
+  widgetId: string;
+  /**
+   * The url that is used as the target for the PostMessages sent
+   * by the widget (to the client).
+   *
+   * For a web app client this is the client url. In case of using other
+   * platforms the client most likely is setup up to listen to
+   * postmessages in the same webview the widget is hosted. In this case
+   * the `parent_url` is set to the url of the webview with the widget. Be
+   * aware that this means that the widget will receive its own postmessage
+   * messages. The `matrix-widget-api` (js) ignores those so this works but
+   * it might break custom implementations.
+   *
+   * Defaults to `element_call_url` for the non-iframe (dedicated webview)
+   * usecase.
+   */
+  parentUrl: string | undefined;
+  /**
+   * Whether the branding header of Element call should be shown or if a
+   * mobile header navbar should be render.
+   *
+   * Default: [`HeaderStyle::Standard`]
+   */
+  header: HeaderStyle | undefined;
+  /**
+   * Whether the branding header of Element call should be hidden.
+   *
+   * Default: `true`
+   */
+  hideHeader: boolean | undefined;
+  /**
+   * If set, the lobby will be skipped and the widget will join the
+   * call on the `io.element.join` action.
+   *
+   * Default: `false`
+   */
+  preload: boolean | undefined;
+  /**
+   * The font scale which will be used inside element call.
+   *
+   * Default: `1`
+   */
+  fontScale: /*f64*/ number | undefined;
+  /**
+   * Whether element call should prompt the user to open in the browser or
+   * the app.
+   *
+   * Default: `false`
+   */
+  appPrompt: boolean | undefined;
+  /**
+   * Make it not possible to get to the calls list in the webview.
+   *
+   * Default: `true`
+   */
+  confineToRoom: boolean | undefined;
+  /**
+   * The font to use, to adapt to the system font.
+   */
+  font: string | undefined;
+  /**
+   * The encryption system to use.
+   *
+   * Use `EncryptionSystem::Unencrypted` to disable encryption.
+   */
+  encryption: EncryptionSystem;
+  /**
+   * The intent of showing the call.
+   * If the user wants to start a call or join an existing one.
+   * Controls if the lobby is skipped or not.
+   */
+  intent: Intent | undefined;
+  /**
+   * Do not show the screenshare button.
+   */
+  hideScreensharing: boolean;
+  /**
+   * Can be used to pass a PostHog id to element call.
+   */
+  posthogUserId: string | undefined;
+  /**
+   * The host of the posthog api.
+   * This is only used by the embedded package of Element Call.
+   */
+  posthogApiHost: string | undefined;
+  /**
+   * The key for the posthog api.
+   * This is only used by the embedded package of Element Call.
+   */
+  posthogApiKey: string | undefined;
+  /**
+   * The url to use for submitting rageshakes.
+   * This is only used by the embedded package of Element Call.
+   */
+  rageshakeSubmitUrl: string | undefined;
+  /**
+   * Sentry [DSN](https://docs.sentry.io/concepts/key-terms/dsn-explainer/)
+   * This is only used by the embedded package of Element Call.
+   */
+  sentryDsn: string | undefined;
+  /**
+   * Sentry [environment](https://docs.sentry.io/concepts/key-terms/key-terms/)
+   * This is only used by the embedded package of Element Call.
+   */
+  sentryEnvironment: string | undefined;
+  /**
+   * - `false`: the webview shows a a list of devices injected by the
+   * client. (used on ios & android)
+   */
+  controlledMediaDevices: boolean;
+};
+
+/**
+ * Generated factory for {@link VirtualElementCallWidgetOptions} record objects.
+ */
+export const VirtualElementCallWidgetOptions = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<
+      VirtualElementCallWidgetOptions,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link VirtualElementCallWidgetOptions}, with defaults specified
+     * in Rust, in the {@link matrix_sdk} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link VirtualElementCallWidgetOptions}, with defaults specified
+     * in Rust, in the {@link matrix_sdk} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk} crate.
+     */
+    defaults: () =>
+      Object.freeze(defaults()) as Partial<VirtualElementCallWidgetOptions>,
+  });
+})();
+
+const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
+  type TypeName = VirtualElementCallWidgetOptions;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        elementCallUrl: FfiConverterString.read(from),
+        widgetId: FfiConverterString.read(from),
+        parentUrl: FfiConverterOptionalString.read(from),
+        header: FfiConverterOptionalTypeHeaderStyle.read(from),
+        hideHeader: FfiConverterOptionalBool.read(from),
+        preload: FfiConverterOptionalBool.read(from),
+        fontScale: FfiConverterOptionalFloat64.read(from),
+        appPrompt: FfiConverterOptionalBool.read(from),
+        confineToRoom: FfiConverterOptionalBool.read(from),
+        font: FfiConverterOptionalString.read(from),
+        encryption: FfiConverterTypeEncryptionSystem.read(from),
+        intent: FfiConverterOptionalTypeIntent.read(from),
+        hideScreensharing: FfiConverterBool.read(from),
+        posthogUserId: FfiConverterOptionalString.read(from),
+        posthogApiHost: FfiConverterOptionalString.read(from),
+        posthogApiKey: FfiConverterOptionalString.read(from),
+        rageshakeSubmitUrl: FfiConverterOptionalString.read(from),
+        sentryDsn: FfiConverterOptionalString.read(from),
+        sentryEnvironment: FfiConverterOptionalString.read(from),
+        controlledMediaDevices: FfiConverterBool.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.elementCallUrl, into);
+      FfiConverterString.write(value.widgetId, into);
+      FfiConverterOptionalString.write(value.parentUrl, into);
+      FfiConverterOptionalTypeHeaderStyle.write(value.header, into);
+      FfiConverterOptionalBool.write(value.hideHeader, into);
+      FfiConverterOptionalBool.write(value.preload, into);
+      FfiConverterOptionalFloat64.write(value.fontScale, into);
+      FfiConverterOptionalBool.write(value.appPrompt, into);
+      FfiConverterOptionalBool.write(value.confineToRoom, into);
+      FfiConverterOptionalString.write(value.font, into);
+      FfiConverterTypeEncryptionSystem.write(value.encryption, into);
+      FfiConverterOptionalTypeIntent.write(value.intent, into);
+      FfiConverterBool.write(value.hideScreensharing, into);
+      FfiConverterOptionalString.write(value.posthogUserId, into);
+      FfiConverterOptionalString.write(value.posthogApiHost, into);
+      FfiConverterOptionalString.write(value.posthogApiKey, into);
+      FfiConverterOptionalString.write(value.rageshakeSubmitUrl, into);
+      FfiConverterOptionalString.write(value.sentryDsn, into);
+      FfiConverterOptionalString.write(value.sentryEnvironment, into);
+      FfiConverterBool.write(value.controlledMediaDevices, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterString.allocationSize(value.elementCallUrl) +
+        FfiConverterString.allocationSize(value.widgetId) +
+        FfiConverterOptionalString.allocationSize(value.parentUrl) +
+        FfiConverterOptionalTypeHeaderStyle.allocationSize(value.header) +
+        FfiConverterOptionalBool.allocationSize(value.hideHeader) +
+        FfiConverterOptionalBool.allocationSize(value.preload) +
+        FfiConverterOptionalFloat64.allocationSize(value.fontScale) +
+        FfiConverterOptionalBool.allocationSize(value.appPrompt) +
+        FfiConverterOptionalBool.allocationSize(value.confineToRoom) +
+        FfiConverterOptionalString.allocationSize(value.font) +
+        FfiConverterTypeEncryptionSystem.allocationSize(value.encryption) +
+        FfiConverterOptionalTypeIntent.allocationSize(value.intent) +
+        FfiConverterBool.allocationSize(value.hideScreensharing) +
+        FfiConverterOptionalString.allocationSize(value.posthogUserId) +
+        FfiConverterOptionalString.allocationSize(value.posthogApiHost) +
+        FfiConverterOptionalString.allocationSize(value.posthogApiKey) +
+        FfiConverterOptionalString.allocationSize(value.rageshakeSubmitUrl) +
+        FfiConverterOptionalString.allocationSize(value.sentryDsn) +
+        FfiConverterOptionalString.allocationSize(value.sentryEnvironment) +
+        FfiConverterBool.allocationSize(value.controlledMediaDevices)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 const stringConverter = {
   stringToBytes: (s: string) =>
     uniffiCaller.rustCall((status) =>
@@ -284,6 +519,296 @@ const FfiConverterTypeBackupDownloadStrategy = (() => {
           return ordinalConverter.write(2, into);
         case BackupDownloadStrategy.Manual:
           return ordinalConverter.write(3, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+// Enum: EncryptionSystem
+export enum EncryptionSystem_Tags {
+  Unencrypted = 'Unencrypted',
+  PerParticipantKeys = 'PerParticipantKeys',
+  SharedSecret = 'SharedSecret',
+}
+/**
+ * Defines if a call is encrypted and which encryption system should be used.
+ *
+ * This controls the url parameters: `perParticipantE2EE`, `password`.
+ */
+export const EncryptionSystem = (() => {
+  type Unencrypted__interface = {
+    tag: EncryptionSystem_Tags.Unencrypted;
+  };
+
+  /**
+   * Equivalent to the element call url parameter: `perParticipantE2EE=false`
+   * and no password.
+   */
+  class Unencrypted_ extends UniffiEnum implements Unencrypted__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'EncryptionSystem';
+    readonly tag = EncryptionSystem_Tags.Unencrypted;
+    constructor() {
+      super('EncryptionSystem', 'Unencrypted');
+    }
+
+    static new(): Unencrypted_ {
+      return new Unencrypted_();
+    }
+
+    static instanceOf(obj: any): obj is Unencrypted_ {
+      return obj.tag === EncryptionSystem_Tags.Unencrypted;
+    }
+  }
+
+  type PerParticipantKeys__interface = {
+    tag: EncryptionSystem_Tags.PerParticipantKeys;
+  };
+
+  /**
+   * Equivalent to the element call url parameters:
+   * `perParticipantE2EE=true`
+   */
+  class PerParticipantKeys_
+    extends UniffiEnum
+    implements PerParticipantKeys__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'EncryptionSystem';
+    readonly tag = EncryptionSystem_Tags.PerParticipantKeys;
+    constructor() {
+      super('EncryptionSystem', 'PerParticipantKeys');
+    }
+
+    static new(): PerParticipantKeys_ {
+      return new PerParticipantKeys_();
+    }
+
+    static instanceOf(obj: any): obj is PerParticipantKeys_ {
+      return obj.tag === EncryptionSystem_Tags.PerParticipantKeys;
+    }
+  }
+
+  type SharedSecret__interface = {
+    tag: EncryptionSystem_Tags.SharedSecret;
+    inner: Readonly<{ secret: string }>;
+  };
+
+  /**
+   * Equivalent to the element call url parameters:
+   * `password={secret}`
+   */
+  class SharedSecret_ extends UniffiEnum implements SharedSecret__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'EncryptionSystem';
+    readonly tag = EncryptionSystem_Tags.SharedSecret;
+    readonly inner: Readonly<{ secret: string }>;
+    constructor(inner: {
+      /**
+       * The secret/password which is used in the url.
+       */ secret: string;
+    }) {
+      super('EncryptionSystem', 'SharedSecret');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The secret/password which is used in the url.
+       */ secret: string;
+    }): SharedSecret_ {
+      return new SharedSecret_(inner);
+    }
+
+    static instanceOf(obj: any): obj is SharedSecret_ {
+      return obj.tag === EncryptionSystem_Tags.SharedSecret;
+    }
+  }
+
+  function instanceOf(obj: any): obj is EncryptionSystem {
+    return obj[uniffiTypeNameSymbol] === 'EncryptionSystem';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Unencrypted: Unencrypted_,
+    PerParticipantKeys: PerParticipantKeys_,
+    SharedSecret: SharedSecret_,
+  });
+})();
+
+/**
+ * Defines if a call is encrypted and which encryption system should be used.
+ *
+ * This controls the url parameters: `perParticipantE2EE`, `password`.
+ */
+
+export type EncryptionSystem = InstanceType<
+  (typeof EncryptionSystem)[keyof Omit<typeof EncryptionSystem, 'instanceOf'>]
+>;
+
+// FfiConverter for enum EncryptionSystem
+const FfiConverterTypeEncryptionSystem = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = EncryptionSystem;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new EncryptionSystem.Unencrypted();
+        case 2:
+          return new EncryptionSystem.PerParticipantKeys();
+        case 3:
+          return new EncryptionSystem.SharedSecret({
+            secret: FfiConverterString.read(from),
+          });
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case EncryptionSystem_Tags.Unencrypted: {
+          ordinalConverter.write(1, into);
+          return;
+        }
+        case EncryptionSystem_Tags.PerParticipantKeys: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        case EncryptionSystem_Tags.SharedSecret: {
+          ordinalConverter.write(3, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.secret, into);
+          return;
+        }
+        default:
+          // Throwing from here means that EncryptionSystem_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case EncryptionSystem_Tags.Unencrypted: {
+          return ordinalConverter.allocationSize(1);
+        }
+        case EncryptionSystem_Tags.PerParticipantKeys: {
+          return ordinalConverter.allocationSize(2);
+        }
+        case EncryptionSystem_Tags.SharedSecret: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(3);
+          size += FfiConverterString.allocationSize(inner.secret);
+          return size;
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Defines how (if) element-call renders a header.
+ */
+export enum HeaderStyle {
+  /**
+   * The normal header with branding.
+   */
+  Standard,
+  /**
+   * Render a header with a back button (useful on mobile platforms).
+   */
+  AppBar,
+  /**
+   * No Header (useful for webapps).
+   */
+  None,
+}
+
+const FfiConverterTypeHeaderStyle = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = HeaderStyle;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return HeaderStyle.Standard;
+        case 2:
+          return HeaderStyle.AppBar;
+        case 3:
+          return HeaderStyle.None;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case HeaderStyle.Standard:
+          return ordinalConverter.write(1, into);
+        case HeaderStyle.AppBar:
+          return ordinalConverter.write(2, into);
+        case HeaderStyle.None:
+          return ordinalConverter.write(3, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Defines the intent of showing the call.
+ *
+ * This controls whether to show or skip the lobby.
+ */
+export enum Intent {
+  /**
+   * The user wants to start a call.
+   */
+  StartCall,
+  /**
+   * The user wants to join an existing call.
+   */
+  JoinExisting,
+}
+
+const FfiConverterTypeIntent = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = Intent;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return Intent.StartCall;
+        case 2:
+          return Intent.JoinExisting;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case Intent.StartCall:
+          return ordinalConverter.write(1, into);
+        case Intent.JoinExisting:
+          return ordinalConverter.write(2, into);
       }
     }
     allocationSize(value: TypeName): number {
@@ -1034,8 +1559,29 @@ const FfiConverterTypeOAuthAuthorizationData = new FfiConverterObject(
   uniffiTypeOAuthAuthorizationDataObjectFactory
 );
 
+// FfiConverter for boolean | undefined
+const FfiConverterOptionalBool = new FfiConverterOptional(FfiConverterBool);
+
+// FfiConverter for /*f64*/number | undefined
+const FfiConverterOptionalFloat64 = new FfiConverterOptional(
+  FfiConverterFloat64
+);
+
 // FfiConverter for /*i64*/bigint | undefined
 const FfiConverterOptionalInt64 = new FfiConverterOptional(FfiConverterInt64);
+
+// FfiConverter for string | undefined
+const FfiConverterOptionalString = new FfiConverterOptional(FfiConverterString);
+
+// FfiConverter for HeaderStyle | undefined
+const FfiConverterOptionalTypeHeaderStyle = new FfiConverterOptional(
+  FfiConverterTypeHeaderStyle
+);
+
+// FfiConverter for Intent | undefined
+const FfiConverterOptionalTypeIntent = new FfiConverterOptional(
+  FfiConverterTypeIntent
+);
 
 /**
  * This should be called before anything else.
@@ -1073,11 +1619,15 @@ export default Object.freeze({
   initialize: uniffiEnsureInitialized,
   converters: {
     FfiConverterTypeBackupDownloadStrategy,
+    FfiConverterTypeEncryptionSystem,
+    FfiConverterTypeHeaderStyle,
+    FfiConverterTypeIntent,
     FfiConverterTypeOAuthAuthorizationData,
     FfiConverterTypePaginatorState,
     FfiConverterTypeQRCodeLoginError,
     FfiConverterTypeRoomMemberRole,
     FfiConverterTypeRoomPaginationStatus,
     FfiConverterTypeRoomPowerLevelChanges,
+    FfiConverterTypeVirtualElementCallWidgetOptions,
   },
 });

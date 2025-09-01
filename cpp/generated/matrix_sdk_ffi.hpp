@@ -158,6 +158,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_client_is_livekit_rtc_supported(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_client_is_report_room_api_supported(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -201,8 +205,7 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_remove_avatar(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_method_client_reset_server_capabilities(
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_reset_server_info(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_client_resolve_room_alias(
@@ -342,6 +345,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_decryption_settings(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_disable_automatic_token_refresh(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -368,10 +375,6 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_request_config(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_room_decryption_trust_requirement(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -414,6 +417,9 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_system_is_memory_constrained(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_threads_enabled(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_clientbuilder_user_agent(
@@ -762,34 +768,6 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_ban_user(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_ban(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_invite(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_kick(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_pin_unpin(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_redact_other(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_redact_own(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_send_message(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_send_state(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_fn_method_room_can_user_trigger_room_notification(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_room_canonical_alias(
@@ -1182,6 +1160,89 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_fn_method_roommessageeventcontentwithoutrelation_with_mentions(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_roompowerlevels(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_free_roompowerlevels(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_ban(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_invite(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_kick(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_pin_unpin(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_redact_other(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_redact_own(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_send_message(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_send_state(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_own_user_trigger_room_notification(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_ban(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_invite(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_kick(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_pin_unpin(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_redact_other(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_redact_own(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_send_message(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_send_state(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_trigger_room_notification(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_user_power_levels(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_values(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_roompreview(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1367,6 +1428,10 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_offline_mode(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_share_pos(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_taskhandle(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1386,6 +1451,9 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_threadsummary_latest_event(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_method_threadsummary_num_replies(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_clone_timeline(
@@ -1761,9 +1829,6 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_create_caption_edit(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_enable_sentry_logging(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_gen_transaction_id(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -1781,9 +1846,6 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_log_event(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_make_element_well_known(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_make_widget_driver(
@@ -1817,6 +1879,9 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_parse_matrix_entity_from(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_fn_func_reload_tracing_file_writer(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -1995,9 +2060,6 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_create_caption_edit(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_enable_sentry_logging(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_gen_transaction_id(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2015,9 +2077,6 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_log_event(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_make_element_well_known(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_make_widget_driver(
@@ -2054,6 +2113,9 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_parse_matrix_entity_from(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_func_reload_tracing_file_writer(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2200,6 +2262,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_client_is_livekit_rtc_supported(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_client_is_report_room_api_supported(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2245,8 +2311,7 @@ protected:
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_remove_avatar(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_client_reset_server_capabilities(
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_client_reset_server_info(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2383,6 +2448,10 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_decryption_settings(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_automatic_token_refresh(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -2411,10 +2480,6 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_request_config(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_room_decryption_trust_requirement(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value
@@ -2459,6 +2524,10 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_system_is_memory_constrained(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_threads_enabled(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_user_agent(
@@ -2744,36 +2813,6 @@ protected:
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_ban_user(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_ban(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_invite(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_kick(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_pin_unpin(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_redact_other(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_redact_own(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_send_message(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_send_state(
-      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-      size_t count);
-  jsi::Value
-  cpp_uniffi_matrix_sdk_ffi_checksum_method_room_can_user_trigger_room_notification(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_room_canonical_alias(
@@ -3142,6 +3181,85 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_ban(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_invite(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_kick(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_pin_unpin(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_redact_other(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_redact_own(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_send_message(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_send_state(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_trigger_room_notification(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_ban(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_invite(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_kick(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_pin_unpin(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_redact_other(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_redact_own(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_send_message(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_send_state(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_trigger_room_notification(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_user_power_levels(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_values(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_roompreview_forget(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -3264,6 +3382,10 @@ protected:
   cpp_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_share_pos(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_taskhandle_cancel(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
@@ -3272,6 +3394,10 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_matrix_sdk_ffi_checksum_method_threadsummary_latest_event(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value
+  cpp_uniffi_matrix_sdk_ffi_checksum_method_threadsummary_num_replies(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_matrix_sdk_ffi_checksum_method_timeline_add_listener(
@@ -3720,6 +3846,9 @@ protected:
       size_t count);
   jsi::Value
   cpp_uniffi_internal_fn_method_roommessageeventcontentwithoutrelation_ffi__bless_pointer(
+      jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+      size_t count);
+  jsi::Value cpp_uniffi_internal_fn_method_roompowerlevels_ffi__bless_pointer(
       jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
       size_t count);
   jsi::Value cpp_uniffi_internal_fn_method_roompreview_ffi__bless_pointer(
