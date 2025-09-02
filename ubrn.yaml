@@ -6,6 +6,8 @@ crate:
 android:
   cargoExtras: []
   directory: android
+  native_bindings_dir: kotlin
+  useSharedLibrary: true
   jniLibs: src/main/jniLibs
   targets:
     - arm64-v8a
