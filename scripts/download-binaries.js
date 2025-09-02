@@ -43,14 +43,14 @@ async function downloadBinaries() {
     return;
   }
 
-  console.log(`Downloading binaries for v${VERSION}...`);
+  console.log(`Downloading binaries for ${VERSION}...`);
   
   // Create build directory
   if (!fs.existsSync(buildDir)) {
     fs.mkdirSync(buildDir, { recursive: true });
   }
 
-  const releaseUrl = `https://github.com/${REPO}/releases/download/v${VERSION}/binaries.tar.gz`;
+  const releaseUrl = `https://github.com/${REPO}/releases/download/${VERSION}/binaries.tar.gz`;
   const tempFile = path.join(buildDir, 'binaries.tar.gz');
 
   try {
