@@ -1558,7 +1558,7 @@ PODS:
     - React-logger
     - React-perflogger
     - React-utils (= 0.76.9)
-  - ReactNativeMatrixSdk (0.6.1):
+  - ReactNativeMatrixSdk (0.7.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1856,7 +1856,7 @@ SPEC CHECKSUMS:
   React-utils: 54df9ada708578c8ad40d92895d6fed03e0e8a9e
   ReactCodegen: 21a52ccddc6479448fc91903a437dd23ddc7366c
   ReactCommon: bfd3600989d79bc3acbe7704161b171a1480b9fd
-  ReactNativeMatrixSdk: 868af2596fcfad887d236097761a2f0079af303e
+  ReactNativeMatrixSdk: ceb4db3a25d6794a6a381983204c48ec5b84f8d1
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   uniffi-bindgen-react-native: 125eae9e3a0cf34bf8f3d4b0ceed517df7cc0733
   Yoga: feb4910aba9742cfedc059e2b2902e22ffe9954a
