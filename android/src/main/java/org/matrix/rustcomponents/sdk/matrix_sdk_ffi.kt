@@ -3416,8 +3416,8 @@ internal interface UniffiLib : Library {
             uniffiCallbackInterfaceVerificationStateListener.register(lib)
             uniffiCallbackInterfaceWidgetCapabilitiesProvider.register(lib)
             uniffi.matrix_sdk.uniffiEnsureInitialized()
-            uniffi.matrix_sdk_common.uniffiEnsureInitialized()
             uniffi.matrix_sdk_base.uniffiEnsureInitialized()
+            uniffi.matrix_sdk_common.uniffiEnsureInitialized()
             uniffi.matrix_sdk_crypto.uniffiEnsureInitialized()
             uniffi.matrix_sdk_ui.uniffiEnsureInitialized()
             // Loading of library with integrity check done.
