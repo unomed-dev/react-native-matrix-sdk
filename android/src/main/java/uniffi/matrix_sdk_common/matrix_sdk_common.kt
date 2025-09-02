@@ -1064,7 +1064,12 @@ enum class ShieldStateCode {
     /**
      * The sender was previously verified but changed their identity.
      */
-    VERIFICATION_VIOLATION;
+    VERIFICATION_VIOLATION,
+    /**
+     * The `sender` field on the event does not match the owner of the device
+     * that established the Megolm session.
+     */
+    MISMATCHED_SENDER;
     companion object
 }
 

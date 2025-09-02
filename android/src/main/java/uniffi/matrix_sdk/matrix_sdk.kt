@@ -1086,6 +1086,29 @@ public object FfiConverterLong: FfiConverter<Long, Long> {
 /**
  * @suppress
  */
+public object FfiConverterDouble: FfiConverter<Double, Double> {
+    override fun lift(value: Double): Double {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Double {
+        return buf.getDouble()
+    }
+
+    override fun lower(value: Double): Double {
+        return value
+    }
+
+    override fun allocationSize(value: Double) = 8UL
+
+    override fun write(value: Double, buf: ByteBuffer) {
+        buf.putDouble(value)
+    }
+}
+
+/**
+ * @suppress
+ */
 public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean {
         return value.toInt() != 0
@@ -1513,6 +1536,212 @@ public object FfiConverterTypeRoomPowerLevelChanges: FfiConverterRustBuffer<Room
 
 
 /**
+ * Properties to create a new virtual Element Call widget.
+ */
+data class VirtualElementCallWidgetOptions (
+    /**
+     * The url to the app.
+     *
+     * E.g. <https://call.element.io>, <https://call.element.dev>, <https://call.element.dev/room>
+     */
+    var `elementCallUrl`: kotlin.String, 
+    /**
+     * The widget id.
+     */
+    var `widgetId`: kotlin.String, 
+    /**
+     * The url that is used as the target for the PostMessages sent
+     * by the widget (to the client).
+     *
+     * For a web app client this is the client url. In case of using other
+     * platforms the client most likely is setup up to listen to
+     * postmessages in the same webview the widget is hosted. In this case
+     * the `parent_url` is set to the url of the webview with the widget. Be
+     * aware that this means that the widget will receive its own postmessage
+     * messages. The `matrix-widget-api` (js) ignores those so this works but
+     * it might break custom implementations.
+     *
+     * Defaults to `element_call_url` for the non-iframe (dedicated webview)
+     * usecase.
+     */
+    var `parentUrl`: kotlin.String?, 
+    /**
+     * Whether the branding header of Element call should be shown or if a
+     * mobile header navbar should be render.
+     *
+     * Default: [`HeaderStyle::Standard`]
+     */
+    var `header`: HeaderStyle?, 
+    /**
+     * Whether the branding header of Element call should be hidden.
+     *
+     * Default: `true`
+     */
+    var `hideHeader`: kotlin.Boolean?, 
+    /**
+     * If set, the lobby will be skipped and the widget will join the
+     * call on the `io.element.join` action.
+     *
+     * Default: `false`
+     */
+    var `preload`: kotlin.Boolean?, 
+    /**
+     * The font scale which will be used inside element call.
+     *
+     * Default: `1`
+     */
+    var `fontScale`: kotlin.Double?, 
+    /**
+     * Whether element call should prompt the user to open in the browser or
+     * the app.
+     *
+     * Default: `false`
+     */
+    var `appPrompt`: kotlin.Boolean?, 
+    /**
+     * Make it not possible to get to the calls list in the webview.
+     *
+     * Default: `true`
+     */
+    var `confineToRoom`: kotlin.Boolean?, 
+    /**
+     * The font to use, to adapt to the system font.
+     */
+    var `font`: kotlin.String?, 
+    /**
+     * The encryption system to use.
+     *
+     * Use `EncryptionSystem::Unencrypted` to disable encryption.
+     */
+    var `encryption`: EncryptionSystem, 
+    /**
+     * The intent of showing the call.
+     * If the user wants to start a call or join an existing one.
+     * Controls if the lobby is skipped or not.
+     */
+    var `intent`: Intent?, 
+    /**
+     * Do not show the screenshare button.
+     */
+    var `hideScreensharing`: kotlin.Boolean, 
+    /**
+     * Can be used to pass a PostHog id to element call.
+     */
+    var `posthogUserId`: kotlin.String?, 
+    /**
+     * The host of the posthog api.
+     * This is only used by the embedded package of Element Call.
+     */
+    var `posthogApiHost`: kotlin.String?, 
+    /**
+     * The key for the posthog api.
+     * This is only used by the embedded package of Element Call.
+     */
+    var `posthogApiKey`: kotlin.String?, 
+    /**
+     * The url to use for submitting rageshakes.
+     * This is only used by the embedded package of Element Call.
+     */
+    var `rageshakeSubmitUrl`: kotlin.String?, 
+    /**
+     * Sentry [DSN](https://docs.sentry.io/concepts/key-terms/dsn-explainer/)
+     * This is only used by the embedded package of Element Call.
+     */
+    var `sentryDsn`: kotlin.String?, 
+    /**
+     * Sentry [environment](https://docs.sentry.io/concepts/key-terms/key-terms/)
+     * This is only used by the embedded package of Element Call.
+     */
+    var `sentryEnvironment`: kotlin.String?, 
+    /**
+     * - `false`: the webview shows a a list of devices injected by the
+     * client. (used on ios & android)
+     */
+    var `controlledMediaDevices`: kotlin.Boolean
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeVirtualElementCallWidgetOptions: FfiConverterRustBuffer<VirtualElementCallWidgetOptions> {
+    override fun read(buf: ByteBuffer): VirtualElementCallWidgetOptions {
+        return VirtualElementCallWidgetOptions(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalTypeHeaderStyle.read(buf),
+            FfiConverterOptionalBoolean.read(buf),
+            FfiConverterOptionalBoolean.read(buf),
+            FfiConverterOptionalDouble.read(buf),
+            FfiConverterOptionalBoolean.read(buf),
+            FfiConverterOptionalBoolean.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterTypeEncryptionSystem.read(buf),
+            FfiConverterOptionalTypeIntent.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: VirtualElementCallWidgetOptions) = (
+            FfiConverterString.allocationSize(value.`elementCallUrl`) +
+            FfiConverterString.allocationSize(value.`widgetId`) +
+            FfiConverterOptionalString.allocationSize(value.`parentUrl`) +
+            FfiConverterOptionalTypeHeaderStyle.allocationSize(value.`header`) +
+            FfiConverterOptionalBoolean.allocationSize(value.`hideHeader`) +
+            FfiConverterOptionalBoolean.allocationSize(value.`preload`) +
+            FfiConverterOptionalDouble.allocationSize(value.`fontScale`) +
+            FfiConverterOptionalBoolean.allocationSize(value.`appPrompt`) +
+            FfiConverterOptionalBoolean.allocationSize(value.`confineToRoom`) +
+            FfiConverterOptionalString.allocationSize(value.`font`) +
+            FfiConverterTypeEncryptionSystem.allocationSize(value.`encryption`) +
+            FfiConverterOptionalTypeIntent.allocationSize(value.`intent`) +
+            FfiConverterBoolean.allocationSize(value.`hideScreensharing`) +
+            FfiConverterOptionalString.allocationSize(value.`posthogUserId`) +
+            FfiConverterOptionalString.allocationSize(value.`posthogApiHost`) +
+            FfiConverterOptionalString.allocationSize(value.`posthogApiKey`) +
+            FfiConverterOptionalString.allocationSize(value.`rageshakeSubmitUrl`) +
+            FfiConverterOptionalString.allocationSize(value.`sentryDsn`) +
+            FfiConverterOptionalString.allocationSize(value.`sentryEnvironment`) +
+            FfiConverterBoolean.allocationSize(value.`controlledMediaDevices`)
+    )
+
+    override fun write(value: VirtualElementCallWidgetOptions, buf: ByteBuffer) {
+            FfiConverterString.write(value.`elementCallUrl`, buf)
+            FfiConverterString.write(value.`widgetId`, buf)
+            FfiConverterOptionalString.write(value.`parentUrl`, buf)
+            FfiConverterOptionalTypeHeaderStyle.write(value.`header`, buf)
+            FfiConverterOptionalBoolean.write(value.`hideHeader`, buf)
+            FfiConverterOptionalBoolean.write(value.`preload`, buf)
+            FfiConverterOptionalDouble.write(value.`fontScale`, buf)
+            FfiConverterOptionalBoolean.write(value.`appPrompt`, buf)
+            FfiConverterOptionalBoolean.write(value.`confineToRoom`, buf)
+            FfiConverterOptionalString.write(value.`font`, buf)
+            FfiConverterTypeEncryptionSystem.write(value.`encryption`, buf)
+            FfiConverterOptionalTypeIntent.write(value.`intent`, buf)
+            FfiConverterBoolean.write(value.`hideScreensharing`, buf)
+            FfiConverterOptionalString.write(value.`posthogUserId`, buf)
+            FfiConverterOptionalString.write(value.`posthogApiHost`, buf)
+            FfiConverterOptionalString.write(value.`posthogApiKey`, buf)
+            FfiConverterOptionalString.write(value.`rageshakeSubmitUrl`, buf)
+            FfiConverterOptionalString.write(value.`sentryDsn`, buf)
+            FfiConverterOptionalString.write(value.`sentryEnvironment`, buf)
+            FfiConverterBoolean.write(value.`controlledMediaDevices`, buf)
+    }
+}
+
+
+
+/**
  * Settings for end-to-end encryption features.
  */
 
@@ -1559,6 +1788,188 @@ public object FfiConverterTypeBackupDownloadStrategy: FfiConverterRustBuffer<Bac
     override fun allocationSize(value: BackupDownloadStrategy) = 4UL
 
     override fun write(value: BackupDownloadStrategy, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * Defines if a call is encrypted and which encryption system should be used.
+ *
+ * This controls the url parameters: `perParticipantE2EE`, `password`.
+ */
+sealed class EncryptionSystem {
+    
+    /**
+     * Equivalent to the element call url parameter: `perParticipantE2EE=false`
+     * and no password.
+     */
+    object Unencrypted : EncryptionSystem()
+    
+    
+    /**
+     * Equivalent to the element call url parameters:
+     * `perParticipantE2EE=true`
+     */
+    object PerParticipantKeys : EncryptionSystem()
+    
+    
+    /**
+     * Equivalent to the element call url parameters:
+     * `password={secret}`
+     */
+    data class SharedSecret(
+        /**
+         * The secret/password which is used in the url.
+         */
+        val `secret`: kotlin.String) : EncryptionSystem() {
+        companion object
+    }
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeEncryptionSystem : FfiConverterRustBuffer<EncryptionSystem>{
+    override fun read(buf: ByteBuffer): EncryptionSystem {
+        return when(buf.getInt()) {
+            1 -> EncryptionSystem.Unencrypted
+            2 -> EncryptionSystem.PerParticipantKeys
+            3 -> EncryptionSystem.SharedSecret(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: EncryptionSystem) = when(value) {
+        is EncryptionSystem.Unencrypted -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is EncryptionSystem.PerParticipantKeys -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is EncryptionSystem.SharedSecret -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`secret`)
+            )
+        }
+    }
+
+    override fun write(value: EncryptionSystem, buf: ByteBuffer) {
+        when(value) {
+            is EncryptionSystem.Unencrypted -> {
+                buf.putInt(1)
+                Unit
+            }
+            is EncryptionSystem.PerParticipantKeys -> {
+                buf.putInt(2)
+                Unit
+            }
+            is EncryptionSystem.SharedSecret -> {
+                buf.putInt(3)
+                FfiConverterString.write(value.`secret`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
+ * Defines how (if) element-call renders a header.
+ */
+
+enum class HeaderStyle {
+    
+    /**
+     * The normal header with branding.
+     */
+    STANDARD,
+    /**
+     * Render a header with a back button (useful on mobile platforms).
+     */
+    APP_BAR,
+    /**
+     * No Header (useful for webapps).
+     */
+    NONE;
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeHeaderStyle: FfiConverterRustBuffer<HeaderStyle> {
+    override fun read(buf: ByteBuffer) = try {
+        HeaderStyle.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: HeaderStyle) = 4UL
+
+    override fun write(value: HeaderStyle, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * Defines the intent of showing the call.
+ *
+ * This controls whether to show or skip the lobby.
+ */
+
+enum class Intent {
+    
+    /**
+     * The user wants to start a call.
+     */
+    START_CALL,
+    /**
+     * The user wants to join an existing call.
+     */
+    JOIN_EXISTING;
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeIntent: FfiConverterRustBuffer<Intent> {
+    override fun read(buf: ByteBuffer) = try {
+        Intent.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: Intent) = 4UL
+
+    override fun write(value: Intent, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
 }
@@ -1895,6 +2306,166 @@ public object FfiConverterOptionalLong: FfiConverterRustBuffer<kotlin.Long?> {
         } else {
             buf.put(1)
             FfiConverterLong.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalDouble: FfiConverterRustBuffer<kotlin.Double?> {
+    override fun read(buf: ByteBuffer): kotlin.Double? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterDouble.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.Double?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterDouble.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.Double?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterDouble.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalBoolean: FfiConverterRustBuffer<kotlin.Boolean?> {
+    override fun read(buf: ByteBuffer): kotlin.Boolean? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterBoolean.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.Boolean?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterBoolean.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.Boolean?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterBoolean.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?> {
+    override fun read(buf: ByteBuffer): kotlin.String? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterString.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.String?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterString.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.String?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterString.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeHeaderStyle: FfiConverterRustBuffer<HeaderStyle?> {
+    override fun read(buf: ByteBuffer): HeaderStyle? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeHeaderStyle.read(buf)
+    }
+
+    override fun allocationSize(value: HeaderStyle?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeHeaderStyle.allocationSize(value)
+        }
+    }
+
+    override fun write(value: HeaderStyle?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeHeaderStyle.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeIntent: FfiConverterRustBuffer<Intent?> {
+    override fun read(buf: ByteBuffer): Intent? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeIntent.read(buf)
+    }
+
+    override fun allocationSize(value: Intent?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeIntent.allocationSize(value)
+        }
+    }
+
+    override fun write(value: Intent?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeIntent.write(value, buf)
         }
     }
 }
