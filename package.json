@@ -51,7 +51,7 @@
     "generate": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build && yarn ubrn:ios:build && yarn ubrn:ios:generate",
     "generate:android": "yarn ubrn:clean:android && yarn ubrn:checkout && yarn ubrn:android:build --and-generate && node scripts/sort-uniffi-calls.js",
     "generate:ios": "yarn ubrn:clean:ios && yarn ubrn:checkout && yarn ubrn:ios:build && yarn ubrn:ios:post-process",
-    "generate:release": "yarn ubrn:clean && yarn ubrn:checkout && yarn ubrn:android:build:release && yarn ubrn:ios:build:release && yarn ubrn:ios:generate",
+    "generate:release": "yarn generate:release:android && yarn generate:release:ios",
     "generate:release:android": "yarn ubrn:clean:android && yarn ubrn:checkout && yarn ubrn:android:build:release --and-generate && node scripts/sort-uniffi-calls.js",
     "generate:release:ios": "yarn ubrn:clean:ios && yarn ubrn:checkout && yarn ubrn:ios:build:release && yarn ubrn:ios:post-process",
     "format": "prettier -w '**/*.{ts,tsx}'",
@@ -131,7 +131,7 @@
   "release-it": {
     "git": {
       "commitMessage": "chore: release ${version}",
-      "tagName": "v${version}"
+      "tagName": "${version}"
     },
     "npm": {
       "publish": true
@@ -143,7 +143,7 @@
       ]
     },
     "hooks": {
-      "before:release": "node scripts/package-binaries.js"
+      "before:release": "yarn generate:release && node scripts/package-binaries.js"
     },
     "plugins": {
       "@release-it/conventional-changelog": {
