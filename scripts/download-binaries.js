@@ -45,13 +45,8 @@ async function downloadBinaries() {
 
   console.log(`Downloading binaries for ${VERSION}...`);
   
-  // Create build directory
-  if (!fs.existsSync(buildDir)) {
-    fs.mkdirSync(buildDir, { recursive: true });
-  }
-
   const releaseUrl = `https://github.com/${REPO}/releases/download/${VERSION}/binaries.tar.gz`;
-  const tempFile = path.join(buildDir, 'binaries.tar.gz');
+  const tempFile = path.join(__dirname, '..', 'binaries.tar.gz');
 
   try {
     // Download the binary archive
@@ -62,7 +57,7 @@ async function downloadBinaries() {
     console.log('Extracting binaries...');
     await tar.x({
       file: tempFile,
-      cwd: buildDir,
+      cwd: path.join(__dirname, '..'),
     });
     
     // Clean up
