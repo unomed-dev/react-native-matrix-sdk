@@ -207,6 +207,73 @@ const FfiConverterTypeRoomPowerLevelChanges = (() => {
 })();
 
 /**
+ * Information about the server vendor obtained from the federation API.
+ */
+export type ServerVendorInfo = {
+  /**
+   * The server name.
+   */
+  serverName: string;
+  /**
+   * The server version.
+   */
+  version: string;
+};
+
+/**
+ * Generated factory for {@link ServerVendorInfo} record objects.
+ */
+export const ServerVendorInfo = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<ServerVendorInfo, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link ServerVendorInfo}, with defaults specified
+     * in Rust, in the {@link matrix_sdk} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link ServerVendorInfo}, with defaults specified
+     * in Rust, in the {@link matrix_sdk} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<ServerVendorInfo>,
+  });
+})();
+
+const FfiConverterTypeServerVendorInfo = (() => {
+  type TypeName = ServerVendorInfo;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        serverName: FfiConverterString.read(from),
+        version: FfiConverterString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.serverName, into);
+      FfiConverterString.write(value.version, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterString.allocationSize(value.serverName) +
+        FfiConverterString.allocationSize(value.version)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
  * Properties to create a new virtual Element Call widget.
  */
 export type VirtualElementCallWidgetOptions = {
@@ -329,6 +396,11 @@ export type VirtualElementCallWidgetOptions = {
    * client. (used on ios & android)
    */
   controlledMediaDevices: boolean;
+  /**
+   * Whether and what type of notification Element Call should send, when
+   * starting a call.
+   */
+  sendNotificationType: NotificationType | undefined;
 };
 
 /**
@@ -388,6 +460,8 @@ const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
         sentryDsn: FfiConverterOptionalString.read(from),
         sentryEnvironment: FfiConverterOptionalString.read(from),
         controlledMediaDevices: FfiConverterBool.read(from),
+        sendNotificationType:
+          FfiConverterOptionalTypeNotificationType.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
@@ -411,6 +485,10 @@ const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
       FfiConverterOptionalString.write(value.sentryDsn, into);
       FfiConverterOptionalString.write(value.sentryEnvironment, into);
       FfiConverterBool.write(value.controlledMediaDevices, into);
+      FfiConverterOptionalTypeNotificationType.write(
+        value.sendNotificationType,
+        into
+      );
     }
     allocationSize(value: TypeName): number {
       return (
@@ -433,7 +511,10 @@ const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
         FfiConverterOptionalString.allocationSize(value.rageshakeSubmitUrl) +
         FfiConverterOptionalString.allocationSize(value.sentryDsn) +
         FfiConverterOptionalString.allocationSize(value.sentryEnvironment) +
-        FfiConverterBool.allocationSize(value.controlledMediaDevices)
+        FfiConverterBool.allocationSize(value.controlledMediaDevices) +
+        FfiConverterOptionalTypeNotificationType.allocationSize(
+          value.sendNotificationType
+        )
       );
     }
   }
@@ -808,6 +889,49 @@ const FfiConverterTypeIntent = (() => {
         case Intent.StartCall:
           return ordinalConverter.write(1, into);
         case Intent.JoinExisting:
+          return ordinalConverter.write(2, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Types of call notifications.
+ */
+export enum NotificationType {
+  /**
+   * The receiving client should display a visual notification.
+   */
+  Notification,
+  /**
+   * The receiving client should ring with an audible sound.
+   */
+  Ring,
+}
+
+const FfiConverterTypeNotificationType = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = NotificationType;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return NotificationType.Notification;
+        case 2:
+          return NotificationType.Ring;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case NotificationType.Notification:
+          return ordinalConverter.write(1, into);
+        case NotificationType.Ring:
           return ordinalConverter.write(2, into);
       }
     }
@@ -1225,6 +1349,19 @@ const FfiConverterTypeQRCodeLoginError = (() => {
  */
 export enum RoomMemberRole {
   /**
+   * The member is a creator.
+   *
+   * A creator has an infinite power level and cannot be demoted, so this
+   * role is immutable. A room can have several creators.
+   *
+   * It is available in room versions where
+   * `explicitly_privilege_room_creators` in [`AuthorizationRules`] is set to
+   * `true`.
+   *
+   * [`AuthorizationRules`]: ruma::room_version_rules::AuthorizationRules
+   */
+  Creator,
+  /**
    * The member is an administrator.
    */
   Administrator,
@@ -1245,10 +1382,12 @@ const FfiConverterTypeRoomMemberRole = (() => {
     read(from: RustBuffer): TypeName {
       switch (ordinalConverter.read(from)) {
         case 1:
-          return RoomMemberRole.Administrator;
+          return RoomMemberRole.Creator;
         case 2:
-          return RoomMemberRole.Moderator;
+          return RoomMemberRole.Administrator;
         case 3:
+          return RoomMemberRole.Moderator;
+        case 4:
           return RoomMemberRole.User;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -1256,12 +1395,14 @@ const FfiConverterTypeRoomMemberRole = (() => {
     }
     write(value: TypeName, into: RustBuffer): void {
       switch (value) {
-        case RoomMemberRole.Administrator:
+        case RoomMemberRole.Creator:
           return ordinalConverter.write(1, into);
-        case RoomMemberRole.Moderator:
+        case RoomMemberRole.Administrator:
           return ordinalConverter.write(2, into);
-        case RoomMemberRole.User:
+        case RoomMemberRole.Moderator:
           return ordinalConverter.write(3, into);
+        case RoomMemberRole.User:
+          return ordinalConverter.write(4, into);
       }
     }
     allocationSize(value: TypeName): number {
@@ -1583,6 +1724,11 @@ const FfiConverterOptionalTypeIntent = new FfiConverterOptional(
   FfiConverterTypeIntent
 );
 
+// FfiConverter for NotificationType | undefined
+const FfiConverterOptionalTypeNotificationType = new FfiConverterOptional(
+  FfiConverterTypeNotificationType
+);
+
 /**
  * This should be called before anything else.
  *
@@ -1622,12 +1768,14 @@ export default Object.freeze({
     FfiConverterTypeEncryptionSystem,
     FfiConverterTypeHeaderStyle,
     FfiConverterTypeIntent,
+    FfiConverterTypeNotificationType,
     FfiConverterTypeOAuthAuthorizationData,
     FfiConverterTypePaginatorState,
     FfiConverterTypeQRCodeLoginError,
     FfiConverterTypeRoomMemberRole,
     FfiConverterTypeRoomPaginationStatus,
     FfiConverterTypeRoomPowerLevelChanges,
+    FfiConverterTypeServerVendorInfo,
     FfiConverterTypeVirtualElementCallWidgetOptions,
   },
 });

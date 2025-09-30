@@ -400,6 +400,30 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterBool : FfiConverter {
+    typealias FfiType = Int8
+    typealias SwiftType = Bool
+
+    public static func lift(_ value: Int8) throws -> Bool {
+        return value != 0
+    }
+
+    public static func lower(_ value: Bool) -> Int8 {
+        return value ? 1 : 0
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Bool {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Bool, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -620,6 +644,79 @@ public func FfiConverterTypeRoomPinnedEventsChange_lower(_ value: RoomPinnedEven
 
 
 extension RoomPinnedEventsChange: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum SpaceRoomListPaginationState {
+    
+    case idle(endReached: Bool
+    )
+    case loading
+}
+
+
+#if compiler(>=6)
+extension SpaceRoomListPaginationState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSpaceRoomListPaginationState: FfiConverterRustBuffer {
+    typealias SwiftType = SpaceRoomListPaginationState
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SpaceRoomListPaginationState {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .idle(endReached: try FfiConverterBool.read(from: &buf)
+        )
+        
+        case 2: return .loading
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: SpaceRoomListPaginationState, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .idle(endReached):
+            writeInt(&buf, Int32(1))
+            FfiConverterBool.write(endReached, into: &buf)
+            
+        
+        case .loading:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSpaceRoomListPaginationState_lift(_ buf: RustBuffer) throws -> SpaceRoomListPaginationState {
+    return try FfiConverterTypeSpaceRoomListPaginationState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSpaceRoomListPaginationState_lower(_ value: SpaceRoomListPaginationState) -> RustBuffer {
+    return FfiConverterTypeSpaceRoomListPaginationState.lower(value)
+}
+
+
+extension SpaceRoomListPaginationState: Equatable, Hashable {}
 
 
 
