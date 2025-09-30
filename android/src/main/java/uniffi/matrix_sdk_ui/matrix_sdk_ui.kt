@@ -979,6 +979,29 @@ object NoPointer
 /**
  * @suppress
  */
+public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
+    override fun lift(value: Byte): Boolean {
+        return value.toInt() != 0
+    }
+
+    override fun read(buf: ByteBuffer): Boolean {
+        return lift(buf.get())
+    }
+
+    override fun lower(value: Boolean): Byte {
+        return if (value) 1.toByte() else 0.toByte()
+    }
+
+    override fun allocationSize(value: Boolean) = 1UL
+
+    override fun write(value: Boolean, buf: ByteBuffer) {
+        buf.put(lower(value))
+    }
+}
+
+/**
+ * @suppress
+ */
 public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     // Note: we don't inherit from FfiConverterRustBuffer, because we use a
     // special encoding when lowering/lifting.  We can use `RustBuffer.len` to
@@ -1118,6 +1141,70 @@ public object FfiConverterTypeRoomPinnedEventsChange: FfiConverterRustBuffer<Roo
 
     override fun write(value: RoomPinnedEventsChange, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+sealed class SpaceRoomListPaginationState {
+    
+    data class Idle(
+        val `endReached`: kotlin.Boolean) : SpaceRoomListPaginationState() {
+        companion object
+    }
+    
+    object Loading : SpaceRoomListPaginationState()
+    
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSpaceRoomListPaginationState : FfiConverterRustBuffer<SpaceRoomListPaginationState>{
+    override fun read(buf: ByteBuffer): SpaceRoomListPaginationState {
+        return when(buf.getInt()) {
+            1 -> SpaceRoomListPaginationState.Idle(
+                FfiConverterBoolean.read(buf),
+                )
+            2 -> SpaceRoomListPaginationState.Loading
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: SpaceRoomListPaginationState) = when(value) {
+        is SpaceRoomListPaginationState.Idle -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterBoolean.allocationSize(value.`endReached`)
+            )
+        }
+        is SpaceRoomListPaginationState.Loading -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: SpaceRoomListPaginationState, buf: ByteBuffer) {
+        when(value) {
+            is SpaceRoomListPaginationState.Idle -> {
+                buf.putInt(1)
+                FfiConverterBoolean.write(value.`endReached`, buf)
+                Unit
+            }
+            is SpaceRoomListPaginationState.Loading -> {
+                buf.putInt(2)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
 

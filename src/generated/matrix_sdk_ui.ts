@@ -33,11 +33,14 @@ import nativeModule, {
 import {
   type UniffiByteArray,
   AbstractFfiConverterByteArray,
+  FfiConverterBool,
   FfiConverterInt32,
   RustBuffer,
+  UniffiEnum,
   UniffiInternalError,
   UniffiRustCaller,
   uniffiCreateFfiConverterString,
+  uniffiTypeNameSymbol,
 } from 'uniffi-bindgen-react-native';
 
 // Get converters from the other files, if any.
@@ -186,6 +189,134 @@ const FfiConverterTypeRoomPinnedEventsChange = (() => {
   return new FFIConverter();
 })();
 
+// Enum: SpaceRoomListPaginationState
+export enum SpaceRoomListPaginationState_Tags {
+  Idle = 'Idle',
+  Loading = 'Loading',
+}
+export const SpaceRoomListPaginationState = (() => {
+  type Idle__interface = {
+    tag: SpaceRoomListPaginationState_Tags.Idle;
+    inner: Readonly<{ endReached: boolean }>;
+  };
+
+  class Idle_ extends UniffiEnum implements Idle__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'SpaceRoomListPaginationState';
+    readonly tag = SpaceRoomListPaginationState_Tags.Idle;
+    readonly inner: Readonly<{ endReached: boolean }>;
+    constructor(inner: { endReached: boolean }) {
+      super('SpaceRoomListPaginationState', 'Idle');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: { endReached: boolean }): Idle_ {
+      return new Idle_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Idle_ {
+      return obj.tag === SpaceRoomListPaginationState_Tags.Idle;
+    }
+  }
+
+  type Loading__interface = {
+    tag: SpaceRoomListPaginationState_Tags.Loading;
+  };
+
+  class Loading_ extends UniffiEnum implements Loading__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'SpaceRoomListPaginationState';
+    readonly tag = SpaceRoomListPaginationState_Tags.Loading;
+    constructor() {
+      super('SpaceRoomListPaginationState', 'Loading');
+    }
+
+    static new(): Loading_ {
+      return new Loading_();
+    }
+
+    static instanceOf(obj: any): obj is Loading_ {
+      return obj.tag === SpaceRoomListPaginationState_Tags.Loading;
+    }
+  }
+
+  function instanceOf(obj: any): obj is SpaceRoomListPaginationState {
+    return obj[uniffiTypeNameSymbol] === 'SpaceRoomListPaginationState';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Idle: Idle_,
+    Loading: Loading_,
+  });
+})();
+
+export type SpaceRoomListPaginationState = InstanceType<
+  (typeof SpaceRoomListPaginationState)[keyof Omit<
+    typeof SpaceRoomListPaginationState,
+    'instanceOf'
+  >]
+>;
+
+// FfiConverter for enum SpaceRoomListPaginationState
+const FfiConverterTypeSpaceRoomListPaginationState = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = SpaceRoomListPaginationState;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new SpaceRoomListPaginationState.Idle({
+            endReached: FfiConverterBool.read(from),
+          });
+        case 2:
+          return new SpaceRoomListPaginationState.Loading();
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case SpaceRoomListPaginationState_Tags.Idle: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterBool.write(inner.endReached, into);
+          return;
+        }
+        case SpaceRoomListPaginationState_Tags.Loading: {
+          ordinalConverter.write(2, into);
+          return;
+        }
+        default:
+          // Throwing from here means that SpaceRoomListPaginationState_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case SpaceRoomListPaginationState_Tags.Idle: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterBool.allocationSize(inner.endReached);
+          return size;
+        }
+        case SpaceRoomListPaginationState_Tags.Loading: {
+          return ordinalConverter.allocationSize(2);
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
 /**
  * This should be called before anything else.
  *
@@ -215,5 +346,6 @@ export default Object.freeze({
   converters: {
     FfiConverterTypeEventItemOrigin,
     FfiConverterTypeRoomPinnedEventsChange,
+    FfiConverterTypeSpaceRoomListPaginationState,
   },
 });
