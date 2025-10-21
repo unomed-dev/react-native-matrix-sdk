@@ -131,7 +131,8 @@
   "release-it": {
     "git": {
       "commitMessage": "chore: release ${version}",
-      "tagName": "${version}"
+      "tagName": "${version}",
+      "addUntrackedFiles": true
     },
     "npm": {
       "publish": true
@@ -143,7 +144,8 @@
       ]
     },
     "hooks": {
-      "before:release": "yarn generate:release && node scripts/package-binaries.js"
+      "before:release": "yarn generate:release && node scripts/package-binaries.js",
+      "after:bump": "git add example/ios/Podfile.lock"
     },
     "plugins": {
       "@release-it/conventional-changelog": {
