@@ -102,8 +102,7 @@
     "react-native-builder-bob": "^0.31.0",
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
-    "typescript": "^5.2.2",
-    "uniffi-bindgen-react-native": "0.29.3-1"
+    "typescript": "^5.2.2"
   },
   "resolutions": {
     "@types/react": "^18.2.44"
@@ -231,6 +230,7 @@
   "dependencies": {
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
-    "tar": "^7.4.3"
+    "tar": "^7.4.3",
+    "uniffi-bindgen-react-native": "0.29.3-1"
   }
 }
