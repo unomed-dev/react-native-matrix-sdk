@@ -723,6 +723,95 @@ extension SpaceRoomListPaginationState: Equatable, Hashable {}
 
 
 
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * The level of read receipt tracking for the timeline.
+ */
+
+public enum TimelineReadReceiptTracking {
+    
+    /**
+     * Track read receipts for all events.
+     */
+    case allEvents
+    /**
+     * Track read receipts only for message-like events.
+     */
+    case messageLikeEvents
+    /**
+     * Disable read receipt tracking.
+     */
+    case disabled
+}
+
+
+#if compiler(>=6)
+extension TimelineReadReceiptTracking: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTimelineReadReceiptTracking: FfiConverterRustBuffer {
+    typealias SwiftType = TimelineReadReceiptTracking
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TimelineReadReceiptTracking {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .allEvents
+        
+        case 2: return .messageLikeEvents
+        
+        case 3: return .disabled
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TimelineReadReceiptTracking, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .allEvents:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .messageLikeEvents:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .disabled:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimelineReadReceiptTracking_lift(_ buf: RustBuffer) throws -> TimelineReadReceiptTracking {
+    return try FfiConverterTypeTimelineReadReceiptTracking.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimelineReadReceiptTracking_lower(_ value: TimelineReadReceiptTracking) -> RustBuffer {
+    return FfiConverterTypeTimelineReadReceiptTracking.lower(value)
+}
+
+
+extension TimelineReadReceiptTracking: Equatable, Hashable {}
+
+
+
+
+
+
 private enum InitializationResult {
     case ok
     case contractVersionMismatch

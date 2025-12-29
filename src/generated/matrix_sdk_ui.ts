@@ -318,6 +318,57 @@ const FfiConverterTypeSpaceRoomListPaginationState = (() => {
 })();
 
 /**
+ * The level of read receipt tracking for the timeline.
+ */
+export enum TimelineReadReceiptTracking {
+  /**
+   * Track read receipts for all events.
+   */
+  AllEvents,
+  /**
+   * Track read receipts only for message-like events.
+   */
+  MessageLikeEvents,
+  /**
+   * Disable read receipt tracking.
+   */
+  Disabled,
+}
+
+const FfiConverterTypeTimelineReadReceiptTracking = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = TimelineReadReceiptTracking;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return TimelineReadReceiptTracking.AllEvents;
+        case 2:
+          return TimelineReadReceiptTracking.MessageLikeEvents;
+        case 3:
+          return TimelineReadReceiptTracking.Disabled;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case TimelineReadReceiptTracking.AllEvents:
+          return ordinalConverter.write(1, into);
+        case TimelineReadReceiptTracking.MessageLikeEvents:
+          return ordinalConverter.write(2, into);
+        case TimelineReadReceiptTracking.Disabled:
+          return ordinalConverter.write(3, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
  * This should be called before anything else.
  *
  * It is likely that this is being done for you by the library's `index.ts`.
@@ -347,5 +398,6 @@ export default Object.freeze({
     FfiConverterTypeEventItemOrigin,
     FfiConverterTypeRoomPinnedEventsChange,
     FfiConverterTypeSpaceRoomListPaginationState,
+    FfiConverterTypeTimelineReadReceiptTracking,
   },
 });
