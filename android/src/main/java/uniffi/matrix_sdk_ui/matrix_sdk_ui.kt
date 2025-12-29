@@ -1105,6 +1105,37 @@ public object FfiConverterTypeEventItemOrigin: FfiConverterRustBuffer<EventItemO
 
 
 
+
+enum class LatestEventValueLocalState {
+    
+    IS_SENDING,
+    HAS_BEEN_SENT,
+    CANNOT_BE_SENT;
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLatestEventValueLocalState: FfiConverterRustBuffer<LatestEventValueLocalState> {
+    override fun read(buf: ByteBuffer) = try {
+        LatestEventValueLocalState.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: LatestEventValueLocalState) = 4UL
+
+    override fun write(value: LatestEventValueLocalState, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
 /**
  * The type of change between the previous and current pinned events.
  */

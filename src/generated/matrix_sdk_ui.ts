@@ -138,6 +138,45 @@ const FfiConverterTypeEventItemOrigin = (() => {
   return new FFIConverter();
 })();
 
+export enum LatestEventValueLocalState {
+  IsSending,
+  HasBeenSent,
+  CannotBeSent,
+}
+
+const FfiConverterTypeLatestEventValueLocalState = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = LatestEventValueLocalState;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return LatestEventValueLocalState.IsSending;
+        case 2:
+          return LatestEventValueLocalState.HasBeenSent;
+        case 3:
+          return LatestEventValueLocalState.CannotBeSent;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case LatestEventValueLocalState.IsSending:
+          return ordinalConverter.write(1, into);
+        case LatestEventValueLocalState.HasBeenSent:
+          return ordinalConverter.write(2, into);
+        case LatestEventValueLocalState.CannotBeSent:
+          return ordinalConverter.write(3, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
 /**
  * The type of change between the previous and current pinned events.
  */
@@ -396,6 +435,7 @@ export default Object.freeze({
   initialize: uniffiEnsureInitialized,
   converters: {
     FfiConverterTypeEventItemOrigin,
+    FfiConverterTypeLatestEventValueLocalState,
     FfiConverterTypeRoomPinnedEventsChange,
     FfiConverterTypeSpaceRoomListPaginationState,
     FfiConverterTypeTimelineReadReceiptTracking,

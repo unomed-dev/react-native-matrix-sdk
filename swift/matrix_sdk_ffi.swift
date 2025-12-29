@@ -1057,6 +1057,11 @@ public protocol ClientProtocol: AnyObject, Sendable {
     func isLivekitRtcSupported() async throws  -> Bool
     
     /**
+     * Checks if the server supports login using a QR code.
+     */
+    func isLoginWithQrCodeSupported() async throws  -> Bool
+    
+    /**
      * Checks if the server supports the report room API.
      */
     func isReportRoomApiSupported() async throws  -> Bool
@@ -1299,7 +1304,7 @@ public protocol ClientProtocol: AnyObject, Sendable {
      */
     func slidingSyncVersion()  -> SlidingSyncVersion
     
-    func spaceService()  -> SpaceService
+    func spaceService() async  -> SpaceService
     
     /**
      * Returns a handler to start the SSO login process.
@@ -2271,6 +2276,26 @@ open func isLivekitRtcSupported()async throws  -> Bool  {
 }
     
     /**
+     * Checks if the server supports login using a QR code.
+     */
+open func isLoginWithQrCodeSupported()async throws  -> Bool  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_matrix_sdk_ffi_fn_method_client_is_login_with_qr_code_supported(
+                    self.uniffiClonePointer()
+                    
+                )
+            },
+            pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_i8,
+            completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_i8,
+            freeFunc: ffi_matrix_sdk_ffi_rust_future_free_i8,
+            liftFunc: FfiConverterBool.lift,
+            errorHandler: FfiConverterTypeClientError_lift
+        )
+}
+    
+    /**
      * Checks if the server supports the report room API.
      */
 open func isReportRoomApiSupported()async throws  -> Bool  {
@@ -2991,11 +3016,22 @@ open func slidingSyncVersion() -> SlidingSyncVersion  {
 })
 }
     
-open func spaceService() -> SpaceService  {
-    return try!  FfiConverterTypeSpaceService_lift(try! rustCall() {
-    uniffi_matrix_sdk_ffi_fn_method_client_space_service(self.uniffiClonePointer(),$0
-    )
-})
+open func spaceService()async  -> SpaceService  {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_matrix_sdk_ffi_fn_method_client_space_service(
+                    self.uniffiClonePointer()
+                    
+                )
+            },
+            pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_pointer,
+            completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
+            freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
+            liftFunc: FfiConverterTypeSpaceService_lift,
+            errorHandler: nil
+            
+        )
 }
     
     /**
@@ -7213,6 +7249,12 @@ public protocol QrCodeDataProtocol: AnyObject, Sendable {
      */
     func serverName()  -> String?
     
+    /**
+     * Serialize the [`QrCodeData`] into a byte vector for encoding as a QR
+     * code.
+     */
+    func toBytes()  -> Data
+    
 }
 /**
  * Data for the QR code login mechanism.
@@ -7299,6 +7341,17 @@ open func serverName() -> String?  {
 })
 }
     
+    /**
+     * Serialize the [`QrCodeData`] into a byte vector for encoding as a QR
+     * code.
+     */
+open func toBytes() -> Data  {
+    return try!  FfiConverterData.lift(try! rustCall() {
+    uniffi_matrix_sdk_ffi_fn_method_qrcodedata_to_bytes(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
 
 }
 
@@ -7350,6 +7403,152 @@ public func FfiConverterTypeQrCodeData_lift(_ pointer: UnsafeMutableRawPointer) 
 #endif
 public func FfiConverterTypeQrCodeData_lower(_ value: QrCodeData) -> UnsafeMutableRawPointer {
     return FfiConverterTypeQrCodeData.lower(value)
+}
+
+
+
+
+
+
+/**
+ * A raw state event retrieved from the room state store.
+ *
+ * This wrapper provides access to the full raw JSON of a state event,
+ * which is useful for accessing custom fields that aren't exposed through
+ * typed APIs.
+ */
+public protocol RawStateEventProtocol: AnyObject, Sendable {
+    
+    /**
+     * Get the full event as a JSON string.
+     *
+     * This includes all fields: type, state_key, sender, content, etc.
+     */
+    func json() throws  -> String
+    
+}
+/**
+ * A raw state event retrieved from the room state store.
+ *
+ * This wrapper provides access to the full raw JSON of a state event,
+ * which is useful for accessing custom fields that aren't exposed through
+ * typed APIs.
+ */
+open class RawStateEvent: RawStateEventProtocol, @unchecked Sendable {
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public init(noPointer: NoPointer) {
+        self.pointer = nil
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_matrix_sdk_ffi_fn_clone_rawstateevent(self.pointer, $0) }
+    }
+    // No primary constructor declared for this class.
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_matrix_sdk_ffi_fn_free_rawstateevent(pointer, $0) }
+    }
+
+    
+
+    
+    /**
+     * Get the full event as a JSON string.
+     *
+     * This includes all fields: type, state_key, sender, content, etc.
+     */
+open func json()throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeClientError_lift) {
+    uniffi_matrix_sdk_ffi_fn_method_rawstateevent_json(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRawStateEvent: FfiConverter {
+
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = RawStateEvent
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> RawStateEvent {
+        return RawStateEvent(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: RawStateEvent) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RawStateEvent {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: RawStateEvent, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRawStateEvent_lift(_ pointer: UnsafeMutableRawPointer) throws -> RawStateEvent {
+    return try FfiConverterTypeRawStateEvent.lift(pointer)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRawStateEvent_lower(_ value: RawStateEvent) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeRawStateEvent.lower(value)
 }
 
 
@@ -7474,6 +7673,28 @@ public protocol RoomProtocol: AnyObject, Sendable {
     func getRoomVisibility() async throws  -> RoomVisibility
     
     /**
+     * Get a state event from the room's state store.
+     *
+     * This method retrieves a state event as a raw wrapper, which provides
+     * access to the full JSON including custom fields that aren't exposed
+     * through typed APIs.
+     *
+     * For custom event types, use `StateEventType::Custom { value: "..." }`.
+     *
+     * # Arguments
+     *
+     * * `event_type` - The type of state event to retrieve
+     * * `state_key` - The state key of the event (empty string for events with
+     * no state key)
+     *
+     * # Returns
+     *
+     * A `RawStateEvent` wrapper providing access to the full event JSON,
+     * or `None` if not found.
+     */
+    func getStateEvent(eventType: StateEventType, stateKey: String) async throws  -> RawStateEvent?
+    
+    /**
      * Is there a non expired membership with application "m.call" and scope
      * "m.room" in this room.
      */
@@ -7556,7 +7777,7 @@ public protocol RoomProtocol: AnyObject, Sendable {
     
     func latestEncryptionState() async throws  -> EncryptionState
     
-    func latestEvent() async  -> EventTimelineItem?
+    func latestEvent() async  -> LatestEventValue
     
     /**
      * Leave this room.
@@ -7627,8 +7848,6 @@ public protocol RoomProtocol: AnyObject, Sendable {
      * The room's current membership state.
      */
     func membership()  -> Membership
-    
-    func newLatestEvent() async  -> LatestEventValue
     
     func ownUserId()  -> String
     
@@ -7756,6 +7975,22 @@ public protocol RoomProtocol: AnyObject, Sendable {
      */
     func sendRaw(eventType: String, content: String) async throws 
     
+    /**
+     * Send a state event to the room.
+     *
+     * # Arguments
+     *
+     * * `event_type` - The type of state event to send.
+     * * `state_key` - The state key for the event. Use an empty string for
+     * state events with no state key.
+     * * `content` - The event content as a JSON string.
+     *
+     * # Returns
+     *
+     * The event ID of the sent state event.
+     */
+    func sendStateEvent(eventType: StateEventType, stateKey: String, content: String) async throws  -> String
+    
     func setIsFavourite(isFavourite: Bool, tagOrder: Double?) async throws 
     
     func setIsLowPriority(isLowPriority: Bool, tagOrder: Double?) async throws 
@@ -7845,7 +8080,7 @@ public protocol RoomProtocol: AnyObject, Sendable {
     func subscribeToTypingNotifications(listener: TypingNotificationsListener)  -> TaskHandle
     
     /**
-     * If this room is tombstoned, return the “reference” to the successor room
+     * If this room is tombstoned, return the "reference" to the successor room
      * —i.e. the room replacing this one.
      *
      * A room is tombstoned if it has received a [`m.room.tombstone`] state
@@ -8317,6 +8552,43 @@ open func getRoomVisibility()async throws  -> RoomVisibility  {
 }
     
     /**
+     * Get a state event from the room's state store.
+     *
+     * This method retrieves a state event as a raw wrapper, which provides
+     * access to the full JSON including custom fields that aren't exposed
+     * through typed APIs.
+     *
+     * For custom event types, use `StateEventType::Custom { value: "..." }`.
+     *
+     * # Arguments
+     *
+     * * `event_type` - The type of state event to retrieve
+     * * `state_key` - The state key of the event (empty string for events with
+     * no state key)
+     *
+     * # Returns
+     *
+     * A `RawStateEvent` wrapper providing access to the full event JSON,
+     * or `None` if not found.
+     */
+open func getStateEvent(eventType: StateEventType, stateKey: String)async throws  -> RawStateEvent?  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_matrix_sdk_ffi_fn_method_room_get_state_event(
+                    self.uniffiClonePointer(),
+                    FfiConverterTypeStateEventType_lower(eventType),FfiConverterString.lower(stateKey)
+                )
+            },
+            pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeRawStateEvent.lift,
+            errorHandler: FfiConverterTypeClientError_lift
+        )
+}
+    
+    /**
      * Is there a non expired membership with application "m.call" and scope
      * "m.room" in this room.
      */
@@ -8576,7 +8848,7 @@ open func latestEncryptionState()async throws  -> EncryptionState  {
         )
 }
     
-open func latestEvent()async  -> EventTimelineItem?  {
+open func latestEvent()async  -> LatestEventValue  {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -8588,7 +8860,7 @@ open func latestEvent()async  -> EventTimelineItem?  {
             pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionTypeEventTimelineItem.lift,
+            liftFunc: FfiConverterTypeLatestEventValue_lift,
             errorHandler: nil
             
         )
@@ -8862,24 +9134,6 @@ open func membership() -> Membership  {
     uniffi_matrix_sdk_ffi_fn_method_room_membership(self.uniffiClonePointer(),$0
     )
 })
-}
-    
-open func newLatestEvent()async  -> LatestEventValue  {
-    return
-        try!  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_matrix_sdk_ffi_fn_method_room_new_latest_event(
-                    self.uniffiClonePointer()
-                    
-                )
-            },
-            pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
-            completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
-            freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterTypeLatestEventValue_lift,
-            errorHandler: nil
-            
-        )
 }
     
 open func ownUserId() -> String  {
@@ -9218,6 +9472,37 @@ open func sendRaw(eventType: String, content: String)async throws   {
         )
 }
     
+    /**
+     * Send a state event to the room.
+     *
+     * # Arguments
+     *
+     * * `event_type` - The type of state event to send.
+     * * `state_key` - The state key for the event. Use an empty string for
+     * state events with no state key.
+     * * `content` - The event content as a JSON string.
+     *
+     * # Returns
+     *
+     * The event ID of the sent state event.
+     */
+open func sendStateEvent(eventType: StateEventType, stateKey: String, content: String)async throws  -> String  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_matrix_sdk_ffi_fn_method_room_send_state_event(
+                    self.uniffiClonePointer(),
+                    FfiConverterTypeStateEventType_lower(eventType),FfiConverterString.lower(stateKey),FfiConverterString.lower(content)
+                )
+            },
+            pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterString.lift,
+            errorHandler: FfiConverterTypeClientError_lift
+        )
+}
+    
 open func setIsFavourite(isFavourite: Bool, tagOrder: Double?)async throws   {
     return
         try  await uniffiRustCallAsync(
@@ -9497,7 +9782,7 @@ open func subscribeToTypingNotifications(listener: TypingNotificationsListener) 
 }
     
     /**
-     * If this room is tombstoned, return the “reference” to the successor room
+     * If this room is tombstoned, return the "reference" to the successor room
      * —i.e. the room replacing this one.
      *
      * A room is tombstoned if it has received a [`m.room.tombstone`] state
@@ -11093,6 +11378,8 @@ public protocol RoomPowerLevelsProtocol: AnyObject, Sendable {
      */
     func canUserTriggerRoomNotification(userId: String) throws  -> Bool
     
+    func events()  -> [TimelineEventType: Int64]
+    
     /**
      * Gets a map with the `UserId` of users with power levels other than `0`
      * and their power level.
@@ -11376,6 +11663,13 @@ open func canUserTriggerRoomNotification(userId: String)throws  -> Bool  {
     return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeClientError_lift) {
     uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_can_user_trigger_room_notification(self.uniffiClonePointer(),
         FfiConverterString.lower(userId),$0
+    )
+})
+}
+    
+open func events() -> [TimelineEventType: Int64]  {
+    return try!  FfiConverterDictionaryTypeTimelineEventTypeInt64.lift(try! rustCall() {
+    uniffi_matrix_sdk_ffi_fn_method_roompowerlevels_events(self.uniffiClonePointer(),$0
     )
 })
 }
@@ -12962,22 +13256,21 @@ public protocol SpaceServiceProtocol: AnyObject, Sendable {
      * Returns a flattened list containing all the spaces where the user has
      * permission to send `m.space.child` state events.
      *
-     * Note: Unlike [`Self::joined_spaces()`], this method does not recompute
-     * the space graph, nor does it notify subscribers about changes.
+     * Note: Unlike [`Self::top_level_joined_spaces()`], this method does not
+     * recompute the space graph, nor does it notify subscribers about changes.
      */
     func editableSpaces() async  -> [SpaceRoom]
+    
+    /**
+     * Returns the corresponding `SpaceRoom` for the given room ID, or `None`
+     * if it isn't known.
+     */
+    func getSpaceRoom(roomId: String) async throws  -> SpaceRoom?
     
     /**
      * Returns all known direct-parents of a given space room ID.
      */
     func joinedParentsOfChild(childId: String) async throws  -> [SpaceRoom]
-    
-    /**
-     * Returns a list of all the top-level joined spaces. It will eagerly
-     * compute the latest version and also notify subscribers if there were
-     * any changes.
-     */
-    func joinedSpaces() async  -> [SpaceRoom]
     
     /**
      * Start a space leave process returning a [`LeaveSpaceHandle`] from which
@@ -13001,7 +13294,14 @@ public protocol SpaceServiceProtocol: AnyObject, Sendable {
      * Subscribes to updates on the joined spaces list. If space rooms are
      * joined or left, the stream will yield diffs that reflect the changes.
      */
-    func subscribeToJoinedSpaces(listener: SpaceServiceJoinedSpacesListener) async  -> TaskHandle
+    func subscribeToTopLevelJoinedSpaces(listener: SpaceServiceJoinedSpacesListener) async  -> TaskHandle
+    
+    /**
+     * Returns a list of all the top-level joined spaces. It will eagerly
+     * compute the latest version and also notify subscribers if there were
+     * any changes.
+     */
+    func topLevelJoinedSpaces() async  -> [SpaceRoom]
     
 }
 /**
@@ -13084,8 +13384,8 @@ open func addChildToSpace(childId: String, spaceId: String)async throws   {
      * Returns a flattened list containing all the spaces where the user has
      * permission to send `m.space.child` state events.
      *
-     * Note: Unlike [`Self::joined_spaces()`], this method does not recompute
-     * the space graph, nor does it notify subscribers about changes.
+     * Note: Unlike [`Self::top_level_joined_spaces()`], this method does not
+     * recompute the space graph, nor does it notify subscribers about changes.
      */
 open func editableSpaces()async  -> [SpaceRoom]  {
     return
@@ -13106,6 +13406,27 @@ open func editableSpaces()async  -> [SpaceRoom]  {
 }
     
     /**
+     * Returns the corresponding `SpaceRoom` for the given room ID, or `None`
+     * if it isn't known.
+     */
+open func getSpaceRoom(roomId: String)async throws  -> SpaceRoom?  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_matrix_sdk_ffi_fn_method_spaceservice_get_space_room(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(roomId)
+                )
+            },
+            pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeSpaceRoom.lift,
+            errorHandler: FfiConverterTypeClientError_lift
+        )
+}
+    
+    /**
      * Returns all known direct-parents of a given space room ID.
      */
 open func joinedParentsOfChild(childId: String)async throws  -> [SpaceRoom]  {
@@ -13122,29 +13443,6 @@ open func joinedParentsOfChild(childId: String)async throws  -> [SpaceRoom]  {
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeSpaceRoom.lift,
             errorHandler: FfiConverterTypeClientError_lift
-        )
-}
-    
-    /**
-     * Returns a list of all the top-level joined spaces. It will eagerly
-     * compute the latest version and also notify subscribers if there were
-     * any changes.
-     */
-open func joinedSpaces()async  -> [SpaceRoom]  {
-    return
-        try!  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_matrix_sdk_ffi_fn_method_spaceservice_joined_spaces(
-                    self.uniffiClonePointer()
-                    
-                )
-            },
-            pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
-            completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
-            freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterSequenceTypeSpaceRoom.lift,
-            errorHandler: nil
-            
         )
 }
     
@@ -13215,11 +13513,11 @@ open func spaceRoomList(spaceId: String)async throws  -> SpaceRoomList  {
      * Subscribes to updates on the joined spaces list. If space rooms are
      * joined or left, the stream will yield diffs that reflect the changes.
      */
-open func subscribeToJoinedSpaces(listener: SpaceServiceJoinedSpacesListener)async  -> TaskHandle  {
+open func subscribeToTopLevelJoinedSpaces(listener: SpaceServiceJoinedSpacesListener)async  -> TaskHandle  {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_matrix_sdk_ffi_fn_method_spaceservice_subscribe_to_joined_spaces(
+                uniffi_matrix_sdk_ffi_fn_method_spaceservice_subscribe_to_top_level_joined_spaces(
                     self.uniffiClonePointer(),
                     FfiConverterCallbackInterfaceSpaceServiceJoinedSpacesListener_lower(listener)
                 )
@@ -13228,6 +13526,29 @@ open func subscribeToJoinedSpaces(listener: SpaceServiceJoinedSpacesListener)asy
             completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_pointer,
             freeFunc: ffi_matrix_sdk_ffi_rust_future_free_pointer,
             liftFunc: FfiConverterTypeTaskHandle_lift,
+            errorHandler: nil
+            
+        )
+}
+    
+    /**
+     * Returns a list of all the top-level joined spaces. It will eagerly
+     * compute the latest version and also notify subscribers if there were
+     * any changes.
+     */
+open func topLevelJoinedSpaces()async  -> [SpaceRoom]  {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_matrix_sdk_ffi_fn_method_spaceservice_top_level_joined_spaces(
+                    self.uniffiClonePointer()
+                    
+                )
+            },
+            pollFunc: ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterSequenceTypeSpaceRoom.lift,
             errorHandler: nil
             
         )
@@ -15417,9 +15738,9 @@ public func FfiConverterTypeTimeline_lower(_ value: Timeline) -> UnsafeMutableRa
 
 public protocol TimelineEventProtocol: AnyObject, Sendable {
     
-    func eventId()  -> String
+    func content() throws  -> TimelineEventContent
     
-    func eventType() throws  -> TimelineEventType
+    func eventId()  -> String
     
     func senderId()  -> String
     
@@ -15484,16 +15805,16 @@ open class TimelineEvent: TimelineEventProtocol, @unchecked Sendable {
     
 
     
-open func eventId() -> String  {
-    return try!  FfiConverterString.lift(try! rustCall() {
-    uniffi_matrix_sdk_ffi_fn_method_timelineevent_event_id(self.uniffiClonePointer(),$0
+open func content()throws  -> TimelineEventContent  {
+    return try  FfiConverterTypeTimelineEventContent_lift(try rustCallWithError(FfiConverterTypeClientError_lift) {
+    uniffi_matrix_sdk_ffi_fn_method_timelineevent_content(self.uniffiClonePointer(),$0
     )
 })
 }
     
-open func eventType()throws  -> TimelineEventType  {
-    return try  FfiConverterTypeTimelineEventType_lift(try rustCallWithError(FfiConverterTypeClientError_lift) {
-    uniffi_matrix_sdk_ffi_fn_method_timelineevent_event_type(self.uniffiClonePointer(),$0
+open func eventId() -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_matrix_sdk_ffi_fn_method_timelineevent_event_id(self.uniffiClonePointer(),$0
     )
 })
 }
@@ -30271,7 +30592,7 @@ public enum LatestEventValue {
     case none
     case remote(timestamp: Timestamp, sender: String, isOwn: Bool, profile: ProfileDetails, content: TimelineItemContent
     )
-    case local(timestamp: Timestamp, sender: String, profile: ProfileDetails, content: TimelineItemContent, isSending: Bool
+    case local(timestamp: Timestamp, sender: String, profile: ProfileDetails, content: TimelineItemContent, state: LatestEventValueLocalState
     )
 }
 
@@ -30295,7 +30616,7 @@ public struct FfiConverterTypeLatestEventValue: FfiConverterRustBuffer {
         case 2: return .remote(timestamp: try FfiConverterTypeTimestamp.read(from: &buf), sender: try FfiConverterString.read(from: &buf), isOwn: try FfiConverterBool.read(from: &buf), profile: try FfiConverterTypeProfileDetails.read(from: &buf), content: try FfiConverterTypeTimelineItemContent.read(from: &buf)
         )
         
-        case 3: return .local(timestamp: try FfiConverterTypeTimestamp.read(from: &buf), sender: try FfiConverterString.read(from: &buf), profile: try FfiConverterTypeProfileDetails.read(from: &buf), content: try FfiConverterTypeTimelineItemContent.read(from: &buf), isSending: try FfiConverterBool.read(from: &buf)
+        case 3: return .local(timestamp: try FfiConverterTypeTimestamp.read(from: &buf), sender: try FfiConverterString.read(from: &buf), profile: try FfiConverterTypeProfileDetails.read(from: &buf), content: try FfiConverterTypeTimelineItemContent.read(from: &buf), state: try FfiConverterTypeLatestEventValueLocalState.read(from: &buf)
         )
         
         default: throw UniffiInternalError.unexpectedEnumCase
@@ -30319,13 +30640,13 @@ public struct FfiConverterTypeLatestEventValue: FfiConverterRustBuffer {
             FfiConverterTypeTimelineItemContent.write(content, into: &buf)
             
         
-        case let .local(timestamp,sender,profile,content,isSending):
+        case let .local(timestamp,sender,profile,content,state):
             writeInt(&buf, Int32(3))
             FfiConverterTypeTimestamp.write(timestamp, into: &buf)
             FfiConverterString.write(sender, into: &buf)
             FfiConverterTypeProfileDetails.write(profile, into: &buf)
             FfiConverterTypeTimelineItemContent.write(content, into: &buf)
-            FfiConverterBool.write(isSending, into: &buf)
+            FfiConverterTypeLatestEventValueLocalState.write(state, into: &buf)
             
         }
     }
@@ -31389,11 +31710,21 @@ public func FfiConverterTypeMessageLikeEventContent_lower(_ value: MessageLikeEv
 
 public enum MessageLikeEventType {
     
+    case audio
+    case beacon
     case callAnswer
     case callCandidates
     case callHangup
     case callInvite
-    case rtcNotification
+    case callNegotiate
+    case callNotify
+    case callReject
+    case callSdpStreamMetadataChanged
+    case callSelectAnswer
+    case emote
+    case encrypted
+    case file
+    case image
     case keyVerificationAccept
     case keyVerificationCancel
     case keyVerificationDone
@@ -31401,6 +31732,8 @@ public enum MessageLikeEventType {
     case keyVerificationMac
     case keyVerificationReady
     case keyVerificationStart
+    case location
+    case message
     case pollEnd
     case pollResponse
     case pollStart
@@ -31408,10 +31741,14 @@ public enum MessageLikeEventType {
     case roomEncrypted
     case roomMessage
     case roomRedaction
+    case rtcDecline
+    case rtcNotification
     case sticker
     case unstablePollEnd
     case unstablePollResponse
     case unstablePollStart
+    case video
+    case voice
     case other(String
     )
 }
@@ -31431,53 +31768,85 @@ public struct FfiConverterTypeMessageLikeEventType: FfiConverterRustBuffer {
         let variant: Int32 = try readInt(&buf)
         switch variant {
         
-        case 1: return .callAnswer
+        case 1: return .audio
         
-        case 2: return .callCandidates
+        case 2: return .beacon
         
-        case 3: return .callHangup
+        case 3: return .callAnswer
         
-        case 4: return .callInvite
+        case 4: return .callCandidates
         
-        case 5: return .rtcNotification
+        case 5: return .callHangup
         
-        case 6: return .keyVerificationAccept
+        case 6: return .callInvite
         
-        case 7: return .keyVerificationCancel
+        case 7: return .callNegotiate
         
-        case 8: return .keyVerificationDone
+        case 8: return .callNotify
         
-        case 9: return .keyVerificationKey
+        case 9: return .callReject
         
-        case 10: return .keyVerificationMac
+        case 10: return .callSdpStreamMetadataChanged
         
-        case 11: return .keyVerificationReady
+        case 11: return .callSelectAnswer
         
-        case 12: return .keyVerificationStart
+        case 12: return .emote
         
-        case 13: return .pollEnd
+        case 13: return .encrypted
         
-        case 14: return .pollResponse
+        case 14: return .file
         
-        case 15: return .pollStart
+        case 15: return .image
         
-        case 16: return .reaction
+        case 16: return .keyVerificationAccept
         
-        case 17: return .roomEncrypted
+        case 17: return .keyVerificationCancel
         
-        case 18: return .roomMessage
+        case 18: return .keyVerificationDone
         
-        case 19: return .roomRedaction
+        case 19: return .keyVerificationKey
         
-        case 20: return .sticker
+        case 20: return .keyVerificationMac
         
-        case 21: return .unstablePollEnd
+        case 21: return .keyVerificationReady
         
-        case 22: return .unstablePollResponse
+        case 22: return .keyVerificationStart
         
-        case 23: return .unstablePollStart
+        case 23: return .location
         
-        case 24: return .other(try FfiConverterString.read(from: &buf)
+        case 24: return .message
+        
+        case 25: return .pollEnd
+        
+        case 26: return .pollResponse
+        
+        case 27: return .pollStart
+        
+        case 28: return .reaction
+        
+        case 29: return .roomEncrypted
+        
+        case 30: return .roomMessage
+        
+        case 31: return .roomRedaction
+        
+        case 32: return .rtcDecline
+        
+        case 33: return .rtcNotification
+        
+        case 34: return .sticker
+        
+        case 35: return .unstablePollEnd
+        
+        case 36: return .unstablePollResponse
+        
+        case 37: return .unstablePollStart
+        
+        case 38: return .video
+        
+        case 39: return .voice
+        
+        case 40: return .other(try FfiConverterString.read(from: &buf)
         )
         
         default: throw UniffiInternalError.unexpectedEnumCase
@@ -31488,100 +31857,164 @@ public struct FfiConverterTypeMessageLikeEventType: FfiConverterRustBuffer {
         switch value {
         
         
-        case .callAnswer:
+        case .audio:
             writeInt(&buf, Int32(1))
         
         
-        case .callCandidates:
+        case .beacon:
             writeInt(&buf, Int32(2))
         
         
-        case .callHangup:
+        case .callAnswer:
             writeInt(&buf, Int32(3))
         
         
-        case .callInvite:
+        case .callCandidates:
             writeInt(&buf, Int32(4))
         
         
-        case .rtcNotification:
+        case .callHangup:
             writeInt(&buf, Int32(5))
         
         
-        case .keyVerificationAccept:
+        case .callInvite:
             writeInt(&buf, Int32(6))
         
         
-        case .keyVerificationCancel:
+        case .callNegotiate:
             writeInt(&buf, Int32(7))
         
         
-        case .keyVerificationDone:
+        case .callNotify:
             writeInt(&buf, Int32(8))
         
         
-        case .keyVerificationKey:
+        case .callReject:
             writeInt(&buf, Int32(9))
         
         
-        case .keyVerificationMac:
+        case .callSdpStreamMetadataChanged:
             writeInt(&buf, Int32(10))
         
         
-        case .keyVerificationReady:
+        case .callSelectAnswer:
             writeInt(&buf, Int32(11))
         
         
-        case .keyVerificationStart:
+        case .emote:
             writeInt(&buf, Int32(12))
         
         
-        case .pollEnd:
+        case .encrypted:
             writeInt(&buf, Int32(13))
         
         
-        case .pollResponse:
+        case .file:
             writeInt(&buf, Int32(14))
         
         
-        case .pollStart:
+        case .image:
             writeInt(&buf, Int32(15))
         
         
-        case .reaction:
+        case .keyVerificationAccept:
             writeInt(&buf, Int32(16))
         
         
-        case .roomEncrypted:
+        case .keyVerificationCancel:
             writeInt(&buf, Int32(17))
         
         
-        case .roomMessage:
+        case .keyVerificationDone:
             writeInt(&buf, Int32(18))
         
         
-        case .roomRedaction:
+        case .keyVerificationKey:
             writeInt(&buf, Int32(19))
         
         
-        case .sticker:
+        case .keyVerificationMac:
             writeInt(&buf, Int32(20))
         
         
-        case .unstablePollEnd:
+        case .keyVerificationReady:
             writeInt(&buf, Int32(21))
         
         
-        case .unstablePollResponse:
+        case .keyVerificationStart:
             writeInt(&buf, Int32(22))
         
         
-        case .unstablePollStart:
+        case .location:
             writeInt(&buf, Int32(23))
         
         
-        case let .other(v1):
+        case .message:
             writeInt(&buf, Int32(24))
+        
+        
+        case .pollEnd:
+            writeInt(&buf, Int32(25))
+        
+        
+        case .pollResponse:
+            writeInt(&buf, Int32(26))
+        
+        
+        case .pollStart:
+            writeInt(&buf, Int32(27))
+        
+        
+        case .reaction:
+            writeInt(&buf, Int32(28))
+        
+        
+        case .roomEncrypted:
+            writeInt(&buf, Int32(29))
+        
+        
+        case .roomMessage:
+            writeInt(&buf, Int32(30))
+        
+        
+        case .roomRedaction:
+            writeInt(&buf, Int32(31))
+        
+        
+        case .rtcDecline:
+            writeInt(&buf, Int32(32))
+        
+        
+        case .rtcNotification:
+            writeInt(&buf, Int32(33))
+        
+        
+        case .sticker:
+            writeInt(&buf, Int32(34))
+        
+        
+        case .unstablePollEnd:
+            writeInt(&buf, Int32(35))
+        
+        
+        case .unstablePollResponse:
+            writeInt(&buf, Int32(36))
+        
+        
+        case .unstablePollStart:
+            writeInt(&buf, Int32(37))
+        
+        
+        case .video:
+            writeInt(&buf, Int32(38))
+        
+        
+        case .voice:
+            writeInt(&buf, Int32(39))
+        
+        
+        case let .other(v1):
+            writeInt(&buf, Int32(40))
             FfiConverterString.write(v1, into: &buf)
             
         }
@@ -37411,7 +37844,9 @@ extension StateEventContent: Equatable, Hashable {}
 
 public enum StateEventType {
     
+    case beaconInfo
     case callMember
+    case memberHints
     case policyRuleRoom
     case policyRuleServer
     case policyRuleUser
@@ -37422,8 +37857,10 @@ public enum StateEventType {
     case roomEncryption
     case roomGuestAccess
     case roomHistoryVisibility
+    case roomImagePack
     case roomJoinRules
     case roomMemberEvent
+    case roomLanguage
     case roomName
     case roomPinnedEvents
     case roomPowerLevels
@@ -37433,6 +37870,8 @@ public enum StateEventType {
     case roomTopic
     case spaceChild
     case spaceParent
+    case custom(value: String
+    )
 }
 
 
@@ -37450,49 +37889,60 @@ public struct FfiConverterTypeStateEventType: FfiConverterRustBuffer {
         let variant: Int32 = try readInt(&buf)
         switch variant {
         
-        case 1: return .callMember
+        case 1: return .beaconInfo
         
-        case 2: return .policyRuleRoom
+        case 2: return .callMember
         
-        case 3: return .policyRuleServer
+        case 3: return .memberHints
         
-        case 4: return .policyRuleUser
+        case 4: return .policyRuleRoom
         
-        case 5: return .roomAliases
+        case 5: return .policyRuleServer
         
-        case 6: return .roomAvatar
+        case 6: return .policyRuleUser
         
-        case 7: return .roomCanonicalAlias
+        case 7: return .roomAliases
         
-        case 8: return .roomCreate
+        case 8: return .roomAvatar
         
-        case 9: return .roomEncryption
+        case 9: return .roomCanonicalAlias
         
-        case 10: return .roomGuestAccess
+        case 10: return .roomCreate
         
-        case 11: return .roomHistoryVisibility
+        case 11: return .roomEncryption
         
-        case 12: return .roomJoinRules
+        case 12: return .roomGuestAccess
         
-        case 13: return .roomMemberEvent
+        case 13: return .roomHistoryVisibility
         
-        case 14: return .roomName
+        case 14: return .roomImagePack
         
-        case 15: return .roomPinnedEvents
+        case 15: return .roomJoinRules
         
-        case 16: return .roomPowerLevels
+        case 16: return .roomMemberEvent
         
-        case 17: return .roomServerAcl
+        case 17: return .roomLanguage
         
-        case 18: return .roomThirdPartyInvite
+        case 18: return .roomName
         
-        case 19: return .roomTombstone
+        case 19: return .roomPinnedEvents
         
-        case 20: return .roomTopic
+        case 20: return .roomPowerLevels
         
-        case 21: return .spaceChild
+        case 21: return .roomServerAcl
         
-        case 22: return .spaceParent
+        case 22: return .roomThirdPartyInvite
+        
+        case 23: return .roomTombstone
+        
+        case 24: return .roomTopic
+        
+        case 25: return .spaceChild
+        
+        case 26: return .spaceParent
+        
+        case 27: return .custom(value: try FfiConverterString.read(from: &buf)
+        )
         
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -37502,93 +37952,114 @@ public struct FfiConverterTypeStateEventType: FfiConverterRustBuffer {
         switch value {
         
         
-        case .callMember:
+        case .beaconInfo:
             writeInt(&buf, Int32(1))
         
         
-        case .policyRuleRoom:
+        case .callMember:
             writeInt(&buf, Int32(2))
         
         
-        case .policyRuleServer:
+        case .memberHints:
             writeInt(&buf, Int32(3))
         
         
-        case .policyRuleUser:
+        case .policyRuleRoom:
             writeInt(&buf, Int32(4))
         
         
-        case .roomAliases:
+        case .policyRuleServer:
             writeInt(&buf, Int32(5))
         
         
-        case .roomAvatar:
+        case .policyRuleUser:
             writeInt(&buf, Int32(6))
         
         
-        case .roomCanonicalAlias:
+        case .roomAliases:
             writeInt(&buf, Int32(7))
         
         
-        case .roomCreate:
+        case .roomAvatar:
             writeInt(&buf, Int32(8))
         
         
-        case .roomEncryption:
+        case .roomCanonicalAlias:
             writeInt(&buf, Int32(9))
         
         
-        case .roomGuestAccess:
+        case .roomCreate:
             writeInt(&buf, Int32(10))
         
         
-        case .roomHistoryVisibility:
+        case .roomEncryption:
             writeInt(&buf, Int32(11))
         
         
-        case .roomJoinRules:
+        case .roomGuestAccess:
             writeInt(&buf, Int32(12))
         
         
-        case .roomMemberEvent:
+        case .roomHistoryVisibility:
             writeInt(&buf, Int32(13))
         
         
-        case .roomName:
+        case .roomImagePack:
             writeInt(&buf, Int32(14))
         
         
-        case .roomPinnedEvents:
+        case .roomJoinRules:
             writeInt(&buf, Int32(15))
         
         
-        case .roomPowerLevels:
+        case .roomMemberEvent:
             writeInt(&buf, Int32(16))
         
         
-        case .roomServerAcl:
+        case .roomLanguage:
             writeInt(&buf, Int32(17))
         
         
-        case .roomThirdPartyInvite:
+        case .roomName:
             writeInt(&buf, Int32(18))
         
         
-        case .roomTombstone:
+        case .roomPinnedEvents:
             writeInt(&buf, Int32(19))
         
         
-        case .roomTopic:
+        case .roomPowerLevels:
             writeInt(&buf, Int32(20))
         
         
-        case .spaceChild:
+        case .roomServerAcl:
             writeInt(&buf, Int32(21))
         
         
-        case .spaceParent:
+        case .roomThirdPartyInvite:
             writeInt(&buf, Int32(22))
         
+        
+        case .roomTombstone:
+            writeInt(&buf, Int32(23))
+        
+        
+        case .roomTopic:
+            writeInt(&buf, Int32(24))
+        
+        
+        case .spaceChild:
+            writeInt(&buf, Int32(25))
+        
+        
+        case .spaceParent:
+            writeInt(&buf, Int32(26))
+        
+        
+        case let .custom(value):
+            writeInt(&buf, Int32(27))
+            FfiConverterString.write(value, into: &buf)
+            
         }
     }
 }
@@ -38061,7 +38532,7 @@ public func FfiConverterTypeTimelineDiff_lower(_ value: TimelineDiff) -> RustBuf
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
-public enum TimelineEventType {
+public enum TimelineEventContent {
     
     case messageLike(content: MessageLikeEventContent
     )
@@ -38071,16 +38542,16 @@ public enum TimelineEventType {
 
 
 #if compiler(>=6)
-extension TimelineEventType: Sendable {}
+extension TimelineEventContent: Sendable {}
 #endif
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public struct FfiConverterTypeTimelineEventType: FfiConverterRustBuffer {
-    typealias SwiftType = TimelineEventType
+public struct FfiConverterTypeTimelineEventContent: FfiConverterRustBuffer {
+    typealias SwiftType = TimelineEventContent
 
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TimelineEventType {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TimelineEventContent {
         let variant: Int32 = try readInt(&buf)
         switch variant {
         
@@ -38094,7 +38565,7 @@ public struct FfiConverterTypeTimelineEventType: FfiConverterRustBuffer {
         }
     }
 
-    public static func write(_ value: TimelineEventType, into buf: inout [UInt8]) {
+    public static func write(_ value: TimelineEventContent, into buf: inout [UInt8]) {
         switch value {
         
         
@@ -38115,6 +38586,89 @@ public struct FfiConverterTypeTimelineEventType: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+public func FfiConverterTypeTimelineEventContent_lift(_ buf: RustBuffer) throws -> TimelineEventContent {
+    return try FfiConverterTypeTimelineEventContent.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimelineEventContent_lower(_ value: TimelineEventContent) -> RustBuffer {
+    return FfiConverterTypeTimelineEventContent.lower(value)
+}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * The timeline event type.
+ */
+
+public enum TimelineEventType {
+    
+    /**
+     * The event is a message-like one and should be displayed as such.
+     */
+    case messageLike(value: MessageLikeEventType
+    )
+    /**
+     * The event is a state event, and may or may not be displayed in the
+     * timeline.
+     */
+    case state(value: StateEventType
+    )
+}
+
+
+#if compiler(>=6)
+extension TimelineEventType: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTimelineEventType: FfiConverterRustBuffer {
+    typealias SwiftType = TimelineEventType
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TimelineEventType {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .messageLike(value: try FfiConverterTypeMessageLikeEventType.read(from: &buf)
+        )
+        
+        case 2: return .state(value: try FfiConverterTypeStateEventType.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TimelineEventType, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .messageLike(value):
+            writeInt(&buf, Int32(1))
+            FfiConverterTypeMessageLikeEventType.write(value, into: &buf)
+            
+        
+        case let .state(value):
+            writeInt(&buf, Int32(2))
+            FfiConverterTypeStateEventType.write(value, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 public func FfiConverterTypeTimelineEventType_lift(_ buf: RustBuffer) throws -> TimelineEventType {
     return try FfiConverterTypeTimelineEventType.lift(buf)
 }
@@ -38125,6 +38679,9 @@ public func FfiConverterTypeTimelineEventType_lift(_ buf: RustBuffer) throws -> 
 public func FfiConverterTypeTimelineEventType_lower(_ value: TimelineEventType) -> RustBuffer {
     return FfiConverterTypeTimelineEventType.lower(value)
 }
+
+
+extension TimelineEventType: Equatable, Hashable {}
 
 
 
@@ -38505,6 +39062,10 @@ public enum TraceLogPacks {
      * Enables all the logs relevant to sync profiling.
      */
     case syncProfiling
+    /**
+     * Enables all the logs relevant to the latest events.
+     */
+    case latestEvents
 }
 
 
@@ -38532,6 +39093,8 @@ public struct FfiConverterTypeTraceLogPacks: FfiConverterRustBuffer {
         
         case 5: return .syncProfiling
         
+        case 6: return .latestEvents
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -38558,6 +39121,10 @@ public struct FfiConverterTypeTraceLogPacks: FfiConverterRustBuffer {
         
         case .syncProfiling:
             writeInt(&buf, Int32(5))
+        
+        
+        case .latestEvents:
+            writeInt(&buf, Int32(6))
         
         }
     }
@@ -44485,6 +45052,30 @@ fileprivate struct FfiConverterOptionTypeMediaSource: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeRawStateEvent: FfiConverterRustBuffer {
+    typealias SwiftType = RawStateEvent?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeRawStateEvent.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeRawStateEvent.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeRoom: FfiConverterRustBuffer {
     typealias SwiftType = Room?
 
@@ -47277,6 +47868,32 @@ fileprivate struct FfiConverterDictionaryTypeTagNameTypeTagInfo: FfiConverterRus
     }
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterDictionaryTypeTimelineEventTypeInt64: FfiConverterRustBuffer {
+    public static func write(_ value: [TimelineEventType: Int64], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for (key, value) in value {
+            FfiConverterTypeTimelineEventType.write(key, into: &buf)
+            FfiConverterInt64.write(value, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TimelineEventType: Int64] {
+        let len: Int32 = try readInt(&buf)
+        var dict = [TimelineEventType: Int64]()
+        dict.reserveCapacity(Int(len))
+        for _ in 0..<len {
+            let key = try FfiConverterTypeTimelineEventType.read(from: &buf)
+            let value = try FfiConverterInt64.read(from: &buf)
+            dict[key] = value
+        }
+        return dict
+    }
+}
+
 
 /**
  * Typealias from the type name used in the UDL file to the builtin type.  This
@@ -47863,6 +48480,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_client_is_livekit_rtc_supported() != 34863) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_matrix_sdk_ffi_checksum_method_client_is_login_with_qr_code_supported() != 17812) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_matrix_sdk_ffi_checksum_method_client_is_report_room_api_supported() != 17934) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -47977,7 +48597,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_client_sliding_sync_version() != 4957) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_matrix_sdk_ffi_checksum_method_client_space_service() != 31959) {
+    if (uniffi_matrix_sdk_ffi_checksum_method_client_space_service() != 8962) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_client_start_sso_login() != 34571) {
@@ -48331,6 +48951,12 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_qrcodedata_server_name() != 30173) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_matrix_sdk_ffi_checksum_method_qrcodedata_to_bytes() != 13594) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_matrix_sdk_ffi_checksum_method_rawstateevent_json() != 45212) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_matrix_sdk_ffi_checksum_method_room_active_members_count() != 61905) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -48391,6 +49017,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_room_get_room_visibility() != 412) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_matrix_sdk_ffi_checksum_method_room_get_state_event() != 30565) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_matrix_sdk_ffi_checksum_method_room_has_active_room_call() != 33588) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -48442,7 +49071,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_room_latest_encryption_state() != 16843) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_matrix_sdk_ffi_checksum_method_room_latest_event() != 39083) {
+    if (uniffi_matrix_sdk_ffi_checksum_method_room_latest_event() != 41728) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_room_leave() != 63688) {
@@ -48485,9 +49114,6 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_room_membership() != 45951) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_matrix_sdk_ffi_checksum_method_room_new_latest_event() != 11947) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_room_own_user_id() != 39510) {
@@ -48538,6 +49164,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_room_send_raw() != 20486) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_matrix_sdk_ffi_checksum_method_room_send_state_event() != 20422) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_matrix_sdk_ffi_checksum_method_room_set_is_favourite() != 64403) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -48583,7 +49212,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_typing_notifications() != 38524) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_matrix_sdk_ffi_checksum_method_room_successor_room() != 27360) {
+    if (uniffi_matrix_sdk_ffi_checksum_method_room_successor_room() != 3792) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_room_suggested_role_for_user() != 47787) {
@@ -48745,6 +49374,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_trigger_room_notification() != 26319) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_events() != 5095) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_user_power_levels() != 16221) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -48841,13 +49473,13 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_add_child_to_space() != 31295) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_editable_spaces() != 62969) {
+    if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_editable_spaces() != 41388) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_get_space_room() != 47517) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_joined_parents_of_child() != 18724) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_joined_spaces() != 54285) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_leave_space() != 7949) {
@@ -48859,7 +49491,10 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_space_room_list() != 6768) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_subscribe_to_joined_spaces() != 10090) {
+    if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_subscribe_to_top_level_joined_spaces() != 5029) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_matrix_sdk_ffi_checksum_method_spaceservice_top_level_joined_spaces() != 39165) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_span_enter() != 8900) {
@@ -49021,10 +49656,10 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_timeline_unpin_event() != 52414) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_matrix_sdk_ffi_checksum_method_timelineevent_event_id() != 11088) {
+    if (uniffi_matrix_sdk_ffi_checksum_method_timelineevent_content() != 39363) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_matrix_sdk_ffi_checksum_method_timelineevent_event_type() != 12922) {
+    if (uniffi_matrix_sdk_ffi_checksum_method_timelineevent_event_id() != 11088) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_matrix_sdk_ffi_checksum_method_timelineevent_sender_id() != 18142) {
@@ -49304,11 +49939,11 @@ private let initializationResult: InitializationResult = {
     uniffiCallbackInitUnableToDecryptDelegate()
     uniffiCallbackInitVerificationStateListener()
     uniffiCallbackInitWidgetCapabilitiesProvider()
-    uniffiEnsureMatrixSdkBaseInitialized()
     uniffiEnsureMatrixSdkUiInitialized()
     uniffiEnsureMatrixSdkInitialized()
-    uniffiEnsureMatrixSdkCryptoInitialized()
+    uniffiEnsureMatrixSdkBaseInitialized()
     uniffiEnsureMatrixSdkCommonInitialized()
+    uniffiEnsureMatrixSdkCryptoInitialized()
     return InitializationResult.ok
 }()
 

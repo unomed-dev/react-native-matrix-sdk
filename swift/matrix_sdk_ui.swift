@@ -563,6 +563,83 @@ extension EventItemOrigin: Equatable, Hashable {}
 
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum LatestEventValueLocalState {
+    
+    case isSending
+    case hasBeenSent
+    case cannotBeSent
+}
+
+
+#if compiler(>=6)
+extension LatestEventValueLocalState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLatestEventValueLocalState: FfiConverterRustBuffer {
+    typealias SwiftType = LatestEventValueLocalState
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LatestEventValueLocalState {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .isSending
+        
+        case 2: return .hasBeenSent
+        
+        case 3: return .cannotBeSent
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: LatestEventValueLocalState, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .isSending:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .hasBeenSent:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .cannotBeSent:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLatestEventValueLocalState_lift(_ buf: RustBuffer) throws -> LatestEventValueLocalState {
+    return try FfiConverterTypeLatestEventValueLocalState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLatestEventValueLocalState_lower(_ value: LatestEventValueLocalState) -> RustBuffer {
+    return FfiConverterTypeLatestEventValueLocalState.lower(value)
+}
+
+
+extension LatestEventValueLocalState: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * The type of change between the previous and current pinned events.
  */

@@ -1,7 +1,7 @@
 ---
 crate:
-  repo: https://github.com/matrix-org/matrix-rust-sdk
-  rev: 742a0db07bde3afd049077e7962948111473e1e1 # matrix-sdk-base-0.16.0
+  repo: https://github.com/WeissDev/matrix-rust-sdk
+  rev: db55fe42475a385871f81cbd7187d017bda7208b # weissdev/state-events-ffi
   manifestPath: bindings/matrix-sdk-ffi/Cargo.toml
 android:
   cargoExtras: ['--features', 'rustls-tls']
