@@ -143,8 +143,7 @@
       ]
     },
     "hooks": {
-      "before:release": "yarn generate:release && node scripts/package-binaries.js",
-      "after:bump": "git add example/ios/Podfile.lock"
+      "before:release": "yarn generate:release && node scripts/package-binaries.js && git add example/ios/Podfile.lock"
     },
     "plugins": {
       "@release-it/conventional-changelog": {
