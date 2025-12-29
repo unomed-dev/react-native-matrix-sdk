@@ -115,6 +115,10 @@ export type RoomPowerLevelChanges = {
    * The level required to change the room's topic.
    */
   roomTopic: /*i64*/ bigint | undefined;
+  /**
+   * The level required to change the space's children.
+   */
+  spaceChild: /*i64*/ bigint | undefined;
 };
 
 /**
@@ -132,6 +136,7 @@ export const RoomPowerLevelChanges = (() => {
     roomName: undefined,
     roomAvatar: undefined,
     roomTopic: undefined,
+    spaceChild: undefined,
   });
   const create = (() => {
     return uniffiCreateRecord<
@@ -174,6 +179,7 @@ const FfiConverterTypeRoomPowerLevelChanges = (() => {
         roomName: FfiConverterOptionalInt64.read(from),
         roomAvatar: FfiConverterOptionalInt64.read(from),
         roomTopic: FfiConverterOptionalInt64.read(from),
+        spaceChild: FfiConverterOptionalInt64.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
@@ -187,6 +193,7 @@ const FfiConverterTypeRoomPowerLevelChanges = (() => {
       FfiConverterOptionalInt64.write(value.roomName, into);
       FfiConverterOptionalInt64.write(value.roomAvatar, into);
       FfiConverterOptionalInt64.write(value.roomTopic, into);
+      FfiConverterOptionalInt64.write(value.spaceChild, into);
     }
     allocationSize(value: TypeName): number {
       return (
@@ -199,7 +206,8 @@ const FfiConverterTypeRoomPowerLevelChanges = (() => {
         FfiConverterOptionalInt64.allocationSize(value.usersDefault) +
         FfiConverterOptionalInt64.allocationSize(value.roomName) +
         FfiConverterOptionalInt64.allocationSize(value.roomAvatar) +
-        FfiConverterOptionalInt64.allocationSize(value.roomTopic)
+        FfiConverterOptionalInt64.allocationSize(value.roomTopic) +
+        FfiConverterOptionalInt64.allocationSize(value.spaceChild)
       );
     }
   }
@@ -274,9 +282,179 @@ const FfiConverterTypeServerVendorInfo = (() => {
 })();
 
 /**
- * Properties to create a new virtual Element Call widget.
+ * Configuration parameters, to create a new virtual Element Call widget.
+ *
+ * If `intent` is provided the appropriate default values for all other
+ * parameters will be used by element call.
+ * In most cases its enough to only set the intent. Use the other properties
+ * only if you want to deviate from the `intent` defaults.
+ *
+ * Set [`docs/url-params.md`](https://github.com/element-hq/element-call/blob/livekit/docs/url-params.md)
+ * to find out more about the parameters and their defaults.
  */
-export type VirtualElementCallWidgetOptions = {
+export type VirtualElementCallWidgetConfig = {
+  /**
+   * The intent of showing the call.
+   * If the user wants to start a call or join an existing one.
+   * Controls if the lobby is skipped or not.
+   */
+  intent: Intent | undefined;
+  /**
+   * Skip the lobby when joining a call.
+   */
+  skipLobby: boolean | undefined;
+  /**
+   * Whether the branding header of Element call should be shown or if a
+   * mobile header navbar should be render.
+   *
+   * Default: [`HeaderStyle::Standard`]
+   */
+  header: HeaderStyle | undefined;
+  /**
+   * Whether the branding header of Element call should be hidden.
+   *
+   * Default: `true`
+   */
+  hideHeader: boolean | undefined;
+  /**
+   * If set, the lobby will be skipped and the widget will join the
+   * call on the `io.element.join` action.
+   *
+   * Default: `false`
+   */
+  preload: boolean | undefined;
+  /**
+   * Whether element call should prompt the user to open in the browser or
+   * the app.
+   *
+   * Default: `false`
+   */
+  appPrompt: boolean | undefined;
+  /**
+   * Make it not possible to get to the calls list in the webview.
+   *
+   * Default: `true`
+   */
+  confineToRoom: boolean | undefined;
+  /**
+   * Do not show the screenshare button.
+   */
+  hideScreensharing: boolean | undefined;
+  /**
+   * Make the audio devices be controlled by the os instead of the
+   * element-call webview.
+   */
+  controlledAudioDevices: boolean | undefined;
+  /**
+   * Whether and what type of notification Element Call should send, when
+   * starting a call.
+   */
+  sendNotificationType: NotificationType | undefined;
+};
+
+/**
+ * Generated factory for {@link VirtualElementCallWidgetConfig} record objects.
+ */
+export const VirtualElementCallWidgetConfig = (() => {
+  const defaults = () => ({
+    skipLobby: undefined,
+    header: undefined,
+    hideHeader: undefined,
+    preload: undefined,
+    appPrompt: undefined,
+    confineToRoom: undefined,
+    hideScreensharing: undefined,
+    controlledAudioDevices: undefined,
+    sendNotificationType: undefined,
+  });
+  const create = (() => {
+    return uniffiCreateRecord<
+      VirtualElementCallWidgetConfig,
+      ReturnType<typeof defaults>
+    >(defaults);
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link VirtualElementCallWidgetConfig}, with defaults specified
+     * in Rust, in the {@link matrix_sdk} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link VirtualElementCallWidgetConfig}, with defaults specified
+     * in Rust, in the {@link matrix_sdk} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk} crate.
+     */
+    defaults: () =>
+      Object.freeze(defaults()) as Partial<VirtualElementCallWidgetConfig>,
+  });
+})();
+
+const FfiConverterTypeVirtualElementCallWidgetConfig = (() => {
+  type TypeName = VirtualElementCallWidgetConfig;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        intent: FfiConverterOptionalTypeIntent.read(from),
+        skipLobby: FfiConverterOptionalBool.read(from),
+        header: FfiConverterOptionalTypeHeaderStyle.read(from),
+        hideHeader: FfiConverterOptionalBool.read(from),
+        preload: FfiConverterOptionalBool.read(from),
+        appPrompt: FfiConverterOptionalBool.read(from),
+        confineToRoom: FfiConverterOptionalBool.read(from),
+        hideScreensharing: FfiConverterOptionalBool.read(from),
+        controlledAudioDevices: FfiConverterOptionalBool.read(from),
+        sendNotificationType:
+          FfiConverterOptionalTypeNotificationType.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterOptionalTypeIntent.write(value.intent, into);
+      FfiConverterOptionalBool.write(value.skipLobby, into);
+      FfiConverterOptionalTypeHeaderStyle.write(value.header, into);
+      FfiConverterOptionalBool.write(value.hideHeader, into);
+      FfiConverterOptionalBool.write(value.preload, into);
+      FfiConverterOptionalBool.write(value.appPrompt, into);
+      FfiConverterOptionalBool.write(value.confineToRoom, into);
+      FfiConverterOptionalBool.write(value.hideScreensharing, into);
+      FfiConverterOptionalBool.write(value.controlledAudioDevices, into);
+      FfiConverterOptionalTypeNotificationType.write(
+        value.sendNotificationType,
+        into
+      );
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterOptionalTypeIntent.allocationSize(value.intent) +
+        FfiConverterOptionalBool.allocationSize(value.skipLobby) +
+        FfiConverterOptionalTypeHeaderStyle.allocationSize(value.header) +
+        FfiConverterOptionalBool.allocationSize(value.hideHeader) +
+        FfiConverterOptionalBool.allocationSize(value.preload) +
+        FfiConverterOptionalBool.allocationSize(value.appPrompt) +
+        FfiConverterOptionalBool.allocationSize(value.confineToRoom) +
+        FfiConverterOptionalBool.allocationSize(value.hideScreensharing) +
+        FfiConverterOptionalBool.allocationSize(value.controlledAudioDevices) +
+        FfiConverterOptionalTypeNotificationType.allocationSize(
+          value.sendNotificationType
+        )
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
+ * Properties to create a new virtual Element Call widget.
+ *
+ * All these are required to start the widget in the first place.
+ * This is different from the `VirtualElementCallWidgetConfiguration` which
+ * configures the widgets behavior.
+ */
+export type VirtualElementCallWidgetProperties = {
   /**
    * The url to the app.
    *
@@ -304,44 +482,11 @@ export type VirtualElementCallWidgetOptions = {
    */
   parentUrl: string | undefined;
   /**
-   * Whether the branding header of Element call should be shown or if a
-   * mobile header navbar should be render.
-   *
-   * Default: [`HeaderStyle::Standard`]
-   */
-  header: HeaderStyle | undefined;
-  /**
-   * Whether the branding header of Element call should be hidden.
-   *
-   * Default: `true`
-   */
-  hideHeader: boolean | undefined;
-  /**
-   * If set, the lobby will be skipped and the widget will join the
-   * call on the `io.element.join` action.
-   *
-   * Default: `false`
-   */
-  preload: boolean | undefined;
-  /**
    * The font scale which will be used inside element call.
    *
    * Default: `1`
    */
   fontScale: /*f64*/ number | undefined;
-  /**
-   * Whether element call should prompt the user to open in the browser or
-   * the app.
-   *
-   * Default: `false`
-   */
-  appPrompt: boolean | undefined;
-  /**
-   * Make it not possible to get to the calls list in the webview.
-   *
-   * Default: `true`
-   */
-  confineToRoom: boolean | undefined;
   /**
    * The font to use, to adapt to the system font.
    */
@@ -352,16 +497,6 @@ export type VirtualElementCallWidgetOptions = {
    * Use `EncryptionSystem::Unencrypted` to disable encryption.
    */
   encryption: EncryptionSystem;
-  /**
-   * The intent of showing the call.
-   * If the user wants to start a call or join an existing one.
-   * Controls if the lobby is skipped or not.
-   */
-  intent: Intent | undefined;
-  /**
-   * Do not show the screenshare button.
-   */
-  hideScreensharing: boolean;
   /**
    * Can be used to pass a PostHog id to element call.
    */
@@ -391,38 +526,38 @@ export type VirtualElementCallWidgetOptions = {
    * This is only used by the embedded package of Element Call.
    */
   sentryEnvironment: string | undefined;
-  /**
-   * - `false`: the webview shows a a list of devices injected by the
-   * client. (used on ios & android)
-   */
-  controlledMediaDevices: boolean;
-  /**
-   * Whether and what type of notification Element Call should send, when
-   * starting a call.
-   */
-  sendNotificationType: NotificationType | undefined;
 };
 
 /**
- * Generated factory for {@link VirtualElementCallWidgetOptions} record objects.
+ * Generated factory for {@link VirtualElementCallWidgetProperties} record objects.
  */
-export const VirtualElementCallWidgetOptions = (() => {
-  const defaults = () => ({});
+export const VirtualElementCallWidgetProperties = (() => {
+  const defaults = () => ({
+    parentUrl: undefined,
+    fontScale: undefined,
+    font: undefined,
+    posthogUserId: undefined,
+    posthogApiHost: undefined,
+    posthogApiKey: undefined,
+    rageshakeSubmitUrl: undefined,
+    sentryDsn: undefined,
+    sentryEnvironment: undefined,
+  });
   const create = (() => {
     return uniffiCreateRecord<
-      VirtualElementCallWidgetOptions,
+      VirtualElementCallWidgetProperties,
       ReturnType<typeof defaults>
     >(defaults);
   })();
   return Object.freeze({
     /**
-     * Create a frozen instance of {@link VirtualElementCallWidgetOptions}, with defaults specified
+     * Create a frozen instance of {@link VirtualElementCallWidgetProperties}, with defaults specified
      * in Rust, in the {@link matrix_sdk} crate.
      */
     create,
 
     /**
-     * Create a frozen instance of {@link VirtualElementCallWidgetOptions}, with defaults specified
+     * Create a frozen instance of {@link VirtualElementCallWidgetProperties}, with defaults specified
      * in Rust, in the {@link matrix_sdk} crate.
      */
     new: create,
@@ -431,90 +566,57 @@ export const VirtualElementCallWidgetOptions = (() => {
      * Defaults specified in the {@link matrix_sdk} crate.
      */
     defaults: () =>
-      Object.freeze(defaults()) as Partial<VirtualElementCallWidgetOptions>,
+      Object.freeze(defaults()) as Partial<VirtualElementCallWidgetProperties>,
   });
 })();
 
-const FfiConverterTypeVirtualElementCallWidgetOptions = (() => {
-  type TypeName = VirtualElementCallWidgetOptions;
+const FfiConverterTypeVirtualElementCallWidgetProperties = (() => {
+  type TypeName = VirtualElementCallWidgetProperties;
   class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
     read(from: RustBuffer): TypeName {
       return {
         elementCallUrl: FfiConverterString.read(from),
         widgetId: FfiConverterString.read(from),
         parentUrl: FfiConverterOptionalString.read(from),
-        header: FfiConverterOptionalTypeHeaderStyle.read(from),
-        hideHeader: FfiConverterOptionalBool.read(from),
-        preload: FfiConverterOptionalBool.read(from),
         fontScale: FfiConverterOptionalFloat64.read(from),
-        appPrompt: FfiConverterOptionalBool.read(from),
-        confineToRoom: FfiConverterOptionalBool.read(from),
         font: FfiConverterOptionalString.read(from),
         encryption: FfiConverterTypeEncryptionSystem.read(from),
-        intent: FfiConverterOptionalTypeIntent.read(from),
-        hideScreensharing: FfiConverterBool.read(from),
         posthogUserId: FfiConverterOptionalString.read(from),
         posthogApiHost: FfiConverterOptionalString.read(from),
         posthogApiKey: FfiConverterOptionalString.read(from),
         rageshakeSubmitUrl: FfiConverterOptionalString.read(from),
         sentryDsn: FfiConverterOptionalString.read(from),
         sentryEnvironment: FfiConverterOptionalString.read(from),
-        controlledMediaDevices: FfiConverterBool.read(from),
-        sendNotificationType:
-          FfiConverterOptionalTypeNotificationType.read(from),
       };
     }
     write(value: TypeName, into: RustBuffer): void {
       FfiConverterString.write(value.elementCallUrl, into);
       FfiConverterString.write(value.widgetId, into);
       FfiConverterOptionalString.write(value.parentUrl, into);
-      FfiConverterOptionalTypeHeaderStyle.write(value.header, into);
-      FfiConverterOptionalBool.write(value.hideHeader, into);
-      FfiConverterOptionalBool.write(value.preload, into);
       FfiConverterOptionalFloat64.write(value.fontScale, into);
-      FfiConverterOptionalBool.write(value.appPrompt, into);
-      FfiConverterOptionalBool.write(value.confineToRoom, into);
       FfiConverterOptionalString.write(value.font, into);
       FfiConverterTypeEncryptionSystem.write(value.encryption, into);
-      FfiConverterOptionalTypeIntent.write(value.intent, into);
-      FfiConverterBool.write(value.hideScreensharing, into);
       FfiConverterOptionalString.write(value.posthogUserId, into);
       FfiConverterOptionalString.write(value.posthogApiHost, into);
       FfiConverterOptionalString.write(value.posthogApiKey, into);
       FfiConverterOptionalString.write(value.rageshakeSubmitUrl, into);
       FfiConverterOptionalString.write(value.sentryDsn, into);
       FfiConverterOptionalString.write(value.sentryEnvironment, into);
-      FfiConverterBool.write(value.controlledMediaDevices, into);
-      FfiConverterOptionalTypeNotificationType.write(
-        value.sendNotificationType,
-        into
-      );
     }
     allocationSize(value: TypeName): number {
       return (
         FfiConverterString.allocationSize(value.elementCallUrl) +
         FfiConverterString.allocationSize(value.widgetId) +
         FfiConverterOptionalString.allocationSize(value.parentUrl) +
-        FfiConverterOptionalTypeHeaderStyle.allocationSize(value.header) +
-        FfiConverterOptionalBool.allocationSize(value.hideHeader) +
-        FfiConverterOptionalBool.allocationSize(value.preload) +
         FfiConverterOptionalFloat64.allocationSize(value.fontScale) +
-        FfiConverterOptionalBool.allocationSize(value.appPrompt) +
-        FfiConverterOptionalBool.allocationSize(value.confineToRoom) +
         FfiConverterOptionalString.allocationSize(value.font) +
         FfiConverterTypeEncryptionSystem.allocationSize(value.encryption) +
-        FfiConverterOptionalTypeIntent.allocationSize(value.intent) +
-        FfiConverterBool.allocationSize(value.hideScreensharing) +
         FfiConverterOptionalString.allocationSize(value.posthogUserId) +
         FfiConverterOptionalString.allocationSize(value.posthogApiHost) +
         FfiConverterOptionalString.allocationSize(value.posthogApiKey) +
         FfiConverterOptionalString.allocationSize(value.rageshakeSubmitUrl) +
         FfiConverterOptionalString.allocationSize(value.sentryDsn) +
-        FfiConverterOptionalString.allocationSize(value.sentryEnvironment) +
-        FfiConverterBool.allocationSize(value.controlledMediaDevices) +
-        FfiConverterOptionalTypeNotificationType.allocationSize(
-          value.sendNotificationType
-        )
+        FfiConverterOptionalString.allocationSize(value.sentryEnvironment)
       );
     }
   }
@@ -868,6 +970,15 @@ export enum Intent {
    * The user wants to join an existing call.
    */
   JoinExisting,
+  /**
+   * The user wants to join an existing call that is a "Direct Message" (DM)
+   * room.
+   */
+  JoinExistingDm,
+  /**
+   * The user wants to start a call in a "Direct Message" (DM) room.
+   */
+  StartCallDm,
 }
 
 const FfiConverterTypeIntent = (() => {
@@ -880,6 +991,10 @@ const FfiConverterTypeIntent = (() => {
           return Intent.StartCall;
         case 2:
           return Intent.JoinExisting;
+        case 3:
+          return Intent.JoinExistingDm;
+        case 4:
+          return Intent.StartCallDm;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
       }
@@ -890,6 +1005,10 @@ const FfiConverterTypeIntent = (() => {
           return ordinalConverter.write(1, into);
         case Intent.JoinExisting:
           return ordinalConverter.write(2, into);
+        case Intent.JoinExistingDm:
+          return ordinalConverter.write(3, into);
+        case Intent.StartCallDm:
+          return ordinalConverter.write(4, into);
       }
     }
     allocationSize(value: TypeName): number {
@@ -1008,11 +1127,13 @@ export enum QrCodeLoginError_Tags {
   LoginFailure = 'LoginFailure',
   UnexpectedMessage = 'UnexpectedMessage',
   SecureChannel = 'SecureChannel',
+  NotFound = 'NotFound',
   CrossProcessRefreshLock = 'CrossProcessRefreshLock',
   UserIdDiscovery = 'UserIdDiscovery',
   SessionTokens = 'SessionTokens',
   DeviceKeyUpload = 'DeviceKeyUpload',
   SecretImport = 'SecretImport',
+  ServerReset = 'ServerReset',
 }
 /**
  * The error type for failures while trying to log in a new device using a QR
@@ -1121,6 +1242,31 @@ export const QrCodeLoginError = (() => {
     }
   }
   /**
+   * The rendezvous session was not found and might have expired.
+   */
+  class NotFound extends UniffiError {
+    /**
+     * @private
+     * This field is private and should not be used.
+     */
+    readonly [uniffiTypeNameSymbol]: string = 'QrCodeLoginError';
+    /**
+     * @private
+     * This field is private and should not be used.
+     */
+    readonly [variantOrdinalSymbol] = 5;
+
+    public readonly tag = QrCodeLoginError_Tags.NotFound;
+
+    constructor(message: string) {
+      super('QrCodeLoginError', 'NotFound', message);
+    }
+
+    static instanceOf(e: any): e is NotFound {
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 5;
+    }
+  }
+  /**
    * The cross-process refresh lock failed to be initialized.
    */
   class CrossProcessRefreshLock extends UniffiError {
@@ -1133,7 +1279,7 @@ export const QrCodeLoginError = (() => {
      * @private
      * This field is private and should not be used.
      */
-    readonly [variantOrdinalSymbol] = 5;
+    readonly [variantOrdinalSymbol] = 6;
 
     public readonly tag = QrCodeLoginError_Tags.CrossProcessRefreshLock;
 
@@ -1142,7 +1288,7 @@ export const QrCodeLoginError = (() => {
     }
 
     static instanceOf(e: any): e is CrossProcessRefreshLock {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 5;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 6;
     }
   }
   /**
@@ -1160,7 +1306,7 @@ export const QrCodeLoginError = (() => {
      * @private
      * This field is private and should not be used.
      */
-    readonly [variantOrdinalSymbol] = 6;
+    readonly [variantOrdinalSymbol] = 7;
 
     public readonly tag = QrCodeLoginError_Tags.UserIdDiscovery;
 
@@ -1169,7 +1315,7 @@ export const QrCodeLoginError = (() => {
     }
 
     static instanceOf(e: any): e is UserIdDiscovery {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 6;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 7;
     }
   }
   /**
@@ -1186,7 +1332,7 @@ export const QrCodeLoginError = (() => {
      * @private
      * This field is private and should not be used.
      */
-    readonly [variantOrdinalSymbol] = 7;
+    readonly [variantOrdinalSymbol] = 8;
 
     public readonly tag = QrCodeLoginError_Tags.SessionTokens;
 
@@ -1195,7 +1341,7 @@ export const QrCodeLoginError = (() => {
     }
 
     static instanceOf(e: any): e is SessionTokens {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 7;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 8;
     }
   }
   /**
@@ -1211,7 +1357,7 @@ export const QrCodeLoginError = (() => {
      * @private
      * This field is private and should not be used.
      */
-    readonly [variantOrdinalSymbol] = 8;
+    readonly [variantOrdinalSymbol] = 9;
 
     public readonly tag = QrCodeLoginError_Tags.DeviceKeyUpload;
 
@@ -1220,7 +1366,7 @@ export const QrCodeLoginError = (() => {
     }
 
     static instanceOf(e: any): e is DeviceKeyUpload {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 8;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 9;
     }
   }
   /**
@@ -1237,7 +1383,7 @@ export const QrCodeLoginError = (() => {
      * @private
      * This field is private and should not be used.
      */
-    readonly [variantOrdinalSymbol] = 9;
+    readonly [variantOrdinalSymbol] = 10;
 
     public readonly tag = QrCodeLoginError_Tags.SecretImport;
 
@@ -1246,7 +1392,33 @@ export const QrCodeLoginError = (() => {
     }
 
     static instanceOf(e: any): e is SecretImport {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 9;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 10;
+    }
+  }
+  /**
+   * The other party told us to use a different homeserver but we failed to
+   * reset the server URL.
+   */
+  class ServerReset extends UniffiError {
+    /**
+     * @private
+     * This field is private and should not be used.
+     */
+    readonly [uniffiTypeNameSymbol]: string = 'QrCodeLoginError';
+    /**
+     * @private
+     * This field is private and should not be used.
+     */
+    readonly [variantOrdinalSymbol] = 11;
+
+    public readonly tag = QrCodeLoginError_Tags.ServerReset;
+
+    constructor(message: string) {
+      super('QrCodeLoginError', 'ServerReset', message);
+    }
+
+    static instanceOf(e: any): e is ServerReset {
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 11;
     }
   }
 
@@ -1259,11 +1431,13 @@ export const QrCodeLoginError = (() => {
     LoginFailure,
     UnexpectedMessage,
     SecureChannel,
+    NotFound,
     CrossProcessRefreshLock,
     UserIdDiscovery,
     SessionTokens,
     DeviceKeyUpload,
     SecretImport,
+    ServerReset,
     instanceOf,
   };
 })();
@@ -1304,27 +1478,35 @@ const FfiConverterTypeQRCodeLoginError = (() => {
           );
 
         case 5:
+          return new QrCodeLoginError.NotFound(FfiConverterString.read(from));
+
+        case 6:
           return new QrCodeLoginError.CrossProcessRefreshLock(
             FfiConverterString.read(from)
           );
 
-        case 6:
+        case 7:
           return new QrCodeLoginError.UserIdDiscovery(
             FfiConverterString.read(from)
           );
 
-        case 7:
+        case 8:
           return new QrCodeLoginError.SessionTokens(
             FfiConverterString.read(from)
           );
 
-        case 8:
+        case 9:
           return new QrCodeLoginError.DeviceKeyUpload(
             FfiConverterString.read(from)
           );
 
-        case 9:
+        case 10:
           return new QrCodeLoginError.SecretImport(
+            FfiConverterString.read(from)
+          );
+
+        case 11:
+          return new QrCodeLoginError.ServerReset(
             FfiConverterString.read(from)
           );
 
@@ -1776,6 +1958,7 @@ export default Object.freeze({
     FfiConverterTypeRoomPaginationStatus,
     FfiConverterTypeRoomPowerLevelChanges,
     FfiConverterTypeServerVendorInfo,
-    FfiConverterTypeVirtualElementCallWidgetOptions,
+    FfiConverterTypeVirtualElementCallWidgetConfig,
+    FfiConverterTypeVirtualElementCallWidgetProperties,
   },
 });

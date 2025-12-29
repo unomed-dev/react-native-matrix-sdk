@@ -1,356 +1,193 @@
 diff --git a/Cargo.lock b/Cargo.lock
-index 17625d434..451eb3d2d 100644
+index e47e06f41..93ec4e2c5 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -217,43 +217,44 @@ checksum = "9dbc3a507a82b17ba0d98f6ce8fd6954ea0c8152e98009d36a40d8dcc8ce078a"
+@@ -4957,7 +4957,7 @@ dependencies = [
+  "ruma-identifiers-validation",
+  "serde",
+  "syn 2.0.101",
+- "toml",
++ "toml 0.9.7",
+ ]
  
  [[package]]
- name = "askama"
--version = "0.12.1"
-+version = "0.13.1"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "b79091df18a97caea757e28cd2d5fda49c6cd4bd01ddffd7ff01ace0c0ad2c28"
-+checksum = "5d4744ed2eef2645831b441d8f5459689ade2ab27c854488fbab1fbe94fce1a7"
- dependencies = [
-  "askama_derive",
-- "askama_escape",
-+ "itoa",
-+ "percent-encoding",
+@@ -6144,18 +6144,25 @@ dependencies = [
+  "tokio",
+ ]
+ 
++[[package]]
++name = "toml"
++version = "0.5.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f4f7f0dd8d50a853a531c426359045b1998f04219d88799810762cd4ad314234"
++dependencies = [
 + "serde",
-+ "serde_json",
- ]
- 
++]
++
  [[package]]
- name = "askama_derive"
--version = "0.12.5"
-+version = "0.13.1"
+ name = "toml"
+ version = "0.9.7"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "19fe8d6cb13c4714962c072ea496f3392015f0989b1a2847bb4b2d9effd71d83"
-+checksum = "d661e0f57be36a5c14c48f78d09011e67e0cb618f269cca9f2fd8d15b68c46ac"
+ checksum = "00e5e5d9bf2475ac9d4f0d9edab68cc573dc2fd644b0dba36b0c30a92dd9eaa0"
  dependencies = [
-  "askama_parser",
-  "basic-toml",
-- "mime",
-- "mime_guess",
-+ "memchr",
-  "proc-macro2",
-  "quote",
-+ "rustc-hash 2.0.0",
-  "serde",
-+ "serde_derive",
-  "syn",
- ]
- 
--[[package]]
--name = "askama_escape"
--version = "0.10.3"
--source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "619743e34b5ba4e9703bba34deac3427c72507c7159f5fd030aea8cac0cfe341"
--
- [[package]]
- name = "askama_parser"
--version = "0.2.1"
-+version = "0.13.0"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "acb1161c6b64d1c3d83108213c2a2533a342ac225aabd0bda218278c2ddb00c0"
-+checksum = "cf315ce6524c857bb129ff794935cf6d42c82a6cff60526fe2a63593de4d0d4f"
- dependencies = [
-- "nom",
-+ "memchr",
-+ "serde",
-+ "serde_derive",
-+ "winnow 0.7.13",
- ]
- 
- [[package]]
-@@ -670,16 +671,16 @@ dependencies = [
- 
- [[package]]
- name = "cargo_metadata"
--version = "0.15.4"
-+version = "0.19.2"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "eee4243f1f26fc7a42710e7439c149e2b10b05472f88090acce52632f231a73a"
-+checksum = "dd5eb614ed4c27c5d706420e4320fbe3216ab31fa1c33cd8246ac36dae4479ba"
- dependencies = [
-  "camino",
-  "cargo-platform",
-  "semver",
-  "serde",
-  "serde_json",
-- "thiserror 1.0.63",
-+ "thiserror 2.0.16",
- ]
- 
- [[package]]
-@@ -3650,16 +3651,6 @@ version = "0.1.54"
- source = "registry+https://github.com/rust-lang/crates.io-index"
- checksum = "cbf6f36070878c42c5233846cd3de24cf9016828fd47bc22957a687298bb21fc"
- 
--[[package]]
--name = "mime_guess"
--version = "2.0.5"
--source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "f7c44f8e672c00fe5308fa235f821cb4198414e1c77935c1ab6948d3fd78550e"
--dependencies = [
-- "mime",
-- "unicase",
--]
--
- [[package]]
- name = "minicov"
- version = "0.3.7"
-@@ -6073,7 +6064,7 @@ dependencies = [
-  "serde",
+- "indexmap",
+  "serde_core",
   "serde_spanned",
-  "toml_datetime",
-- "winnow",
-+ "winnow 0.6.20",
+  "toml_datetime 0.7.2",
+  "toml_parser",
+- "toml_writer",
+  "winnow 0.7.13",
  ]
  
+@@ -6194,12 +6201,6 @@ dependencies = [
+  "winnow 0.7.13",
+ ]
+ 
+-[[package]]
+-name = "toml_writer"
+-version = "1.0.4"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "df8b2b54733674ad286d16267dcfc7a71ed5c776e4ac7aa3c3e2561f7c637bf2"
+-
  [[package]]
-@@ -6339,17 +6330,19 @@ checksum = "1fc81956842c57dac11422a97c3b8195a1ff727f06e85c84ed2e8aa277c9a0fd"
+ name = "tower"
+ version = "0.5.2"
+@@ -6484,9 +6485,9 @@ checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
  
  [[package]]
  name = "uniffi"
--version = "0.28.0"
-+version = "0.29.4"
+-version = "0.30.0"
++version = "0.29.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "f31bff6daf87277a9014bcdefbc2842b0553392919d1096843c5aad899ca4588"
-+checksum = "c6d968cb62160c11f2573e6be724ef8b1b18a277aededd17033f8a912d73e2b4"
+-checksum = "c866f627c3f04c3df068b68bb2d725492caaa539dd313e2a9d26bb85b1a32f4e"
++checksum = "3291800a6b06569f7d3e15bdb6dc235e0f0c8bd3eb07177f430057feb076415f"
  dependencies = [
   "anyhow",
   "camino",
-+ "cargo_metadata",
-  "clap",
-  "uniffi_bindgen",
-  "uniffi_build",
-  "uniffi_core",
-  "uniffi_macros",
-+ "uniffi_pipeline",
- ]
- 
- [[package]]
-@@ -6361,9 +6354,9 @@ dependencies = [
+@@ -6508,9 +6509,9 @@ dependencies = [
  
  [[package]]
  name = "uniffi_bindgen"
--version = "0.28.0"
-+version = "0.29.4"
+-version = "0.30.0"
++version = "0.29.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "96061d7e01b185aa405f7c9b134741ab3e50cc6796a47d6fd8ab9a5364b5feed"
-+checksum = "f6b39ef1acbe1467d5d210f274fae344cb6f8766339330cb4c9688752899bf6b"
+-checksum = "7c8ca600167641ebe7c8ba9254af40492dda3397c528cc3b2f511bd23e8541a5"
++checksum = "a04b99fa7796eaaa7b87976a0dbdd1178dc1ee702ea00aca2642003aef9b669e"
  dependencies = [
   "anyhow",
   "askama",
-@@ -6373,60 +6366,61 @@ dependencies = [
-  "glob",
-  "goblin",
-  "heck",
-+ "indexmap",
-  "once_cell",
-- "paste",
+@@ -6525,7 +6526,7 @@ dependencies = [
   "serde",
-+ "tempfile",
+  "tempfile",
   "textwrap",
-  "toml 0.5.11",
-+ "uniffi_internal_macros",
+- "toml",
++ "toml 0.5.11",
+  "uniffi_internal_macros",
   "uniffi_meta",
-- "uniffi_testing",
-+ "uniffi_pipeline",
-  "uniffi_udl",
- ]
+  "uniffi_pipeline",
+@@ -6534,9 +6535,9 @@ dependencies = [
  
  [[package]]
  name = "uniffi_build"
--version = "0.28.0"
-+version = "0.29.4"
+-version = "0.30.0"
++version = "0.29.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "9d6b86f9b221046af0c533eafe09ece04e2f1ded04ccdc9bba0ec09aec1c52bd"
-+checksum = "6683e6b665423cddeacd89a3f97312cf400b2fb245a26f197adaf65c45d505b2"
+-checksum = "3e55c05228f4858bb258f651d21d743fcc1fe5a2ec20d3c0f9daefddb105ee4d"
++checksum = "025a05cba02ee22b6624ac3d257e59c7395319ea8fe1aae33a7cdb4e2a3016cc"
  dependencies = [
   "anyhow",
   "camino",
-  "uniffi_bindgen",
- ]
+@@ -6545,9 +6546,9 @@ dependencies = [
  
--[[package]]
--name = "uniffi_checksum_derive"
--version = "0.28.3"
--source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "802d2051a700e3ec894c79f80d2705b69d85844dafbbe5d1a92776f8f48b563a"
--dependencies = [
-- "quote",
-- "syn",
--]
--
  [[package]]
  name = "uniffi_core"
--version = "0.28.0"
-+version = "0.29.4"
+-version = "0.30.0"
++version = "0.29.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "3210d57d6ab6065ab47a2898dacdb7c606fd6a4156196831fa3bf82e34ac58a6"
-+checksum = "c2d990b553d6b9a7ee9c3ae71134674739913d52350b56152b0e613595bb5a6f"
+-checksum = "7e7a5a038ebffe8f4cf91416b154ef3c2468b18e828b7009e01b1b99938089f9"
++checksum = "f38a9a27529ccff732f8efddb831b65b1e07f7dea3fd4cacd4a35a8c4b253b98"
  dependencies = [
   "anyhow",
   "async-compat",
-  "bytes",
-- "camino",
-- "log",
-  "once_cell",
-- "paste",
-  "static_assertions",
- ]
+@@ -6558,9 +6559,9 @@ dependencies = [
  
-+[[package]]
-+name = "uniffi_internal_macros"
-+version = "0.29.4"
-+source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "04f4f224becf14885c10e6e400b95cc4d1985738140cb194ccc2044563f8a56b"
-+dependencies = [
-+ "anyhow",
-+ "indexmap",
-+ "proc-macro2",
-+ "quote",
-+ "syn",
-+]
-+
+ [[package]]
+ name = "uniffi_internal_macros"
+-version = "0.30.0"
++version = "0.29.5"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "e3c2a6f93e7b73726e2015696ece25ca0ac5a5f1cf8d6a7ab5214dd0a01d2edf"
++checksum = "09acd2ce09c777dd65ee97c251d33c8a972afc04873f1e3b21eb3492ade16933"
+ dependencies = [
+  "anyhow",
+  "indexmap",
+@@ -6571,9 +6572,9 @@ dependencies = [
+ 
  [[package]]
  name = "uniffi_macros"
--version = "0.28.0"
-+version = "0.29.4"
+-version = "0.30.0"
++version = "0.29.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "b58691741080935437dc862122e68d7414432a11824ac1137868de46181a0bd2"
-+checksum = "b481d385af334871d70904e6a5f129be7cd38c18fcf8dd8fd1f646b426a56d58"
+-checksum = "64c6309fc36c7992afc03bc0c5b059c656bccbef3f2a4bc362980017f8936141"
++checksum = "5596f178c4f7aafa1a501c4e0b96236a96bc2ef92bdb453d83e609dad0040152"
  dependencies = [
-- "bincode",
   "camino",
   "fs-err",
-  "once_cell",
-@@ -6440,39 +6434,38 @@ dependencies = [
+@@ -6582,15 +6583,15 @@ dependencies = [
+  "quote",
+  "serde",
+  "syn 2.0.101",
+- "toml",
++ "toml 0.5.11",
+  "uniffi_meta",
+ ]
  
  [[package]]
  name = "uniffi_meta"
--version = "0.28.0"
-+version = "0.29.4"
+-version = "0.30.0"
++version = "0.29.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "7663eacdbd9fbf4a88907ddcfe2e6fa85838eb6dc2418a7d91eebb3786f8e20b"
-+checksum = "10f817868a3b171bb7bf259e882138d104deafde65684689b4694c846d322491"
+-checksum = "0a138823392dba19b0aa494872689f97d0ee157de5852e2bec157ce6de9cdc22"
++checksum = "beadc1f460eb2e209263c49c4f5b19e9a02e00a3b2b393f78ad10d766346ecff"
  dependencies = [
   "anyhow",
-- "bytes",
   "siphasher 0.3.11",
-- "uniffi_checksum_derive",
-+ "uniffi_internal_macros",
-+ "uniffi_pipeline",
- ]
+@@ -6600,9 +6601,9 @@ dependencies = [
  
  [[package]]
--name = "uniffi_testing"
--version = "0.28.0"
-+name = "uniffi_pipeline"
-+version = "0.29.4"
+ name = "uniffi_pipeline"
+-version = "0.30.0"
++version = "0.29.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "f922465f7566f25f8fe766920205fdfa9a3fcdc209c6bfb7557f0b5bf45b04dd"
-+checksum = "4b147e133ad7824e32426b90bc41fda584363563f2ba747f590eca1fd6fd14e6"
+-checksum = "8c27c4b515d25f8e53cc918e238c39a79c3144a40eaf2e51c4a7958973422c29"
++checksum = "dd76b3ac8a2d964ca9fce7df21c755afb4c77b054a85ad7a029ad179cc5abb8a"
  dependencies = [
   "anyhow",
-- "camino",
-- "cargo_metadata",
-- "fs-err",
-- "once_cell",
-+ "heck",
-+ "indexmap",
-+ "tempfile",
-+ "uniffi_internal_macros",
- ]
+  "heck",
+@@ -6613,9 +6614,9 @@ dependencies = [
  
  [[package]]
  name = "uniffi_udl"
--version = "0.28.0"
-+version = "0.29.4"
+-version = "0.30.0"
++version = "0.29.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "cef408229a3a407fafa4c36dc4f6ece78a6fb258ab28d2b64bddd49c8cb680f6"
-+checksum = "caed654fb73da5abbc7a7e9c741532284532ba4762d6fe5071372df22a41730a"
+-checksum = "d0adacdd848aeed7af4f5af7d2f621d5e82531325d405e29463482becfdeafca"
++checksum = "4319cf905911d70d5b97ce0f46f101619a22e9a189c8c46d797a9955e9233716"
  dependencies = [
   "anyhow",
   "textwrap",
-  "uniffi_meta",
-- "uniffi_testing",
-  "weedle2",
- ]
- 
-@@ -7182,6 +7175,15 @@ dependencies = [
-  "memchr",
- ]
- 
-+[[package]]
-+name = "winnow"
-+version = "0.7.13"
-+source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "21a0236b59786fed61e2a80582dd500fe61f18b5dca67a4a067d0bc9039339cf"
-+dependencies = [
-+ "memchr",
-+]
-+
- [[package]]
- name = "wiremock"
- version = "0.6.5"
 diff --git a/Cargo.toml b/Cargo.toml
-index 399e7b6f6..45cec4598 100644
+index 23e28a80b..ffe025b2c 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -102,8 +102,8 @@ tracing-appender = "0.2.3"
+@@ -105,8 +105,8 @@ tracing-appender = "0.2.3"
  tracing-core = "0.1.34"
  tracing-subscriber = "0.3.20"
- unicode-normalization = "0.1.24"
--uniffi = { version = "0.28.0" }
--uniffi_bindgen = { version = "0.28.0" }
+ unicode-normalization = "0.1.25"
+-uniffi = { version = "0.30.0" }
+-uniffi_bindgen = { version = "0.30.0" }
 +uniffi = { version = "0.29.4" }
 +uniffi_bindgen = { version = "0.29.4" }
  url = "2.5.7"
- uuid = "1.18.0"
+ uuid = "1.18.1"
  vergen-gitcl = "1.0.8"
-diff --git a/bindings/matrix-sdk-ffi/src/api.udl b/bindings/matrix-sdk-ffi/src/api.udl
-index c7caa1afb..c5fa1c1ff 100644
---- a/bindings/matrix-sdk-ffi/src/api.udl
-+++ b/bindings/matrix-sdk-ffi/src/api.udl
-@@ -1,10 +1,12 @@
- namespace matrix_sdk_ffi {};
- 
-+[Remote]
- dictionary Mentions {
-   sequence<string> user_ids;
-   boolean room;
- };
- 
-+[Remote]
- interface RoomMessageEventContentWithoutRelation {
-     RoomMessageEventContentWithoutRelation with_mentions(Mentions mentions);
- };
-diff --git a/xtask/src/swift.rs b/xtask/src/swift.rs
-index bf8e7f345..a2a315553 100644
---- a/xtask/src/swift.rs
-+++ b/xtask/src/swift.rs
-@@ -8,6 +8,7 @@ use clap::{Args, Subcommand};
- use uniffi_bindgen::{bindings::SwiftBindingGenerator, library_mode::generate_bindings};
- use xshell::cmd;
- 
-+use cargo_metadata::MetadataCommand;
- use crate::{Result, sh, workspace};
- 
- /// Builds the SDK for Swift as a Static Library or XCFramework.
-@@ -185,7 +186,12 @@ fn build_library() -> Result<()> {
- }
- 
- fn generate_uniffi(library_path: &Utf8Path, ffi_directory: &Utf8Path) -> Result<()> {
--    generate_bindings(library_path, None, &SwiftBindingGenerator, None, ffi_directory, false)?;
-+    let manifest_path = std::env::current_dir()?.join("Cargo.toml");
-+    println!("manifest path {:?}", manifest_path);
-+    let metadata = MetadataCommand::new().manifest_path(manifest_path).exec()?;
-+    let config_supplier = CrateConfigSupplier::from(metadata);
-+
-+    generate_bindings(library_path, None, &SwiftBindingGenerator, &config_supplier, None, ffi_directory, false)?;
-     Ok(())
- }
- 

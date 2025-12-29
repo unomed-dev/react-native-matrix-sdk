@@ -58,7 +58,7 @@ const uniffiIsDebug =
 // Public interface members begin here.
 
 /**
- * The retention policy for media content used by the [`EventCacheStore`].
+ * The retention policy for media content used by the [`MediaStore`].
  *
  * [`EventCacheStore`]: crate::event_cache::store::EventCacheStore
  */

@@ -1,7 +1,7 @@
 ---
 crate:
   repo: https://github.com/matrix-org/matrix-rust-sdk
-  rev: 5ef3ecac8c63d2373d8e45a47807769e602ebd89 # matrix-sdk-base-0.14.1
+  rev: 742a0db07bde3afd049077e7962948111473e1e1 # matrix-sdk-base-0.16.0
   manifestPath: bindings/matrix-sdk-ffi/Cargo.toml
 android:
   cargoExtras: ['--features', 'rustls-tls']

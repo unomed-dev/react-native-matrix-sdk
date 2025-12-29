@@ -1210,3 +1210,46 @@ public object FfiConverterTypeSpaceRoomListPaginationState : FfiConverterRustBuf
 
 
 
+
+
+/**
+ * The level of read receipt tracking for the timeline.
+ */
+
+enum class TimelineReadReceiptTracking {
+    
+    /**
+     * Track read receipts for all events.
+     */
+    ALL_EVENTS,
+    /**
+     * Track read receipts only for message-like events.
+     */
+    MESSAGE_LIKE_EVENTS,
+    /**
+     * Disable read receipt tracking.
+     */
+    DISABLED;
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTimelineReadReceiptTracking: FfiConverterRustBuffer<TimelineReadReceiptTracking> {
+    override fun read(buf: ByteBuffer) = try {
+        TimelineReadReceiptTracking.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TimelineReadReceiptTracking) = 4UL
+
+    override fun write(value: TimelineReadReceiptTracking, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+

@@ -1100,7 +1100,7 @@ public object FfiConverterDuration: FfiConverterRustBuffer<java.time.Duration> {
 
 
 /**
- * The retention policy for media content used by the [`EventCacheStore`].
+ * The retention policy for media content used by the [`MediaStore`].
  *
  * [`EventCacheStore`]: crate::event_cache::store::EventCacheStore
  */
