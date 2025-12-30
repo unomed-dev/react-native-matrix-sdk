@@ -14456,6 +14456,22 @@ public protocol SyncServiceBuilderProtocol: AnyObject, Sendable {
     func withCrossProcessLock()  -> SyncServiceBuilder
     
     /**
+     * Add extra required state events to sync beyond the defaults.
+     *
+     * These will be merged with the default required state and synced for all
+     * rooms in the room list. This is useful for syncing custom state events
+     * that your application needs.
+     *
+     * # Arguments
+     *
+     * * `required_state` - A list of extra required state entries to sync. Use
+     * `StateEventType::Custom` for custom event types like
+     * `com.example.custom`. For state_key, use empty string for events with
+     * no state key, or `"*"` to match all state keys for this event type.
+     */
+    func withExtraRequiredState(requiredState: [ExtraRequiredState])  -> SyncServiceBuilder
+    
+    /**
      * Enable the "offline" mode for the [`SyncService`].
      */
     func withOfflineMode()  -> SyncServiceBuilder
@@ -14535,6 +14551,28 @@ open func finish()async throws  -> SyncService  {
 open func withCrossProcessLock() -> SyncServiceBuilder  {
     return try!  FfiConverterTypeSyncServiceBuilder_lift(try! rustCall() {
     uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Add extra required state events to sync beyond the defaults.
+     *
+     * These will be merged with the default required state and synced for all
+     * rooms in the room list. This is useful for syncing custom state events
+     * that your application needs.
+     *
+     * # Arguments
+     *
+     * * `required_state` - A list of extra required state entries to sync. Use
+     * `StateEventType::Custom` for custom event types like
+     * `com.example.custom`. For state_key, use empty string for events with
+     * no state key, or `"*"` to match all state keys for this event type.
+     */
+open func withExtraRequiredState(requiredState: [ExtraRequiredState]) -> SyncServiceBuilder  {
+    return try!  FfiConverterTypeSyncServiceBuilder_lift(try! rustCall() {
+    uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_required_state(self.uniffiClonePointer(),
+        FfiConverterSequenceTypeExtraRequiredState.lower(requiredState),$0
     )
 })
 }
@@ -17989,6 +18027,93 @@ public func FfiConverterTypeEventTimelineItemDebugInfo_lift(_ buf: RustBuffer) t
 #endif
 public func FfiConverterTypeEventTimelineItemDebugInfo_lower(_ value: EventTimelineItemDebugInfo) -> RustBuffer {
     return FfiConverterTypeEventTimelineItemDebugInfo.lower(value)
+}
+
+
+/**
+ * An extra required state entry for sliding sync.
+ */
+public struct ExtraRequiredState {
+    /**
+     * The state event type to sync.
+     */
+    public var eventType: StateEventType
+    /**
+     * The state key to match. Use empty string for events with no state key,
+     * or `"*"` to match all state keys for this event type.
+     */
+    public var stateKey: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The state event type to sync.
+         */eventType: StateEventType, 
+        /**
+         * The state key to match. Use empty string for events with no state key,
+         * or `"*"` to match all state keys for this event type.
+         */stateKey: String) {
+        self.eventType = eventType
+        self.stateKey = stateKey
+    }
+}
+
+#if compiler(>=6)
+extension ExtraRequiredState: Sendable {}
+#endif
+
+
+extension ExtraRequiredState: Equatable, Hashable {
+    public static func ==(lhs: ExtraRequiredState, rhs: ExtraRequiredState) -> Bool {
+        if lhs.eventType != rhs.eventType {
+            return false
+        }
+        if lhs.stateKey != rhs.stateKey {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(eventType)
+        hasher.combine(stateKey)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeExtraRequiredState: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ExtraRequiredState {
+        return
+            try ExtraRequiredState(
+                eventType: FfiConverterTypeStateEventType.read(from: &buf), 
+                stateKey: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ExtraRequiredState, into buf: inout [UInt8]) {
+        FfiConverterTypeStateEventType.write(value.eventType, into: &buf)
+        FfiConverterString.write(value.stateKey, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeExtraRequiredState_lift(_ buf: RustBuffer) throws -> ExtraRequiredState {
+    return try FfiConverterTypeExtraRequiredState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeExtraRequiredState_lower(_ value: ExtraRequiredState) -> RustBuffer {
+    return FfiConverterTypeExtraRequiredState.lower(value)
 }
 
 
@@ -46788,6 +46913,31 @@ fileprivate struct FfiConverterSequenceTypeConditionalPushRule: FfiConverterRust
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeExtraRequiredState: FfiConverterRustBuffer {
+    typealias SwiftType = [ExtraRequiredState]
+
+    public static func write(_ value: [ExtraRequiredState], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeExtraRequiredState.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [ExtraRequiredState] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [ExtraRequiredState]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeExtraRequiredState.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeIdentityStatusChange: FfiConverterRustBuffer {
     typealias SwiftType = [IdentityStatusChange]
 
@@ -49548,6 +49698,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_cross_process_lock() != 56326) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state() != 662) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode() != 16958) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -49939,11 +50092,11 @@ private let initializationResult: InitializationResult = {
     uniffiCallbackInitUnableToDecryptDelegate()
     uniffiCallbackInitVerificationStateListener()
     uniffiCallbackInitWidgetCapabilitiesProvider()
-    uniffiEnsureMatrixSdkUiInitialized()
-    uniffiEnsureMatrixSdkInitialized()
-    uniffiEnsureMatrixSdkBaseInitialized()
-    uniffiEnsureMatrixSdkCommonInitialized()
     uniffiEnsureMatrixSdkCryptoInitialized()
+    uniffiEnsureMatrixSdkBaseInitialized()
+    uniffiEnsureMatrixSdkInitialized()
+    uniffiEnsureMatrixSdkCommonInitialized()
+    uniffiEnsureMatrixSdkUiInitialized()
     return InitializationResult.ok
 }()
 

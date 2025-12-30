@@ -1615,6 +1615,9 @@ uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_finish(void *ptr);
 void *
 uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(
     void *ptr, RustCallStatus *uniffi_out_err);
+void *
+uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_required_state(
+    void *ptr, RustBuffer required_state, RustCallStatus *uniffi_out_err);
 void *uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_offline_mode(
     void *ptr, RustCallStatus *uniffi_out_err);
 void *uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_share_pos(
@@ -2651,6 +2654,8 @@ uint16_t uniffi_matrix_sdk_ffi_checksum_method_syncservice_stop();
 uint16_t uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_finish();
 uint16_t
 uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_cross_process_lock();
+uint16_t
+uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state();
 uint16_t
 uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode();
 uint16_t
@@ -23070,6 +23075,19 @@ NativeMatrixSdkFfi::NativeMatrixSdkFfi(
             ->cpp_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(
                 rt, thisVal, args, count);
       });
+  props["ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_"
+        "required_state"] = jsi::Function::createFromHostFunction(
+      rt,
+      jsi::PropNameID::forAscii(rt,
+                                "ubrn_uniffi_matrix_sdk_ffi_fn_method_"
+                                "syncservicebuilder_with_extra_required_state"),
+      2,
+      [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+             const jsi::Value *args, size_t count) -> jsi::Value {
+        return this
+            ->cpp_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_required_state(
+                rt, thisVal, args, count);
+      });
   props["ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_offline_"
         "mode"] = jsi::Function::createFromHostFunction(
       rt,
@@ -30645,6 +30663,19 @@ NativeMatrixSdkFfi::NativeMatrixSdkFfi(
              const jsi::Value *args, size_t count) -> jsi::Value {
         return this
             ->cpp_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_cross_process_lock(
+                rt, thisVal, args, count);
+      });
+  props["ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_"
+        "extra_required_state"] = jsi::Function::createFromHostFunction(
+      rt,
+      jsi::PropNameID::forAscii(rt,
+                                "ubrn_uniffi_matrix_sdk_ffi_checksum_method_"
+                                "syncservicebuilder_with_extra_required_state"),
+      0,
+      [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+             const jsi::Value *args, size_t count) -> jsi::Value {
+        return this
+            ->cpp_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state(
                 rt, thisVal, args, count);
       });
   props["ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_"
@@ -40333,6 +40364,23 @@ jsi::Value NativeMatrixSdkFfi::
   return uniffi_jsi::Bridging<void *>::toJs(rt, callInvoker, value);
 }
 jsi::Value NativeMatrixSdkFfi::
+    cpp_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_required_state(
+        jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+        size_t count) {
+  RustCallStatus status =
+      uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::rustSuccess(rt);
+  auto value =
+      uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_required_state(
+          uniffi_jsi::Bridging<void *>::fromJs(rt, callInvoker, args[0]),
+          uniffi::matrix_sdk_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker,
+                                                               args[1]),
+          &status);
+  uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::copyIntoJs(
+      rt, callInvoker, status, args[count - 1]);
+
+  return uniffi_jsi::Bridging<void *>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMatrixSdkFfi::
     cpp_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_offline_mode(
         jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
         size_t count) {
@@ -46684,6 +46732,15 @@ jsi::Value NativeMatrixSdkFfi::
         size_t count) {
   auto value =
       uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_cross_process_lock();
+
+  return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMatrixSdkFfi::
+    cpp_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state(
+        jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+        size_t count) {
+  auto value =
+      uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state();
 
   return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
 }

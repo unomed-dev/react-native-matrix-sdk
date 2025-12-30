@@ -2790,6 +2790,8 @@ internal open class UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider(
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is 
 // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -3648,6 +3650,8 @@ fun uniffi_matrix_sdk_ffi_checksum_method_syncservice_stop(
 fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_finish(
 ): Short
 fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_cross_process_lock(
+): Short
+fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state(
 ): Short
 fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode(
 ): Short
@@ -4950,6 +4954,8 @@ fun uniffi_matrix_sdk_ffi_fn_free_syncservicebuilder(`ptr`: Pointer,uniffi_out_e
 fun uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_finish(`ptr`: Pointer,
 ): Long
 fun uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): Pointer
+fun uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_required_state(`ptr`: Pointer,`requiredState`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Pointer
 fun uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_offline_mode(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
 ): Pointer
@@ -6629,6 +6635,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_cross_process_lock() != 56326.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state() != 662.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode() != 16958.toShort()) {
@@ -27440,6 +27449,22 @@ public interface SyncServiceBuilderInterface {
     fun `withCrossProcessLock`(): SyncServiceBuilder
     
     /**
+     * Add extra required state events to sync beyond the defaults.
+     *
+     * These will be merged with the default required state and synced for all
+     * rooms in the room list. This is useful for syncing custom state events
+     * that your application needs.
+     *
+     * # Arguments
+     *
+     * * `required_state` - A list of extra required state entries to sync. Use
+     * `StateEventType::Custom` for custom event types like
+     * `com.example.custom`. For state_key, use empty string for events with
+     * no state key, or `"*"` to match all state keys for this event type.
+     */
+    fun `withExtraRequiredState`(`requiredState`: List<ExtraRequiredState>): SyncServiceBuilder
+    
+    /**
      * Enable the "offline" mode for the [`SyncService`].
      */
     fun `withOfflineMode`(): SyncServiceBuilder
@@ -27558,6 +27583,32 @@ open class SyncServiceBuilder: Disposable, AutoCloseable, SyncServiceBuilderInte
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Add extra required state events to sync beyond the defaults.
+     *
+     * These will be merged with the default required state and synced for all
+     * rooms in the room list. This is useful for syncing custom state events
+     * that your application needs.
+     *
+     * # Arguments
+     *
+     * * `required_state` - A list of extra required state entries to sync. Use
+     * `StateEventType::Custom` for custom event types like
+     * `com.example.custom`. For state_key, use empty string for events with
+     * no state key, or `"*"` to match all state keys for this event type.
+     */override fun `withExtraRequiredState`(`requiredState`: List<ExtraRequiredState>): SyncServiceBuilder {
+            return FfiConverterTypeSyncServiceBuilder.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_required_state(
+        it, FfiConverterSequenceTypeExtraRequiredState.lower(`requiredState`),_status)
 }
     }
     )
@@ -31894,6 +31945,48 @@ public object FfiConverterTypeEventTimelineItemDebugInfo: FfiConverterRustBuffer
             FfiConverterString.write(value.`model`, buf)
             FfiConverterOptionalString.write(value.`originalJson`, buf)
             FfiConverterOptionalString.write(value.`latestEditJson`, buf)
+    }
+}
+
+
+
+/**
+ * An extra required state entry for sliding sync.
+ */
+data class ExtraRequiredState (
+    /**
+     * The state event type to sync.
+     */
+    var `eventType`: StateEventType, 
+    /**
+     * The state key to match. Use empty string for events with no state key,
+     * or `"*"` to match all state keys for this event type.
+     */
+    var `stateKey`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeExtraRequiredState: FfiConverterRustBuffer<ExtraRequiredState> {
+    override fun read(buf: ByteBuffer): ExtraRequiredState {
+        return ExtraRequiredState(
+            FfiConverterTypeStateEventType.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ExtraRequiredState) = (
+            FfiConverterTypeStateEventType.allocationSize(value.`eventType`) +
+            FfiConverterString.allocationSize(value.`stateKey`)
+    )
+
+    override fun write(value: ExtraRequiredState, buf: ByteBuffer) {
+            FfiConverterTypeStateEventType.write(value.`eventType`, buf)
+            FfiConverterString.write(value.`stateKey`, buf)
     }
 }
 
@@ -56659,6 +56752,34 @@ public object FfiConverterSequenceTypeConditionalPushRule: FfiConverterRustBuffe
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeConditionalPushRule.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeExtraRequiredState: FfiConverterRustBuffer<List<ExtraRequiredState>> {
+    override fun read(buf: ByteBuffer): List<ExtraRequiredState> {
+        val len = buf.getInt()
+        return List<ExtraRequiredState>(len) {
+            FfiConverterTypeExtraRequiredState.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<ExtraRequiredState>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeExtraRequiredState.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<ExtraRequiredState>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeExtraRequiredState.write(it, buf)
         }
     }
 }

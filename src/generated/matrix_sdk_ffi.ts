@@ -3880,6 +3880,74 @@ const FfiConverterTypeEventTimelineItemDebugInfo = (() => {
   return new FFIConverter();
 })();
 
+/**
+ * An extra required state entry for sliding sync.
+ */
+export type ExtraRequiredState = {
+  /**
+   * The state event type to sync.
+   */
+  eventType: StateEventType;
+  /**
+   * The state key to match. Use empty string for events with no state key,
+   * or `"*"` to match all state keys for this event type.
+   */
+  stateKey: string;
+};
+
+/**
+ * Generated factory for {@link ExtraRequiredState} record objects.
+ */
+export const ExtraRequiredState = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<ExtraRequiredState, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    /**
+     * Create a frozen instance of {@link ExtraRequiredState}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    create,
+
+    /**
+     * Create a frozen instance of {@link ExtraRequiredState}, with defaults specified
+     * in Rust, in the {@link matrix_sdk_ffi} crate.
+     */
+    new: create,
+
+    /**
+     * Defaults specified in the {@link matrix_sdk_ffi} crate.
+     */
+    defaults: () => Object.freeze(defaults()) as Partial<ExtraRequiredState>,
+  });
+})();
+
+const FfiConverterTypeExtraRequiredState = (() => {
+  type TypeName = ExtraRequiredState;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        eventType: FfiConverterTypeStateEventType.read(from),
+        stateKey: FfiConverterString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterTypeStateEventType.write(value.eventType, into);
+      FfiConverterString.write(value.stateKey, into);
+    }
+    allocationSize(value: TypeName): number {
+      return (
+        FfiConverterTypeStateEventType.allocationSize(value.eventType) +
+        FfiConverterString.allocationSize(value.stateKey)
+      );
+    }
+  }
+  return new FFIConverter();
+})();
+
 export type FileInfo = {
   mimetype: string | undefined;
   size: /*u64*/ bigint | undefined;
@@ -61020,6 +61088,23 @@ export interface SyncServiceBuilderInterface {
   }) /*throws*/ : Promise<SyncServiceInterface>;
   withCrossProcessLock(): SyncServiceBuilderInterface;
   /**
+   * Add extra required state events to sync beyond the defaults.
+   *
+   * These will be merged with the default required state and synced for all
+   * rooms in the room list. This is useful for syncing custom state events
+   * that your application needs.
+   *
+   * # Arguments
+   *
+   * * `required_state` - A list of extra required state entries to sync. Use
+   * `StateEventType::Custom` for custom event types like
+   * `com.example.custom`. For state_key, use empty string for events with
+   * no state key, or `"*"` to match all state keys for this event type.
+   */
+  withExtraRequiredState(
+    requiredState: Array<ExtraRequiredState>
+  ): SyncServiceBuilderInterface;
+  /**
    * Enable the "offline" mode for the [`SyncService`].
    */
   withOfflineMode(): SyncServiceBuilderInterface;
@@ -61084,6 +61169,37 @@ export class SyncServiceBuilder
         /*caller:*/ (callStatus) => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_cross_process_lock(
             uniffiTypeSyncServiceBuilderObjectFactory.clonePointer(this),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Add extra required state events to sync beyond the defaults.
+   *
+   * These will be merged with the default required state and synced for all
+   * rooms in the room list. This is useful for syncing custom state events
+   * that your application needs.
+   *
+   * # Arguments
+   *
+   * * `required_state` - A list of extra required state entries to sync. Use
+   * `StateEventType::Custom` for custom event types like
+   * `com.example.custom`. For state_key, use empty string for events with
+   * no state key, or `"*"` to match all state keys for this event type.
+   */
+  public withExtraRequiredState(
+    requiredState: Array<ExtraRequiredState>
+  ): SyncServiceBuilderInterface {
+    return FfiConverterTypeSyncServiceBuilder.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_syncservicebuilder_with_extra_required_state(
+            uniffiTypeSyncServiceBuilderObjectFactory.clonePointer(this),
+            FfiConverterArrayTypeExtraRequiredState.lower(requiredState),
             callStatus
           );
         },
@@ -64510,6 +64626,11 @@ const FfiConverterArrayFloat32 = new FfiConverterArray(FfiConverterFloat32);
 // FfiConverter for Array<ConditionalPushRule>
 const FfiConverterArrayTypeConditionalPushRule = new FfiConverterArray(
   FfiConverterTypeConditionalPushRule
+);
+
+// FfiConverter for Array<ExtraRequiredState>
+const FfiConverterArrayTypeExtraRequiredState = new FfiConverterArray(
+  FfiConverterTypeExtraRequiredState
 );
 
 // FfiConverter for Array<IdentityStatusChange>
@@ -68307,6 +68428,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state() !==
+    662
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_extra_required_state'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode() !==
     16958
   ) {
@@ -69321,6 +69450,7 @@ export default Object.freeze({
     FfiConverterTypeEventSendState,
     FfiConverterTypeEventTimelineItem,
     FfiConverterTypeEventTimelineItemDebugInfo,
+    FfiConverterTypeExtraRequiredState,
     FfiConverterTypeFileInfo,
     FfiConverterTypeFileMessageContent,
     FfiConverterTypeFilterTimelineEventType,
