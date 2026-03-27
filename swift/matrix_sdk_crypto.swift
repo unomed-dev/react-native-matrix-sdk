@@ -352,19 +352,29 @@ private func uniffiTraitInterfaceCallWithError<T, E>(
         callStatus.pointee.errorBuf = FfiConverterString.lower(String(describing: error))
     }
 }
+// Initial value and increment amount for handles. 
+// These ensure that SWIFT handles always have the lowest bit set
+fileprivate let UNIFFI_HANDLEMAP_INITIAL: UInt64 = 1
+fileprivate let UNIFFI_HANDLEMAP_DELTA: UInt64 = 2
+
 fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
     // All mutation happens with this lock held, which is why we implement @unchecked Sendable.
     private let lock = NSLock()
     private var map: [UInt64: T] = [:]
-    private var currentHandle: UInt64 = 1
+    private var currentHandle: UInt64 = UNIFFI_HANDLEMAP_INITIAL
 
     func insert(obj: T) -> UInt64 {
         lock.withLock {
-            let handle = currentHandle
-            currentHandle += 1
-            map[handle] = obj
-            return handle
+            return doInsert(obj)
         }
+    }
+
+    // Low-level insert function, this assumes `lock` is held.
+    private func doInsert(_ obj: T) -> UInt64 {
+        let handle = currentHandle
+        currentHandle += UNIFFI_HANDLEMAP_DELTA
+        map[handle] = obj
+        return handle
     }
 
      func get(handle: UInt64) throws -> T {
@@ -373,6 +383,15 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
                 throw UniffiInternalError.unexpectedStaleHandle
             }
             return obj
+        }
+    }
+
+     func clone(handle: UInt64) throws -> UInt64 {
+        try lock.withLock {
+            guard let obj = map[handle] else {
+                throw UniffiInternalError.unexpectedStaleHandle
+            }
+            return doInsert(obj)
         }
     }
 
@@ -442,7 +461,7 @@ fileprivate struct FfiConverterString: FfiConverter {
 /**
  * Settings for decrypting messages
  */
-public struct DecryptionSettings {
+public struct DecryptionSettings: Equatable, Hashable {
     /**
      * The trust level in the sender's device that is required to decrypt the
      * event. If the sender's device is not sufficiently trusted,
@@ -460,27 +479,15 @@ public struct DecryptionSettings {
          */senderDeviceTrustRequirement: TrustRequirement) {
         self.senderDeviceTrustRequirement = senderDeviceTrustRequirement
     }
+
+    
+
+    
 }
 
 #if compiler(>=6)
 extension DecryptionSettings: Sendable {}
 #endif
-
-
-extension DecryptionSettings: Equatable, Hashable {
-    public static func ==(lhs: DecryptionSettings, rhs: DecryptionSettings) -> Bool {
-        if lhs.senderDeviceTrustRequirement != rhs.senderDeviceTrustRequirement {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(senderDeviceTrustRequirement)
-    }
-}
-
-
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -520,7 +527,7 @@ public func FfiConverterTypeDecryptionSettings_lower(_ value: DecryptionSettings
  * current discussion.
  */
 
-public enum CollectStrategy {
+public enum CollectStrategy: Equatable, Hashable {
     
     /**
      * Share with all (unblacklisted) devices.
@@ -559,8 +566,12 @@ public enum CollectStrategy {
      * - It is the current own device of the user.
      */
     case onlyTrustedDevices
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension CollectStrategy: Sendable {}
@@ -627,20 +638,13 @@ public func FfiConverterTypeCollectStrategy_lower(_ value: CollectStrategy) -> R
 }
 
 
-extension CollectStrategy: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * The state of an identity - verified, pinned etc.
  */
 
-public enum IdentityState {
+public enum IdentityState: Equatable, Hashable {
     
     /**
      * The user is verified with us
@@ -667,8 +671,12 @@ public enum IdentityState {
      * [`UserIdentity::withdraw_verification`] to make it pinned.
      */
     case verificationViolation
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension IdentityState: Sendable {}
@@ -735,20 +743,13 @@ public func FfiConverterTypeIdentityState_lower(_ value: IdentityState) -> RustB
 }
 
 
-extension IdentityState: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * The local trust state of a device.
  */
 
-public enum LocalTrust {
+public enum LocalTrust: Equatable, Hashable {
     
     /**
      * The device has been verified and is trusted.
@@ -766,8 +767,12 @@ public enum LocalTrust {
      * The trust state is unset.
      */
     case unset
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension LocalTrust: Sendable {}
@@ -834,18 +839,11 @@ public func FfiConverterTypeLocalTrust_lower(_ value: LocalTrust) -> RustBuffer 
 }
 
 
-extension LocalTrust: Equatable, Hashable {}
-
-
-
-
-
-
 
 /**
  * Error type for the decoding of the [`QrCodeData`].
  */
-public enum LoginQrCodeDecodeError: Swift.Error {
+public enum LoginQrCodeDecodeError: Swift.Error, Equatable, Hashable, Foundation.LocalizedError {
 
     
     
@@ -886,8 +884,21 @@ public enum LoginQrCodeDecodeError: Swift.Error {
      */
     case InvalidPrefix(message: String)
     
+
+    
+
+    
+
+    
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
+    
 }
 
+#if compiler(>=6)
+extension LoginQrCodeDecodeError: Sendable {}
+#endif
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -976,28 +987,13 @@ public func FfiConverterTypeLoginQrCodeDecodeError_lower(_ value: LoginQrCodeDec
     return FfiConverterTypeLoginQrCodeDecodeError.lower(value)
 }
 
-
-extension LoginQrCodeDecodeError: Equatable, Hashable {}
-
-
-
-
-extension LoginQrCodeDecodeError: Foundation.LocalizedError {
-    public var errorDescription: String? {
-        String(reflecting: self)
-    }
-}
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * The result of a signature check.
  */
 
-public enum SignatureState {
+public enum SignatureState: Equatable, Hashable {
     
     /**
      * The signature is missing.
@@ -1017,8 +1013,12 @@ public enum SignatureState {
      * signature is trusted.
      */
     case validAndTrusted
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension SignatureState: Sendable {}
@@ -1085,13 +1085,6 @@ public func FfiConverterTypeSignatureState_lower(_ value: SignatureState) -> Rus
 }
 
 
-extension SignatureState: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -1099,7 +1092,7 @@ extension SignatureState: Equatable, Hashable {}
  * event.
  */
 
-public enum TrustRequirement {
+public enum TrustRequirement: Equatable, Hashable {
     
     /**
      * Decrypt events from everyone regardless of trust.
@@ -1114,8 +1107,12 @@ public enum TrustRequirement {
      * Only decrypt events from cross-signed devices.
      */
     case crossSigned
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension TrustRequirement: Sendable {}
@@ -1176,20 +1173,13 @@ public func FfiConverterTypeTrustRequirement_lower(_ value: TrustRequirement) ->
 }
 
 
-extension TrustRequirement: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * Our best guess at the reason why an event can't be decrypted.
  */
 
-public enum UtdCause {
+public enum UtdCause: Equatable, Hashable {
     
     /**
      * We don't have an explanation for why this UTD happened - it is probably
@@ -1273,8 +1263,12 @@ public enum UtdCause {
      * Expected message to user: "You need to verify this device".
      */
     case historicalMessageAndDeviceIsUnverified
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension UtdCause: Sendable {}
@@ -1371,13 +1365,6 @@ public func FfiConverterTypeUtdCause_lower(_ value: UtdCause) -> RustBuffer {
 }
 
 
-extension UtdCause: Equatable, Hashable {}
-
-
-
-
-
-
 private enum InitializationResult {
     case ok
     case contractVersionMismatch
@@ -1387,7 +1374,7 @@ private enum InitializationResult {
 // the code inside is only computed once.
 private let initializationResult: InitializationResult = {
     // Get the bindings contract version from our ComponentInterface
-    let bindings_contract_version = 29
+    let bindings_contract_version = 30
     // Get the scaffolding contract version by calling the into the dylib
     let scaffolding_contract_version = ffi_matrix_sdk_crypto_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {

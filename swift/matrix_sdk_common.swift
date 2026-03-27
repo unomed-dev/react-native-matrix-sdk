@@ -352,19 +352,29 @@ private func uniffiTraitInterfaceCallWithError<T, E>(
         callStatus.pointee.errorBuf = FfiConverterString.lower(String(describing: error))
     }
 }
+// Initial value and increment amount for handles. 
+// These ensure that SWIFT handles always have the lowest bit set
+fileprivate let UNIFFI_HANDLEMAP_INITIAL: UInt64 = 1
+fileprivate let UNIFFI_HANDLEMAP_DELTA: UInt64 = 2
+
 fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
     // All mutation happens with this lock held, which is why we implement @unchecked Sendable.
     private let lock = NSLock()
     private var map: [UInt64: T] = [:]
-    private var currentHandle: UInt64 = 1
+    private var currentHandle: UInt64 = UNIFFI_HANDLEMAP_INITIAL
 
     func insert(obj: T) -> UInt64 {
         lock.withLock {
-            let handle = currentHandle
-            currentHandle += 1
-            map[handle] = obj
-            return handle
+            return doInsert(obj)
         }
+    }
+
+    // Low-level insert function, this assumes `lock` is held.
+    private func doInsert(_ obj: T) -> UInt64 {
+        let handle = currentHandle
+        currentHandle += UNIFFI_HANDLEMAP_DELTA
+        map[handle] = obj
+        return handle
     }
 
      func get(handle: UInt64) throws -> T {
@@ -373,6 +383,15 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
                 throw UniffiInternalError.unexpectedStaleHandle
             }
             return obj
+        }
+    }
+
+     func clone(handle: UInt64) throws -> UInt64 {
+        try lock.withLock {
+            guard let obj = map[handle] else {
+                throw UniffiInternalError.unexpectedStaleHandle
+            }
+            return doInsert(obj)
         }
     }
 
@@ -444,7 +463,7 @@ fileprivate struct FfiConverterString: FfiConverter {
  * A machine-readable representation of the authenticity for a `ShieldState`.
  */
 
-public enum ShieldStateCode {
+public enum ShieldStateCode: Equatable, Hashable {
     
     /**
      * Not enough information available to check the authenticity.
@@ -475,8 +494,12 @@ public enum ShieldStateCode {
      * that established the Megolm session.
      */
     case mismatchedSender
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension ShieldStateCode: Sendable {}
@@ -561,13 +584,6 @@ public func FfiConverterTypeShieldStateCode_lower(_ value: ShieldStateCode) -> R
 }
 
 
-extension ShieldStateCode: Equatable, Hashable {}
-
-
-
-
-
-
 private enum InitializationResult {
     case ok
     case contractVersionMismatch
@@ -577,7 +593,7 @@ private enum InitializationResult {
 // the code inside is only computed once.
 private let initializationResult: InitializationResult = {
     // Get the bindings contract version from our ComponentInterface
-    let bindings_contract_version = 29
+    let bindings_contract_version = 30
     // Get the scaffolding contract version by calling the into the dylib
     let scaffolding_contract_version = ffi_matrix_sdk_common_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
