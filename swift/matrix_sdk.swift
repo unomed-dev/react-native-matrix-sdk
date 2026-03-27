@@ -352,19 +352,29 @@ private func uniffiTraitInterfaceCallWithError<T, E>(
         callStatus.pointee.errorBuf = FfiConverterString.lower(String(describing: error))
     }
 }
+// Initial value and increment amount for handles. 
+// These ensure that SWIFT handles always have the lowest bit set
+fileprivate let UNIFFI_HANDLEMAP_INITIAL: UInt64 = 1
+fileprivate let UNIFFI_HANDLEMAP_DELTA: UInt64 = 2
+
 fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
     // All mutation happens with this lock held, which is why we implement @unchecked Sendable.
     private let lock = NSLock()
     private var map: [UInt64: T] = [:]
-    private var currentHandle: UInt64 = 1
+    private var currentHandle: UInt64 = UNIFFI_HANDLEMAP_INITIAL
 
     func insert(obj: T) -> UInt64 {
         lock.withLock {
-            let handle = currentHandle
-            currentHandle += 1
-            map[handle] = obj
-            return handle
+            return doInsert(obj)
         }
+    }
+
+    // Low-level insert function, this assumes `lock` is held.
+    private func doInsert(_ obj: T) -> UInt64 {
+        let handle = currentHandle
+        currentHandle += UNIFFI_HANDLEMAP_DELTA
+        map[handle] = obj
+        return handle
     }
 
      func get(handle: UInt64) throws -> T {
@@ -373,6 +383,15 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
                 throw UniffiInternalError.unexpectedStaleHandle
             }
             return obj
+        }
+    }
+
+     func clone(handle: UInt64) throws -> UInt64 {
+        try lock.withLock {
+            guard let obj = map[handle] else {
+                throw UniffiInternalError.unexpectedStaleHandle
+            }
+            return doInsert(obj)
         }
     }
 
@@ -512,13 +531,13 @@ public protocol OAuthAuthorizationDataProtocol: AnyObject, Sendable {
  * The data needed to perform authorization using OAuth 2.0.
  */
 open class OAuthAuthorizationData: OAuthAuthorizationDataProtocol, @unchecked Sendable {
-    fileprivate let pointer: UnsafeMutableRawPointer!
+    fileprivate let handle: UInt64
 
-    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+    /// Used to instantiate a [FFIObject] without an actual handle, for fakes in tests, mostly.
 #if swift(>=5.8)
     @_documentation(visibility: private)
 #endif
-    public struct NoPointer {
+    public struct NoHandle {
         public init() {}
     }
 
@@ -528,36 +547,37 @@ open class OAuthAuthorizationData: OAuthAuthorizationDataProtocol, @unchecked Se
 #if swift(>=5.8)
     @_documentation(visibility: private)
 #endif
-    required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
-        self.pointer = pointer
+    required public init(unsafeFromHandle handle: UInt64) {
+        self.handle = handle
     }
 
     // This constructor can be used to instantiate a fake object.
-    // - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    // - Parameter noHandle: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
     //
     // - Warning:
-    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing handle the FFI lower functions will crash.
 #if swift(>=5.8)
     @_documentation(visibility: private)
 #endif
-    public init(noPointer: NoPointer) {
-        self.pointer = nil
+    public init(noHandle: NoHandle) {
+        self.handle = 0
     }
 
 #if swift(>=5.8)
     @_documentation(visibility: private)
 #endif
-    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
-        return try! rustCall { uniffi_matrix_sdk_fn_clone_oauthauthorizationdata(self.pointer, $0) }
+    public func uniffiCloneHandle() -> UInt64 {
+        return try! rustCall { uniffi_matrix_sdk_fn_clone_oauthauthorizationdata(self.handle, $0) }
     }
     // No primary constructor declared for this class.
 
     deinit {
-        guard let pointer = pointer else {
+        if handle == 0 {
+            // Mock objects have handle=0 don't try to free them
             return
         }
 
-        try! rustCall { uniffi_matrix_sdk_fn_free_oauthauthorizationdata(pointer, $0) }
+        try! rustCall { uniffi_matrix_sdk_fn_free_oauthauthorizationdata(handle, $0) }
     }
 
     
@@ -568,12 +588,14 @@ open class OAuthAuthorizationData: OAuthAuthorizationDataProtocol, @unchecked Se
      */
 open func loginUrl() -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
-    uniffi_matrix_sdk_fn_method_oauthauthorizationdata_login_url(self.uniffiClonePointer(),$0
+    uniffi_matrix_sdk_fn_method_oauthauthorizationdata_login_url(
+            self.uniffiCloneHandle(),$0
     )
 })
 }
     
 
+    
 }
 
 
@@ -581,33 +603,24 @@ open func loginUrl() -> String  {
 @_documentation(visibility: private)
 #endif
 public struct FfiConverterTypeOAuthAuthorizationData: FfiConverter {
-
-    typealias FfiType = UnsafeMutableRawPointer
+    typealias FfiType = UInt64
     typealias SwiftType = OAuthAuthorizationData
 
-    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> OAuthAuthorizationData {
-        return OAuthAuthorizationData(unsafeFromRawPointer: pointer)
+    public static func lift(_ handle: UInt64) throws -> OAuthAuthorizationData {
+        return OAuthAuthorizationData(unsafeFromHandle: handle)
     }
 
-    public static func lower(_ value: OAuthAuthorizationData) -> UnsafeMutableRawPointer {
-        return value.uniffiClonePointer()
+    public static func lower(_ value: OAuthAuthorizationData) -> UInt64 {
+        return value.uniffiCloneHandle()
     }
 
     public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> OAuthAuthorizationData {
-        let v: UInt64 = try readInt(&buf)
-        // The Rust code won't compile if a pointer won't fit in a UInt64.
-        // We have to go via `UInt` because that's the thing that's the size of a pointer.
-        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
-        if (ptr == nil) {
-            throw UniffiInternalError.unexpectedNullPointer
-        }
-        return try lift(ptr!)
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
     }
 
     public static func write(_ value: OAuthAuthorizationData, into buf: inout [UInt8]) {
-        // This fiddling is because `Int` is the thing that's the same size as a pointer.
-        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
-        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+        writeInt(&buf, lower(value))
     }
 }
 
@@ -615,14 +628,14 @@ public struct FfiConverterTypeOAuthAuthorizationData: FfiConverter {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public func FfiConverterTypeOAuthAuthorizationData_lift(_ pointer: UnsafeMutableRawPointer) throws -> OAuthAuthorizationData {
-    return try FfiConverterTypeOAuthAuthorizationData.lift(pointer)
+public func FfiConverterTypeOAuthAuthorizationData_lift(_ handle: UInt64) throws -> OAuthAuthorizationData {
+    return try FfiConverterTypeOAuthAuthorizationData.lift(handle)
 }
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public func FfiConverterTypeOAuthAuthorizationData_lower(_ value: OAuthAuthorizationData) -> UnsafeMutableRawPointer {
+public func FfiConverterTypeOAuthAuthorizationData_lower(_ value: OAuthAuthorizationData) -> UInt64 {
     return FfiConverterTypeOAuthAuthorizationData.lower(value)
 }
 
@@ -634,7 +647,7 @@ public func FfiConverterTypeOAuthAuthorizationData_lower(_ value: OAuthAuthoriza
  * that can be applied as a single operation. When updating these
  * settings, any levels that are `None` will remain unchanged.
  */
-public struct RoomPowerLevelChanges {
+public struct RoomPowerLevelChanges: Equatable, Hashable {
     /**
      * The level required to ban a user.
      */
@@ -728,67 +741,15 @@ public struct RoomPowerLevelChanges {
         self.roomTopic = roomTopic
         self.spaceChild = spaceChild
     }
+
+    
+
+    
 }
 
 #if compiler(>=6)
 extension RoomPowerLevelChanges: Sendable {}
 #endif
-
-
-extension RoomPowerLevelChanges: Equatable, Hashable {
-    public static func ==(lhs: RoomPowerLevelChanges, rhs: RoomPowerLevelChanges) -> Bool {
-        if lhs.ban != rhs.ban {
-            return false
-        }
-        if lhs.invite != rhs.invite {
-            return false
-        }
-        if lhs.kick != rhs.kick {
-            return false
-        }
-        if lhs.redact != rhs.redact {
-            return false
-        }
-        if lhs.eventsDefault != rhs.eventsDefault {
-            return false
-        }
-        if lhs.stateDefault != rhs.stateDefault {
-            return false
-        }
-        if lhs.usersDefault != rhs.usersDefault {
-            return false
-        }
-        if lhs.roomName != rhs.roomName {
-            return false
-        }
-        if lhs.roomAvatar != rhs.roomAvatar {
-            return false
-        }
-        if lhs.roomTopic != rhs.roomTopic {
-            return false
-        }
-        if lhs.spaceChild != rhs.spaceChild {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(ban)
-        hasher.combine(invite)
-        hasher.combine(kick)
-        hasher.combine(redact)
-        hasher.combine(eventsDefault)
-        hasher.combine(stateDefault)
-        hasher.combine(usersDefault)
-        hasher.combine(roomName)
-        hasher.combine(roomAvatar)
-        hasher.combine(roomTopic)
-        hasher.combine(spaceChild)
-    }
-}
-
-
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -845,7 +806,7 @@ public func FfiConverterTypeRoomPowerLevelChanges_lower(_ value: RoomPowerLevelC
 /**
  * Information about the server vendor obtained from the federation API.
  */
-public struct ServerVendorInfo {
+public struct ServerVendorInfo: Equatable, Hashable {
     /**
      * The server name.
      */
@@ -867,31 +828,15 @@ public struct ServerVendorInfo {
         self.serverName = serverName
         self.version = version
     }
+
+    
+
+    
 }
 
 #if compiler(>=6)
 extension ServerVendorInfo: Sendable {}
 #endif
-
-
-extension ServerVendorInfo: Equatable, Hashable {
-    public static func ==(lhs: ServerVendorInfo, rhs: ServerVendorInfo) -> Bool {
-        if lhs.serverName != rhs.serverName {
-            return false
-        }
-        if lhs.version != rhs.version {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(serverName)
-        hasher.combine(version)
-    }
-}
-
-
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -938,7 +883,7 @@ public func FfiConverterTypeServerVendorInfo_lower(_ value: ServerVendorInfo) ->
  * Set [`docs/url-params.md`](https://github.com/element-hq/element-call/blob/livekit/docs/url-params.md)
  * to find out more about the parameters and their defaults.
  */
-public struct VirtualElementCallWidgetConfig {
+public struct VirtualElementCallWidgetConfig: Equatable, Hashable {
     /**
      * The intent of showing the call.
      * If the user wants to start a call or join an existing one.
@@ -1058,63 +1003,15 @@ public struct VirtualElementCallWidgetConfig {
         self.controlledAudioDevices = controlledAudioDevices
         self.sendNotificationType = sendNotificationType
     }
+
+    
+
+    
 }
 
 #if compiler(>=6)
 extension VirtualElementCallWidgetConfig: Sendable {}
 #endif
-
-
-extension VirtualElementCallWidgetConfig: Equatable, Hashable {
-    public static func ==(lhs: VirtualElementCallWidgetConfig, rhs: VirtualElementCallWidgetConfig) -> Bool {
-        if lhs.intent != rhs.intent {
-            return false
-        }
-        if lhs.skipLobby != rhs.skipLobby {
-            return false
-        }
-        if lhs.header != rhs.header {
-            return false
-        }
-        if lhs.hideHeader != rhs.hideHeader {
-            return false
-        }
-        if lhs.preload != rhs.preload {
-            return false
-        }
-        if lhs.appPrompt != rhs.appPrompt {
-            return false
-        }
-        if lhs.confineToRoom != rhs.confineToRoom {
-            return false
-        }
-        if lhs.hideScreensharing != rhs.hideScreensharing {
-            return false
-        }
-        if lhs.controlledAudioDevices != rhs.controlledAudioDevices {
-            return false
-        }
-        if lhs.sendNotificationType != rhs.sendNotificationType {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(intent)
-        hasher.combine(skipLobby)
-        hasher.combine(header)
-        hasher.combine(hideHeader)
-        hasher.combine(preload)
-        hasher.combine(appPrompt)
-        hasher.combine(confineToRoom)
-        hasher.combine(hideScreensharing)
-        hasher.combine(controlledAudioDevices)
-        hasher.combine(sendNotificationType)
-    }
-}
-
-
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -1173,7 +1070,7 @@ public func FfiConverterTypeVirtualElementCallWidgetConfig_lower(_ value: Virtua
  * This is different from the `VirtualElementCallWidgetConfiguration` which
  * configures the widgets behavior.
  */
-public struct VirtualElementCallWidgetProperties {
+public struct VirtualElementCallWidgetProperties: Equatable, Hashable {
     /**
      * The url to the app.
      *
@@ -1321,71 +1218,15 @@ public struct VirtualElementCallWidgetProperties {
         self.sentryDsn = sentryDsn
         self.sentryEnvironment = sentryEnvironment
     }
+
+    
+
+    
 }
 
 #if compiler(>=6)
 extension VirtualElementCallWidgetProperties: Sendable {}
 #endif
-
-
-extension VirtualElementCallWidgetProperties: Equatable, Hashable {
-    public static func ==(lhs: VirtualElementCallWidgetProperties, rhs: VirtualElementCallWidgetProperties) -> Bool {
-        if lhs.elementCallUrl != rhs.elementCallUrl {
-            return false
-        }
-        if lhs.widgetId != rhs.widgetId {
-            return false
-        }
-        if lhs.parentUrl != rhs.parentUrl {
-            return false
-        }
-        if lhs.fontScale != rhs.fontScale {
-            return false
-        }
-        if lhs.font != rhs.font {
-            return false
-        }
-        if lhs.encryption != rhs.encryption {
-            return false
-        }
-        if lhs.posthogUserId != rhs.posthogUserId {
-            return false
-        }
-        if lhs.posthogApiHost != rhs.posthogApiHost {
-            return false
-        }
-        if lhs.posthogApiKey != rhs.posthogApiKey {
-            return false
-        }
-        if lhs.rageshakeSubmitUrl != rhs.rageshakeSubmitUrl {
-            return false
-        }
-        if lhs.sentryDsn != rhs.sentryDsn {
-            return false
-        }
-        if lhs.sentryEnvironment != rhs.sentryEnvironment {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(elementCallUrl)
-        hasher.combine(widgetId)
-        hasher.combine(parentUrl)
-        hasher.combine(fontScale)
-        hasher.combine(font)
-        hasher.combine(encryption)
-        hasher.combine(posthogUserId)
-        hasher.combine(posthogApiHost)
-        hasher.combine(posthogApiKey)
-        hasher.combine(rageshakeSubmitUrl)
-        hasher.combine(sentryDsn)
-        hasher.combine(sentryEnvironment)
-    }
-}
-
-
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -1446,7 +1287,7 @@ public func FfiConverterTypeVirtualElementCallWidgetProperties_lower(_ value: Vi
  * Settings for end-to-end encryption features.
  */
 
-public enum BackupDownloadStrategy {
+public enum BackupDownloadStrategy: Equatable, Hashable {
     
     /**
      * Automatically download all room keys from the backup when the backup
@@ -1472,8 +1313,12 @@ public enum BackupDownloadStrategy {
      * This is the default option.
      */
     case manual
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension BackupDownloadStrategy: Sendable {}
@@ -1534,13 +1379,6 @@ public func FfiConverterTypeBackupDownloadStrategy_lower(_ value: BackupDownload
 }
 
 
-extension BackupDownloadStrategy: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -1549,7 +1387,7 @@ extension BackupDownloadStrategy: Equatable, Hashable {}
  * This controls the url parameters: `perParticipantE2EE`, `password`.
  */
 
-public enum EncryptionSystem {
+public enum EncryptionSystem: Equatable, Hashable {
     
     /**
      * Equivalent to the element call url parameter: `perParticipantE2EE=false`
@@ -1570,8 +1408,12 @@ public enum EncryptionSystem {
          * The secret/password which is used in the url.
          */secret: String
     )
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension EncryptionSystem: Sendable {}
@@ -1634,20 +1476,13 @@ public func FfiConverterTypeEncryptionSystem_lower(_ value: EncryptionSystem) ->
 }
 
 
-extension EncryptionSystem: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * Defines how (if) element-call renders a header.
  */
 
-public enum HeaderStyle {
+public enum HeaderStyle: Equatable, Hashable {
     
     /**
      * The normal header with branding.
@@ -1661,8 +1496,12 @@ public enum HeaderStyle {
      * No Header (useful for webapps).
      */
     case none
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension HeaderStyle: Sendable {}
@@ -1723,13 +1562,6 @@ public func FfiConverterTypeHeaderStyle_lower(_ value: HeaderStyle) -> RustBuffe
 }
 
 
-extension HeaderStyle: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -1738,7 +1570,7 @@ extension HeaderStyle: Equatable, Hashable {}
  * This controls whether to show or skip the lobby.
  */
 
-public enum Intent {
+public enum Intent: Equatable, Hashable {
     
     /**
      * The user wants to start a call.
@@ -1757,8 +1589,12 @@ public enum Intent {
      * The user wants to start a call in a "Direct Message" (DM) room.
      */
     case startCallDm
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension Intent: Sendable {}
@@ -1825,20 +1661,13 @@ public func FfiConverterTypeIntent_lower(_ value: Intent) -> RustBuffer {
 }
 
 
-extension Intent: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * Types of call notifications.
  */
 
-public enum NotificationType {
+public enum NotificationType: Equatable, Hashable {
     
     /**
      * The receiving client should display a visual notification.
@@ -1848,8 +1677,12 @@ public enum NotificationType {
      * The receiving client should ring with an audible sound.
      */
     case ring
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension NotificationType: Sendable {}
@@ -1904,20 +1737,13 @@ public func FfiConverterTypeNotificationType_lower(_ value: NotificationType) ->
 }
 
 
-extension NotificationType: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * Current state of a [`Paginator`].
  */
 
-public enum PaginatorState {
+public enum PaginatorState: Equatable, Hashable {
     
     /**
      * The initial state of the paginator.
@@ -1936,8 +1762,12 @@ public enum PaginatorState {
      * The paginator is… paginating one direction or another.
      */
     case paginating
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension PaginatorState: Sendable {}
@@ -2004,19 +1834,12 @@ public func FfiConverterTypePaginatorState_lower(_ value: PaginatorState) -> Rus
 }
 
 
-extension PaginatorState: Equatable, Hashable {}
-
-
-
-
-
-
 
 /**
  * The error type for failures while trying to log in a new device using a QR
  * code.
  */
-public enum QrCodeLoginError: Swift.Error {
+public enum QrCodeLoginError: Swift.Error, Equatable, Hashable, Foundation.LocalizedError {
 
     
     
@@ -2081,8 +1904,21 @@ public enum QrCodeLoginError: Swift.Error {
      */
     case ServerReset(message: String)
     
+
+    
+
+    
+
+    
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
+    
 }
 
+#if compiler(>=6)
+extension QrCodeLoginError: Sendable {}
+#endif
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -2195,28 +2031,13 @@ public func FfiConverterTypeQRCodeLoginError_lower(_ value: QrCodeLoginError) ->
     return FfiConverterTypeQRCodeLoginError.lower(value)
 }
 
-
-extension QrCodeLoginError: Equatable, Hashable {}
-
-
-
-
-extension QrCodeLoginError: Foundation.LocalizedError {
-    public var errorDescription: String? {
-        String(reflecting: self)
-    }
-}
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * The role of a member in a room.
  */
 
-public enum RoomMemberRole {
+public enum RoomMemberRole: Equatable, Hashable {
     
     /**
      * The member is a creator.
@@ -2243,8 +2064,12 @@ public enum RoomMemberRole {
      * The member is a regular user.
      */
     case user
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension RoomMemberRole: Sendable {}
@@ -2311,20 +2136,13 @@ public func FfiConverterTypeRoomMemberRole_lower(_ value: RoomMemberRole) -> Rus
 }
 
 
-extension RoomMemberRole: Equatable, Hashable {}
-
-
-
-
-
-
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * Status for the back-pagination on a room event cache.
  */
 
-public enum RoomPaginationStatus {
+public enum RoomPaginationStatus: Equatable, Hashable {
     
     /**
      * No back-pagination is happening right now.
@@ -2339,8 +2157,12 @@ public enum RoomPaginationStatus {
      * Back-pagination is already running in the background.
      */
     case paginating
-}
 
+
+
+
+
+}
 
 #if compiler(>=6)
 extension RoomPaginationStatus: Sendable {}
@@ -2395,13 +2217,6 @@ public func FfiConverterTypeRoomPaginationStatus_lift(_ buf: RustBuffer) throws 
 public func FfiConverterTypeRoomPaginationStatus_lower(_ value: RoomPaginationStatus) -> RustBuffer {
     return FfiConverterTypeRoomPaginationStatus.lower(value)
 }
-
-
-extension RoomPaginationStatus: Equatable, Hashable {}
-
-
-
-
 
 
 #if swift(>=5.8)
@@ -2581,13 +2396,13 @@ private enum InitializationResult {
 // the code inside is only computed once.
 private let initializationResult: InitializationResult = {
     // Get the bindings contract version from our ComponentInterface
-    let bindings_contract_version = 29
+    let bindings_contract_version = 30
     // Get the scaffolding contract version by calling the into the dylib
     let scaffolding_contract_version = ffi_matrix_sdk_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
-    if (uniffi_matrix_sdk_checksum_method_oauthauthorizationdata_login_url() != 25566) {
+    if (uniffi_matrix_sdk_checksum_method_oauthauthorizationdata_login_url() != 47865) {
         return InitializationResult.apiChecksumMismatch
     }
 

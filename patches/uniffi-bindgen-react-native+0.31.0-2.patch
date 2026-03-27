@@ -1,0 +1,44 @@
+diff --git a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/android/commands.rs b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/android/commands.rs
+index 1234567..abcdefg 100644
+--- a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/android/commands.rs
++++ b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/android/commands.rs
+@@ -208,12 +208,16 @@ impl AndroidBuildArgs {
+             .context("Need at least one library file to generate native Kotlin bindings")?;
+         let out_dir = config.android.src_main_java_dir(config.project_root());
+-        generate_native_kotlin_bindings(GenerateOptions {
++        let pwd = ubrn_common::pwd()?;
++        ubrn_common::cd(&config.crate_.crate_dir()?)?;
++        let result = generate_native_kotlin_bindings(GenerateOptions {
+             source: library_path.clone(),
+             languages: vec![TargetLanguage::Kotlin],
+             out_dir: out_dir.clone(),
+             format: false,
+             ..Default::default()
+-        })?;
++        });
++        ubrn_common::cd(&pwd)?;
++        result?;
+         Ok(())
+     }
+diff --git a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/ios/commands.rs b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/ios/commands.rs
+index 1234567..abcdefg 100644
+--- a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/ios/commands.rs
++++ b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/ios/commands.rs
+@@ -193,12 +193,16 @@ impl IosBuildArgs {
+         }
+         ubrn_common::mk_dir(&out_dir)?;
+-        generate_native_swift_bindings(GenerateOptions {
++        let pwd = ubrn_common::pwd()?;
++        ubrn_common::cd(&config.crate_.crate_dir()?)?;
++        let result = generate_native_swift_bindings(GenerateOptions {
+             source: library_path.clone(),
+             languages: vec![TargetLanguage::Swift],
+             out_dir: out_dir.clone(),
+             format: false,
+             ..Default::default()
+-        })?;
++        });
++        ubrn_common::cd(&pwd)?;
++        result?;
+         Ok(())
+     }
