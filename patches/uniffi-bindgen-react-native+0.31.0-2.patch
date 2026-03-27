@@ -1,8 +1,9 @@
 diff --git a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/android/commands.rs b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/android/commands.rs
-index 1234567..abcdefg 100644
+index 3a9d438..c9158b9 100644
 --- a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/android/commands.rs
 +++ b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/android/commands.rs
-@@ -208,12 +208,16 @@ impl AndroidBuildArgs {
+@@ -208,13 +208,17 @@ impl AndroidBuildArgs {
+             .next()
              .context("Need at least one library file to generate native Kotlin bindings")?;
          let out_dir = config.android.src_main_java_dir(config.project_root());
 -        generate_native_kotlin_bindings(GenerateOptions {
@@ -20,11 +21,13 @@ index 1234567..abcdefg 100644
 +        result?;
          Ok(())
      }
+ 
 diff --git a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/ios/commands.rs b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/ios/commands.rs
-index 1234567..abcdefg 100644
+index b9ba204..6e6bc58 100644
 --- a/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/ios/commands.rs
 +++ b/node_modules/uniffi-bindgen-react-native/crates/ubrn_cli/src/jsi/ios/commands.rs
-@@ -193,12 +193,16 @@ impl IosBuildArgs {
+@@ -192,13 +192,17 @@ impl IosBuildArgs {
+             rm_dir(&out_dir)?;
          }
          ubrn_common::mk_dir(&out_dir)?;
 -        generate_native_swift_bindings(GenerateOptions {
@@ -42,3 +45,4 @@ index 1234567..abcdefg 100644
 +        result?;
          Ok(())
      }
+ 
