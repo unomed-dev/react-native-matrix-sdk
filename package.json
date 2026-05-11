@@ -60,7 +60,8 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli -v android/build example/android/build example/android/app/build example/ios/build lib **/.cxx",
     "prepare": "bob build",
-    "release": "release-it",
+    "release": "yarn release:prepare && release-it",
+    "release:prepare": "yarn generate:release",
     "postinstall": "patch-package && node scripts/download-binaries.js"
   },
   "keywords": [
@@ -143,7 +144,7 @@
       ]
     },
     "hooks": {
-      "before:release": "yarn generate:release && node scripts/package-binaries.js && git add example/ios/Podfile.lock"
+      "before:release": "node scripts/package-binaries.js && git add example/ios/Podfile.lock"
     },
     "plugins": {
       "@release-it/conventional-changelog": {
