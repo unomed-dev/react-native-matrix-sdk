@@ -8,11 +8,7 @@ import { useMatrix, type Credentials } from './use-matrix';
 export const LoginScreen: FunctionComponent<{ afterLogin?: () => void }> = ({ afterLogin }) => {
     const [loggingIn, setLoggingIn] = useState(false);
     const [credentials, setCredentials] = useState<Partial<Credentials>>({
-        // url: 'https://matrix.org',
-        // FIXME remote
-        url: 'http://10.0.2.2:8008',
-        username: '@mafo:my.matrix.host',
-        password: 'test-friendsaver',
+        url: 'https://matrix.org',
     });
     const { login } = useMatrix();
 
