@@ -53,8 +53,8 @@ const ChatRow: FunctionComponent<{ chat: Chat, messageList: MessageList, space: 
             </View>
             <View style={[styles.hStack, styles.hSpaceBetween, styles.vSpaceBottom]}>
                 {
-                    messageList.length > 0
-                    ? <MessagePreview message={messageList[0]!} />
+                    lastMessage
+                    ? <MessagePreview message={lastMessage} />
                     : <Text style={{fontStyle: 'italic'}}>no message</Text>
                 }
                 {
