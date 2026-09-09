@@ -14,6 +14,7 @@ export const ChatScreen: FunctionComponent<ChatScreenProps> = ({ navigation, rou
   const { roomMap, messageMap } = useMatrix();
   const room = roomMap[chatId]!; // if you hit this route the room will exists
   const messageList = messageMap[chatId] ?? [];
+  const scrollViewRef = useRef<ScrollView>(null);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -27,7 +28,11 @@ export const ChatScreen: FunctionComponent<ChatScreenProps> = ({ navigation, rou
         </View>
         <View style={[styles.buttonBubble, { backgroundColor: 'transparent' }]} />
       </View>
-      <ScrollView contentContainerStyle={{ padding: 5, gap: 4 }}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={{ padding: 5, gap: 4 }}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         {
           messageList.length === 0
           ? <View style={[styles.hStack, styles.hSpaceCenter]}>
