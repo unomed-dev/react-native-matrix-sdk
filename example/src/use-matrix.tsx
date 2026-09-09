@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useRef, useState, type FunctionComponent, type PropsWithChildren } from "react";
-import { MessageContent, Session, SyncServiceState, UserIdentity, UserProfile, type ClientLike, type Room, type RoomLike } from "@unomed/react-native-matrix-sdk";
+import { Session, SyncServiceState, UserProfile, type ClientLike, type Room, type RoomLike } from "@unomed/react-native-matrix-sdk";
 
 import { type Media, loadMedia as _loadMedia } from "./matrix-lib/load-media";
 import { type Credentials, login as _login } from "./matrix-lib/login";
