@@ -1,6 +1,14 @@
-import type { ClientLike, MessageContent, RoomLike, RoomMember, SpaceRoom, SyncServiceState, TimelineDiff, TimelineItemLike, UserProfile } from "@unomed/react-native-matrix-sdk";
+import type { ClientLike, Mentions, MessageType, RoomLike, RoomMember, SpaceRoom, SyncServiceState, TimelineDiff, TimelineItemLike, UserProfile } from "@unomed/react-native-matrix-sdk";
 
-export type Message = { id: string, timestamp: Date, isRead: boolean, userId: string } & MessageContent;
+export type Message = {
+    id: string;
+    timestamp: Date;
+    isRead: boolean;
+    userId: string;
+    body: string;
+    isEdited: boolean;
+    mentions?: Mentions;
+} & MessageType;
 
 export interface SynchronizeListener {
     onChange: (data: Partial<{
@@ -45,12 +53,15 @@ function toMessage(item: TimelineItemLike): Message | undefined {
         ? event.eventOrTransactionId.inner.eventId
         : event.eventOrTransactionId.inner.transactionId;
 
+    const { msgType, ...commonContent } = kind.inner.content;
+
     return {
         id,
         timestamp: new Date(Number(event.timestamp)),
         isRead: true, // TODO: derive from event.readReceipts once read state matters
         userId: event.sender,
-        ...kind.inner.content,
+        ...commonContent,
+        ...msgType,
     };
 }
 

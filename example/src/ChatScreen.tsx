@@ -1,5 +1,5 @@
 import { useRef, type FunctionComponent } from 'react';
-import { Button, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Button, Image, Pressable, ScrollView, Text, TextInput, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { type ChatScreenProps } from './AppNavigator';
@@ -36,12 +36,12 @@ export const ChatScreen: FunctionComponent<ChatScreenProps> = ({ navigation, rou
       >
         {
           messageList.length === 0
-          ? <View style={[styles.hStack, styles.hSpaceCenter]}>
-            <Text>no messages available</Text>
-          </View>
-          : messageList
-            .sort(newestMessageLast)
-            .map((message) => <MessageRow key={message.id} message={message} />)
+            ? <View style={[styles.hStack, styles.hSpaceCenter]}>
+              <Text>no messages available</Text>
+            </View>
+            : messageList
+              .sort(newestMessageLast)
+              .map((message) => <MessageRow key={message.id} message={message} />)
         }
       </ScrollView>
       <TextInput style={[styles.input, { margin: 5 }]} placeholder='your message' />
@@ -58,62 +58,60 @@ export const MessageRow: FunctionComponent<{ message: Message }> = ({ message })
   if (isOwnMessage) {
     return <View style={[styles.hStack, { paddingLeft: 50, justifyContent: 'flex-end' }]}>
       <View style={[styles.messageBubble, { backgroundColor: '#34C759', overflow: 'hidden' }]}>
-          <MessageContent message={message} />
+        <MessageContent message={message} />
       </View>
     </View>
   }
 
   return <View style={[styles.hStack, { paddingRight: 100 }]}>
-      <Picture url={user!.avatarUrl} style={[styles.picture, styles.pictureSmall]}/>
-      <View style={[styles.messageBubble, { overflow: 'hidden' }]}>
-        <Text style={[{ fontWeight: 'bold' }]}>{user?.displayName}</Text>
-        <MessageContent message={message} />
-      </View>
+    <Picture url={user!.avatarUrl} style={[styles.picture, styles.pictureSmall]} />
+    <View style={[styles.messageBubble, { overflow: 'hidden' }]}>
+      <Text style={[{ fontWeight: 'bold' }]}>{user?.displayName}</Text>
+      <MessageContent message={message} />
+    </View>
   </View>
 }
 
 export const MessageContent: FunctionComponent<{ message: Message }> = ({ message }) => {
-  switch (message.msgType.tag) {
+  switch (message.tag) {
     case MessageType_Tags.Emote:
-      return <Text style={{ fontSize: 30 }}>{message.msgType.inner.content.body}</Text>;
+      return <Text style={{ fontSize: 30 }}>{message.inner.content.body}</Text>;
 
     case MessageType_Tags.Audio: {
-      const { filename } = message.msgType.inner.content;
+      const { filename } = message.inner.content;
       return <Text style={{ fontStyle: 'italic' }}>♬ Audio Message: {filename}</Text>;
     }
 
     case MessageType_Tags.File: {
-      const { filename } = message.msgType.inner.content;
+      const { filename } = message.inner.content;
       return <View><Text style={{ fontStyle: 'italic' }}>💾 File:</Text><Text>{filename}</Text></View>;
     }
 
     case MessageType_Tags.Gallery: {
-      const { body } = message.msgType.inner.content;
+      const { body } = message.inner.content;
       return <View><Text style={{ fontStyle: 'italic' }}>🖼️ Gallery:</Text><Text>{body}</Text></View>;
     }
 
     case MessageType_Tags.Image: {
-      const { source, filename, caption } = message.msgType.inner.content;
+      const { source, filename, caption, info } = message.inner.content;
+      const aspectRatio = (info?.width && info.height) ? Number(info.width / info.height) : 1
       return <View>
-        <Image source={{ uri: source.url() }} />
+        <Picture url={source.url()} style={[{ width: 300, height: 'auto', aspectRatio }]} />
         <Text>{caption ?? filename}</Text>
       </View>;
     }
 
     case MessageType_Tags.Location: {
-      const { description, body } = message.msgType.inner.content;
+      const { description, body } = message.inner.content;
       return <View><Text style={{ fontStyle: 'italic' }}>📍 Location:</Text><Text>{description ?? body}</Text></View>;
     }
 
     case MessageType_Tags.Notice:
-      return <View><Text style={{ fontStyle: 'italic' }}>📝 Notice:</Text><Text>{message.msgType.inner.content.body}</Text></View>;
+      return <View><Text style={{ fontStyle: 'italic' }}>📝 Notice:</Text><Text>{message.inner.content.body}</Text></View>;
 
     case MessageType_Tags.Video: {
-      const { source, filename, caption } = message.msgType.inner.content;
-      return <View>
-        <Image source={{ uri: source.url() }} />
-        <Text>{caption ?? filename}</Text>
-      </View>;
+      const { filename, caption } = message.inner.content;
+      return <View><Text style={{ fontStyle: 'italic' }}>🎥 Video:</Text><Text>{caption ?? filename}</Text></View>;
     }
 
     case MessageType_Tags.Other:
@@ -124,32 +122,32 @@ export const MessageContent: FunctionComponent<{ message: Message }> = ({ messag
 }
 
 export const MessagePreview: FunctionComponent<{ message: Message }> = ({ message }) => {
-  switch (message.msgType.tag) {
+  switch (message.tag) {
     case MessageType_Tags.Emote:
-      return <Text numberOfLines={2} style={{ fontStyle: 'italic' }}>{message.msgType.inner.content.body}</Text>;
+      return <Text numberOfLines={2} style={{ fontStyle: 'italic' }}>{message.inner.content.body}</Text>;
 
     case MessageType_Tags.Audio:
-      return <Text numberOfLines={2}>♬ {message.msgType.inner.content.filename}</Text>;
+      return <Text numberOfLines={2}>♬ {message.inner.content.filename}</Text>;
 
     case MessageType_Tags.File:
-      return <Text numberOfLines={2}>💾 {message.msgType.inner.content.filename}</Text>;
+      return <Text numberOfLines={2}>💾 {message.inner.content.filename}</Text>;
 
     case MessageType_Tags.Gallery:
-      return <Text numberOfLines={2}>🖼️ {message.msgType.inner.content.body}</Text>;
+      return <Text numberOfLines={2}>🖼️ {message.inner.content.body}</Text>;
 
     case MessageType_Tags.Image:
-      return <Text numberOfLines={2}>🖼️ {message.msgType.inner.content.caption}</Text>;
+      return <Text numberOfLines={2}>🖼️ {message.inner.content.caption}</Text>;
 
     case MessageType_Tags.Location: {
-      const { description, body } = message.msgType.inner.content;
+      const { description, body } = message.inner.content;
       return <Text numberOfLines={2}>📍 {description ?? body}</Text>;
     }
 
     case MessageType_Tags.Notice:
-      return <Text numberOfLines={2}>📝 {message.msgType.inner.content.body}</Text>;
+      return <Text numberOfLines={2}>📝 {message.inner.content.body}</Text>;
 
     case MessageType_Tags.Video:
-      return <Text numberOfLines={2}>🎬 {message.msgType.inner.content.filename}</Text>;
+      return <Text numberOfLines={2}>🎬 {message.inner.content.filename}</Text>;
 
     case MessageType_Tags.Other:
     case MessageType_Tags.Text:
