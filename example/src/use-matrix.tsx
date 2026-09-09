@@ -1,11 +1,11 @@
 import { createContext, useCallback, useContext, useRef, useState, type FunctionComponent, type PropsWithChildren } from "react";
-import { MessageContent, Session, SyncServiceState, UserIdentity, type ClientLike, type Room } from "@unomed/react-native-matrix-sdk";
+import { MessageContent, Session, SyncServiceState, UserIdentity, UserProfile, type ClientLike, type Room, type RoomLike } from "@unomed/react-native-matrix-sdk";
 
 import { type Media, loadMedia as _loadMedia } from "./matrix-lib/load-media";
 import { type Credentials, login as _login } from "./matrix-lib/login";
 import { synchronize as _synchronize, type Message } from "./matrix-lib/synchronize";
 
-export { type Credentials };
+export { type Credentials, type Message };
 
 export interface MatrixAPI {
     login: (credential: Credentials) => Promise<void>;
@@ -13,8 +13,8 @@ export interface MatrixAPI {
     synchronizeStatus: SyncServiceState;
     roomMap: Record<string, Room>; // room id -> room
     messageMap: Record<string, Message[]>; // room id -> message list
-    spaceMap: Record<string, { id: string, displayName: string }>; // room id -> space
-    userMap: Record<string, { id: string, avatarUrl?: string, displayName: string }>; // user id -> user
+    spaceMap: Record<string, RoomLike>; // room id -> space
+    userMap: Record<string, UserProfile>; // user id -> user
     loadMedia: (url: string | undefined) => Promise<Media | undefined>;
     session: Session | undefined;
 }
@@ -61,6 +61,10 @@ const _useMatrix = (): MatrixAPI => {
                 setState((old) => ({
                     ...old,
                     ...data, // maybe need to check for actual changes
+                    messageMap: { // messages are run incrementally therefor each tick might be a seperate room
+                        ...old.messageMap,
+                        ...data.messageMap,
+                    },
                 }));
             },
         });
