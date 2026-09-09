@@ -128,5 +128,5 @@ if (isNewArchitectureEnabled()) {
         workingDir "$rootDir/../../"
         commandLine "npx", "bob", "build", "--target", "codegen"
     }
-    preBuild.dependsOn invokeLibraryCodegen
+    // preBuild.dependsOn invokeLibraryCodegen
 }

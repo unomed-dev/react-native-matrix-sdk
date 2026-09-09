@@ -1,43 +1,38 @@
-import * as React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 
-import { StyleSheet, View, Text, TextInput, Button } from 'react-native';
-import { ClientBuilder } from '@unomed/react-native-matrix-sdk';
+import { AppNavigationStack, CHAT, CHAT_LIST } from './AppNavigator';
+import { ChatListScreen } from './ChatListScreen';
+import { ChatScreen } from './ChatScreen';
+import { LoginScreen } from './LoginScreen';
 
-export default function App() {
-  const [homeserver, setHomeserver] = React.useState("https://matrix.org");
-  const [status, setStatus] = React.useState("");
+import { MatrixProvider, useMatrix } from './use-matrix';
 
-  const updateHomeserverLoginDetails = React.useCallback(async () => {
-    if (!homeserver.length) {
-      setStatus("");
-      return;
-    }
+function ExampleApp() {
+  const { session } = useMatrix();
 
-    try {
-      const client = await (new ClientBuilder()).homeserverUrl(homeserver).build();
-      const loginDetails = await client.homeserverLoginDetails();
-
-      setStatus(`url: ${loginDetails.url()}\n`
-        + `supportsOidcLogin: ${loginDetails.supportsOauthLogin()}\n`
-        + `supportsPasswordLogin: ${loginDetails.supportsPasswordLogin()}`);
-    } catch (error) {
-      setStatus(`${error}`);
-    }
-  }, [homeserver]);
+  if (!session) {
+    return <LoginScreen />
+  }
 
   return (
-    <View style={styles.container}>
-      <TextInput value={homeserver} onChangeText={setHomeserver}></TextInput>
-      <Button title='Go' onPress={updateHomeserverLoginDetails}></Button>
-      <Text>{status}</Text>
-    </View>
+    <NavigationContainer>
+      <AppNavigationStack.Navigator
+        initialRouteName={CHAT_LIST}
+        screenOptions={{
+          headerShown: false,
+        }}>
+        <AppNavigationStack.Screen name={CHAT_LIST} component={ChatListScreen} />
+        <AppNavigationStack.Screen name={CHAT} component={ChatScreen} />
+      </AppNavigationStack.Navigator>
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
-});
+
+export default function App() {
+  return (
+    <MatrixProvider>
+      <ExampleApp />
+    </MatrixProvider>
+  );
+}
