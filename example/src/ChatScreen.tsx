@@ -1,4 +1,4 @@
-import { type FunctionComponent } from 'react';
+import { useRef, type FunctionComponent } from 'react';
 import { Button, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +8,7 @@ import { useMatrix, type Message } from './use-matrix';
 import { Picture } from './Picture';
 import { Footer } from './Footer';
 import { newestMessageLast } from './matrix-lib/sort';
+import { MessageType_Tags } from '@unomed/react-native-matrix-sdk';
 
 export const ChatScreen: FunctionComponent<ChatScreenProps> = ({ navigation, route }) => {
   const chatId = route.params.id;
@@ -69,4 +70,90 @@ export const MessageRow: FunctionComponent<{ message: Message }> = ({ message })
         <MessageContent message={message} />
       </View>
   </View>
+}
+
+export const MessageContent: FunctionComponent<{ message: Message }> = ({ message }) => {
+  switch (message.msgType.tag) {
+    case MessageType_Tags.Emote:
+      return <Text style={{ fontSize: 30 }}>{message.msgType.inner.content.body}</Text>;
+
+    case MessageType_Tags.Audio: {
+      const { filename } = message.msgType.inner.content;
+      return <Text style={{ fontStyle: 'italic' }}>♬ Audio Message: {filename}</Text>;
+    }
+
+    case MessageType_Tags.File: {
+      const { filename } = message.msgType.inner.content;
+      return <View><Text style={{ fontStyle: 'italic' }}>💾 File:</Text><Text>{filename}</Text></View>;
+    }
+
+    case MessageType_Tags.Gallery: {
+      const { body } = message.msgType.inner.content;
+      return <View><Text style={{ fontStyle: 'italic' }}>🖼️ Gallery:</Text><Text>{body}</Text></View>;
+    }
+
+    case MessageType_Tags.Image: {
+      const { source, filename, caption } = message.msgType.inner.content;
+      return <View>
+        <Image source={{ uri: source.url() }} />
+        <Text>{caption ?? filename}</Text>
+      </View>;
+    }
+
+    case MessageType_Tags.Location: {
+      const { description, body } = message.msgType.inner.content;
+      return <View><Text style={{ fontStyle: 'italic' }}>📍 Location:</Text><Text>{description ?? body}</Text></View>;
+    }
+
+    case MessageType_Tags.Notice:
+      return <View><Text style={{ fontStyle: 'italic' }}>📝 Notice:</Text><Text>{message.msgType.inner.content.body}</Text></View>;
+
+    case MessageType_Tags.Video: {
+      const { source, filename, caption } = message.msgType.inner.content;
+      return <View>
+        <Image source={{ uri: source.url() }} />
+        <Text>{caption ?? filename}</Text>
+      </View>;
+    }
+
+    case MessageType_Tags.Other:
+    case MessageType_Tags.Text:
+    default:
+      return <Text>{message.body}</Text>;
+  }
+}
+
+export const MessagePreview: FunctionComponent<{ message: Message }> = ({ message }) => {
+  switch (message.msgType.tag) {
+    case MessageType_Tags.Emote:
+      return <Text numberOfLines={2} style={{ fontStyle: 'italic' }}>{message.msgType.inner.content.body}</Text>;
+
+    case MessageType_Tags.Audio:
+      return <Text numberOfLines={2}>♬ {message.msgType.inner.content.filename}</Text>;
+
+    case MessageType_Tags.File:
+      return <Text numberOfLines={2}>💾 {message.msgType.inner.content.filename}</Text>;
+
+    case MessageType_Tags.Gallery:
+      return <Text numberOfLines={2}>🖼️ {message.msgType.inner.content.body}</Text>;
+
+    case MessageType_Tags.Image:
+      return <Text numberOfLines={2}>🖼️ {message.msgType.inner.content.caption}</Text>;
+
+    case MessageType_Tags.Location: {
+      const { description, body } = message.msgType.inner.content;
+      return <Text numberOfLines={2}>📍 {description ?? body}</Text>;
+    }
+
+    case MessageType_Tags.Notice:
+      return <Text numberOfLines={2}>📝 {message.msgType.inner.content.body}</Text>;
+
+    case MessageType_Tags.Video:
+      return <Text numberOfLines={2}>🎬 {message.msgType.inner.content.filename}</Text>;
+
+    case MessageType_Tags.Other:
+    case MessageType_Tags.Text:
+    default:
+      return <Text numberOfLines={2}>{message.body}</Text>;
+  }
 }

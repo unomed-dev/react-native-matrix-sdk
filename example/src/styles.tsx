@@ -70,11 +70,4 @@ export const styles = StyleSheet.create({
     padding: 5,
     backgroundColor: 'darkgray',
   },
-  mediaPreview: {
-    width: 200,
-    height: 150,
-    borderRadius: 8,
-    backgroundColor: 'gray',
-    overflow: 'hidden',
-  },
 });
