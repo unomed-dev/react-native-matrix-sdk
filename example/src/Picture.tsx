@@ -17,7 +17,7 @@ export const Picture: FunctionComponent<{ url: string | undefined } & ViewProps>
     }, []);
 
     if (loadedImageData) {
-        return <Image />
+        return <View style={[style, { backgroundColor: 'transparent' }]}><Image source={{ uri: loadedImageData }} style={{ flex: 1, resizeMode: 'contain' }} /></View>;
     }
-    return <View style={[style]}  />
+    return <View style={[style]} />
 }

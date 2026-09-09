@@ -9,7 +9,6 @@ import { MatrixProvider, useMatrix } from './use-matrix';
 
 function ExampleApp() {
   const { session } = useMatrix();
-  console.log('session', session);
 
   if (!session) {
     return <LoginScreen />

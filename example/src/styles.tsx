@@ -17,9 +17,21 @@ export const styles = StyleSheet.create({
     flexDirection: 'column',
     gap: 4,
   },
+  vSpaceCenter: {
+    alignItems: 'center',
+  },
+  vSpaceBottom: {
+    alignContent: 'flex-end',
+  },
   hStack: {
     flexDirection: 'row',
     gap: 4,
+  },
+  hSpaceBetween: {
+    justifyContent: 'space-between',
+  },
+  hSpaceCenter: {
+    justifyContent: 'center',
   },
   input: {
     borderWidth: 1,
@@ -27,5 +39,42 @@ export const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
     backgroundColor: '#fff',
-  }
+  },
+  picture: {
+    borderRadius: 100,
+    backgroundColor: 'gray',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignContent: 'center',
+  },
+  pictureLarge: {
+    width: 50,
+    height: 50,
+  },
+  pictureSmall: {
+    width: 30,
+    height: 30,
+  },
+  badge: {
+    borderRadius: 100,
+    backgroundColor: 'red',
+  },
+  buttonBubble: {
+    width: 40, height: 40,
+    borderRadius: 100,
+    overflow: 'hidden',
+    backgroundColor: '#007AFF',
+  },
+  messageBubble: {
+    borderRadius: 10,
+    padding: 5,
+    backgroundColor: 'darkgray',
+  },
+  mediaPreview: {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    backgroundColor: 'gray',
+    overflow: 'hidden',
+  },
 });
