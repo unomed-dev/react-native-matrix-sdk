@@ -893,6 +893,70 @@ public func FfiConverterTypeServerVendorInfo_lower(_ value: ServerVendorInfo) ->
 
 
 /**
+ * Information about a map tile server advertised by the homeserver through the
+ * `tile_server` field of the matrix client well-known (MSC3488).
+ */
+public struct TileServerInfo: Equatable, Hashable {
+    /**
+     * The URL of a map tile server's `style.json` file. See the
+     * [Mapbox Style Specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
+     * for more details.
+     */
+    public var mapStyleUrl: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The URL of a map tile server's `style.json` file. See the
+         * [Mapbox Style Specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
+         * for more details.
+         */mapStyleUrl: String) {
+        self.mapStyleUrl = mapStyleUrl
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TileServerInfo: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTileServerInfo: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TileServerInfo {
+        return
+            try TileServerInfo(
+                mapStyleUrl: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TileServerInfo, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.mapStyleUrl, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTileServerInfo_lift(_ buf: RustBuffer) throws -> TileServerInfo {
+    return try FfiConverterTypeTileServerInfo.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTileServerInfo_lower(_ value: TileServerInfo) -> RustBuffer {
+    return FfiConverterTypeTileServerInfo.lower(value)
+}
+
+
+/**
  * Configuration parameters, to create a new virtual Element Call widget.
  *
  * If `intent` is provided the appropriate default values for all other

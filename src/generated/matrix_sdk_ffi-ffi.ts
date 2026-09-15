@@ -307,6 +307,9 @@ interface NativeModuleInterface {
     callbackUrl: Uint8Array
   ): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_client_logout(ptr: bigint): bigint;
+  ubrn_uniffi_matrix_sdk_ffi_fn_method_client_mark_all_rooms_as_read(
+    ptr: bigint
+  ): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_client_new_grant_login_with_qr_code_handler(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -336,6 +339,7 @@ interface NativeModuleInterface {
   ubrn_uniffi_matrix_sdk_ffi_fn_method_client_optimize_stores(
     ptr: bigint
   ): bigint;
+  ubrn_uniffi_matrix_sdk_ffi_fn_method_client_pause(ptr: bigint): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_client_register_notification_handler(
     ptr: bigint,
     listener: bigint
@@ -365,6 +369,7 @@ interface NativeModuleInterface {
     session: Uint8Array,
     roomLoadSettings: Uint8Array
   ): bigint;
+  ubrn_uniffi_matrix_sdk_ffi_fn_method_client_resume(ptr: bigint): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_client_room_alias_exists(
     ptr: bigint,
     roomAlias: Uint8Array
@@ -430,7 +435,8 @@ interface NativeModuleInterface {
     appDisplayName: Uint8Array,
     deviceDisplayName: Uint8Array,
     profileTag: Uint8Array,
-    lang: Uint8Array
+    lang: Uint8Array,
+    append: number
   ): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_client_set_utd_delegate(
     ptr: bigint,
@@ -495,6 +501,7 @@ interface NativeModuleInterface {
     listener: bigint,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
+  ubrn_uniffi_matrix_sdk_ffi_fn_method_client_tile_server(ptr: bigint): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_client_track_recently_visited_room(
     ptr: bigint,
     room: Uint8Array
@@ -2005,10 +2012,7 @@ interface NativeModuleInterface {
     uniffi_out_err: UniffiRustCallStatus
   ): Uint8Array;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_spaceroomlist_reset(ptr: bigint): bigint;
-  ubrn_uniffi_matrix_sdk_ffi_fn_method_spaceroomlist_rooms(
-    ptr: bigint,
-    uniffi_out_err: UniffiRustCallStatus
-  ): Uint8Array;
+  ubrn_uniffi_matrix_sdk_ffi_fn_method_spaceroomlist_rooms(ptr: bigint): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_spaceroomlist_space(
     ptr: bigint,
     uniffi_out_err: UniffiRustCallStatus
@@ -2020,8 +2024,7 @@ interface NativeModuleInterface {
   ): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_spaceroomlist_subscribe_to_room_update(
     ptr: bigint,
-    listener: bigint,
-    uniffi_out_err: UniffiRustCallStatus
+    listener: bigint
   ): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_spaceroomlist_subscribe_to_space_updates(
     ptr: bigint,
@@ -2100,6 +2103,11 @@ interface NativeModuleInterface {
   ubrn_uniffi_matrix_sdk_ffi_fn_method_sqlitestorebuilder_journal_size_limit(
     ptr: bigint,
     limit: Uint8Array,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
+  ubrn_uniffi_matrix_sdk_ffi_fn_method_sqlitestorebuilder_key(
+    ptr: bigint,
+    key: Uint8Array,
     uniffi_out_err: UniffiRustCallStatus
   ): bigint;
   ubrn_uniffi_matrix_sdk_ffi_fn_method_sqlitestorebuilder_passphrase(
@@ -3056,12 +3064,14 @@ interface NativeModuleInterface {
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_login_with_email(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_login_with_oauth_callback(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_logout(): number;
+  ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_mark_all_rooms_as_read(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_new_grant_login_with_qr_code_handler(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_new_login_with_qr_code_handler(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_notification_client(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_observe_account_data_event(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_observe_room_account_data_event(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_optimize_stores(): number;
+  ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_pause(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_register_notification_handler(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_remove_avatar(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_request_openid_token(): number;
@@ -3070,6 +3080,7 @@ interface NativeModuleInterface {
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_resolve_room_alias(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_restore_session(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_restore_session_with(): number;
+  ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_resume(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_room_alias_exists(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_room_directory_search(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_rooms(): number;
@@ -3099,6 +3110,7 @@ interface NativeModuleInterface {
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_sync_once_v2(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_sync_service(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_sync_v2(): number;
+  ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_tile_server(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_track_recently_visited_room(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_unignore_user(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_upload_avatar(): number;
@@ -3415,6 +3427,7 @@ interface NativeModuleInterface {
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_spaceservice_top_level_joined_spaces(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_cache_size(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_journal_size_limit(): number;
+  ubrn_uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_key(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_passphrase(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_pool_max_size(): number;
   ubrn_uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_system_is_memory_constrained(): number;
