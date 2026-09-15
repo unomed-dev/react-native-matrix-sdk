@@ -85,6 +85,7 @@ import {
   type OAuthAuthorizationDataLike,
   type RoomPowerLevelChanges,
   type ServerVendorInfo,
+  type TileServerInfo,
   type VirtualElementCallWidgetConfig,
   type VirtualElementCallWidgetProperties,
   BackupDownloadStrategy,
@@ -171,6 +172,7 @@ const {
   FfiConverterTypeRoomMemberRole,
   FfiConverterTypeRoomPowerLevelChanges,
   FfiConverterTypeServerVendorInfo,
+  FfiConverterTypeTileServerInfo,
   FfiConverterTypeVirtualElementCallWidgetConfig,
   FfiConverterTypeVirtualElementCallWidgetProperties,
 } = uniffiMatrixSdkModule.converters;
@@ -7609,6 +7611,10 @@ export type RoomInfo = {
    */
   numUnreadMentions: /*u64*/ bigint;
   /**
+   * Event ID of the user's `m.fully_read` marker for this room, if any.
+   */
+  fullyReadEventId?: string;
+  /**
    * The currently pinned event ids.
    */
   pinnedEventIds: Array<string>;
@@ -7693,6 +7699,7 @@ const FfiConverterTypeRoomInfo = (() => {
         numUnreadMessages: FfiConverterUInt64.read(from),
         numUnreadNotifications: FfiConverterUInt64.read(from),
         numUnreadMentions: FfiConverterUInt64.read(from),
+        fullyReadEventId: FfiConverterOptionalString.read(from),
         pinnedEventIds: FfiConverterArrayString.read(from),
         joinRule: FfiConverterOptionalTypeJoinRule.read(from),
         historyVisibility: FfiConverterTypeRoomHistoryVisibility.read(from),
@@ -7742,6 +7749,7 @@ const FfiConverterTypeRoomInfo = (() => {
       FfiConverterUInt64.write(value.numUnreadMessages, into);
       FfiConverterUInt64.write(value.numUnreadNotifications, into);
       FfiConverterUInt64.write(value.numUnreadMentions, into);
+      FfiConverterOptionalString.write(value.fullyReadEventId, into);
       FfiConverterArrayString.write(value.pinnedEventIds, into);
       FfiConverterOptionalTypeJoinRule.write(value.joinRule, into);
       FfiConverterTypeRoomHistoryVisibility.write(
@@ -7796,6 +7804,7 @@ const FfiConverterTypeRoomInfo = (() => {
         FfiConverterUInt64.allocationSize(value.numUnreadMessages) +
         FfiConverterUInt64.allocationSize(value.numUnreadNotifications) +
         FfiConverterUInt64.allocationSize(value.numUnreadMentions) +
+        FfiConverterOptionalString.allocationSize(value.fullyReadEventId) +
         FfiConverterArrayString.allocationSize(value.pinnedEventIds) +
         FfiConverterOptionalTypeJoinRule.allocationSize(value.joinRule) +
         FfiConverterTypeRoomHistoryVisibility.allocationSize(
@@ -13077,6 +13086,7 @@ export enum ClientBuildError_Tags {
   SlidingSyncVersion = 'SlidingSyncVersion',
   Sdk = 'Sdk',
   EventCache = 'EventCache',
+  InvalidRawKey = 'InvalidRawKey',
   Generic = 'Generic',
 }
 export const ClientBuildError = (() => {
@@ -13256,7 +13266,7 @@ export const ClientBuildError = (() => {
       return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 8;
     }
   }
-  class Generic extends UniffiError {
+  class InvalidRawKey extends UniffiError {
     /**
      * @private
      * This field is private and should not be used.
@@ -13268,6 +13278,28 @@ export const ClientBuildError = (() => {
      */
     readonly [variantOrdinalSymbol] = 9;
 
+    readonly tag = ClientBuildError_Tags.InvalidRawKey;
+
+    constructor(message: string) {
+      super('ClientBuildError', 'InvalidRawKey', message);
+    }
+
+    static instanceOf(e: any): e is InvalidRawKey {
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 9;
+    }
+  }
+  class Generic extends UniffiError {
+    /**
+     * @private
+     * This field is private and should not be used.
+     */
+    readonly [uniffiTypeNameSymbol]: string = 'ClientBuildError';
+    /**
+     * @private
+     * This field is private and should not be used.
+     */
+    readonly [variantOrdinalSymbol] = 10;
+
     readonly tag = ClientBuildError_Tags.Generic;
 
     constructor(message: string) {
@@ -13275,7 +13307,7 @@ export const ClientBuildError = (() => {
     }
 
     static instanceOf(e: any): e is Generic {
-      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 9;
+      return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 10;
     }
   }
 
@@ -13292,6 +13324,7 @@ export const ClientBuildError = (() => {
     SlidingSyncVersion,
     Sdk,
     EventCache,
+    InvalidRawKey,
     Generic,
     instanceOf,
   };
@@ -13346,6 +13379,11 @@ const FfiConverterTypeClientBuildError = (() => {
           return new ClientBuildError.EventCache(FfiConverterString.read(from));
 
         case 9:
+          return new ClientBuildError.InvalidRawKey(
+            FfiConverterString.read(from)
+          );
+
+        case 10:
           return new ClientBuildError.Generic(FfiConverterString.read(from));
 
         default:
@@ -45863,6 +45901,20 @@ export interface ClientLike {
    */
   logout(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
   /**
+   * Mark all joined rooms as read by sending public, private and fully-read
+   * receipts on each room's latest event.
+   *
+   * This is a best-effort operation — per-room errors are logged and
+   * skipped. Receipts are sent unthreaded, which per the Matrix spec
+   * covers all events in a room including those inside threads.
+   *
+   * This is useful to mitigate backend led wrong iOS app badges and work
+   * around https://github.com/element-hq/element-x-ios/issues/3151
+   */
+  markAllRoomsAsRead(asyncOpts_?: {
+    signal: AbortSignal;
+  }) /*throws*/ : Promise<void>;
+  /**
    * Create a handler for granting login from this device to a new device by
    * way of a QR code.
    */
@@ -45913,6 +45965,25 @@ export interface ClientLike {
   optimizeStores(asyncOpts_?: {
     signal: AbortSignal;
   }) /*throws*/ : Promise<void>;
+  /**
+   * Pause the client for background suspension.
+   *
+   * This method:
+   * 1. Disables all send queues (prevents new message sends).
+   * 2. Pauses all database stores, waiting for in-flight operations and
+   * releasing all connections and file locks.
+   *
+   * Call [`Client::resume()`] when the app returns to the foreground.
+   *
+   * # iOS
+   *
+   * Call this before the app is suspended to avoid `0xdead10cc` kills.
+   * Typically called from
+   * [`applicationDidEnterBackground`](https://developer.apple.com/documentation/uikit/uiapplicationdelegate/applicationdidenterbackground(_:))
+   * or an equivalent SwiftUI lifecycle event, *after* stopping the
+   * `matrix_sdk_ui::sync_service::SyncService`.
+   */
+  pause(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
   /**
    * Register a handler for notifications generated from sync responses.
    *
@@ -45984,6 +46055,16 @@ export interface ClientLike {
     roomLoadSettings: RoomLoadSettings,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
+  /**
+   * Resume the client after a [`Client::pause()`].
+   *
+   * Re-acquires store resources and re-enables send queues.
+   *
+   * If your app stopped the `matrix_sdk_ui::sync_service::SyncService`
+   * before pausing, restart it separately as appropriate for your app
+   * lifecycle.
+   */
+  resume(asyncOpts_?: { signal: AbortSignal }) /*throws*/ : Promise<void>;
   /**
    * Checks if a room alias exists in the current homeserver.
    */
@@ -46081,6 +46162,7 @@ export interface ClientLike {
     deviceDisplayName: string,
     profileTag: string | undefined,
     lang: string,
+    append: boolean,
     asyncOpts_?: { signal: AbortSignal }
   ) /*throws*/ : Promise<void>;
   /**
@@ -46189,6 +46271,17 @@ export interface ClientLike {
    * The listener is called after each successful sync response.
    */
   syncV2(settings: SyncSettingsV2, listener: SyncListenerV2): TaskHandleLike;
+  /**
+   * Get information about the homeserver's advertised map tile server, if
+   * any.
+   *
+   * Reads the `tile_server` field of the matrix client well-known (MSC3488).
+   * Uses the cached well-known when available, otherwise fetches it from the
+   * homeserver.
+   */
+  tileServer(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<TileServerInfo | undefined>;
   trackRecentlyVisitedRoom(
     room: string,
     asyncOpts_?: { signal: AbortSignal }
@@ -48288,6 +48381,52 @@ export class Client extends UniffiAbstractObject implements ClientLike {
   }
 
   /**
+   * Mark all joined rooms as read by sending public, private and fully-read
+   * receipts on each room's latest event.
+   *
+   * This is a best-effort operation — per-room errors are logged and
+   * skipped. Receipts are sent unthreaded, which per the Matrix spec
+   * covers all events in a room including those inside threads.
+   *
+   * This is useful to mitigate backend led wrong iOS app badges and work
+   * around https://github.com/element-hq/element-x-ios/issues/3151
+   */
+  async markAllRoomsAsRead(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_mark_all_rooms_as_read(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
    * Create a handler for granting login from this device to a new device by
    * way of a QR code.
    */
@@ -48440,6 +48579,57 @@ export class Client extends UniffiAbstractObject implements ClientLike {
         /*rustCaller:*/ uniffiCaller,
         /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_optimize_stores(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Pause the client for background suspension.
+   *
+   * This method:
+   * 1. Disables all send queues (prevents new message sends).
+   * 2. Pauses all database stores, waiting for in-flight operations and
+   * releasing all connections and file locks.
+   *
+   * Call [`Client::resume()`] when the app returns to the foreground.
+   *
+   * # iOS
+   *
+   * Call this before the app is suspended to avoid `0xdead10cc` kills.
+   * Typically called from
+   * [`applicationDidEnterBackground`](https://developer.apple.com/documentation/uikit/uiapplicationdelegate/applicationdidenterbackground(_:))
+   * or an equivalent SwiftUI lifecycle event, *after* stopping the
+   * `matrix_sdk_ui::sync_service::SyncService`.
+   */
+  async pause(asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_pause(
             uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
@@ -48776,6 +48966,48 @@ export class Client extends UniffiAbstractObject implements ClientLike {
             uniffiTypeClientObjectFactory.clonePointer(this),
             FfiConverterTypeSession.lower(session),
             FfiConverterTypeRoomLoadSettings.lower(roomLoadSettings)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_void,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_void,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_void,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_void,
+        /*liftFunc:*/ (_v) => {},
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_,
+        /*errorHandler:*/ FfiConverterTypeClientError.lift.bind(
+          FfiConverterTypeClientError
+        )
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
+  }
+
+  /**
+   * Resume the client after a [`Client::pause()`].
+   *
+   * Re-acquires store resources and re-enables send queues.
+   *
+   * If your app stopped the `matrix_sdk_ui::sync_service::SyncService`
+   * before pausing, restart it separately as appropriate for your app
+   * lifecycle.
+   */
+  async resume(asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_resume(
+            uniffiTypeClientObjectFactory.clonePointer(this)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -49272,6 +49504,7 @@ export class Client extends UniffiAbstractObject implements ClientLike {
     deviceDisplayName: string,
     profileTag: string | undefined,
     lang: string,
+    append: boolean,
     asyncOpts_?: { signal: AbortSignal }
   ): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
@@ -49286,7 +49519,8 @@ export class Client extends UniffiAbstractObject implements ClientLike {
             FfiConverterString.lower(appDisplayName),
             FfiConverterString.lower(deviceDisplayName),
             FfiConverterOptionalString.lower(profileTag),
-            FfiConverterString.lower(lang)
+            FfiConverterString.lower(lang),
+            FfiConverterBool.lower(append)
           );
         },
         /*pollFunc:*/ nativeModule()
@@ -49759,6 +49993,48 @@ export class Client extends UniffiAbstractObject implements ClientLike {
         /*liftString:*/ FfiConverterString.lift
       )
     );
+  }
+
+  /**
+   * Get information about the homeserver's advertised map tile server, if
+   * any.
+   *
+   * Reads the `tile_server` field of the matrix client well-known (MSC3488).
+   * Uses the cached well-known when available, otherwise fetches it from the
+   * homeserver.
+   */
+  async tileServer(asyncOpts_?: {
+    signal: AbortSignal;
+  }): Promise<TileServerInfo | undefined> {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_client_tile_server(
+            uniffiTypeClientObjectFactory.clonePointer(this)
+          );
+        },
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterOptionalTypeTileServerInfo.lift.bind(
+          FfiConverterOptionalTypeTileServerInfo
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   async trackRecentlyVisitedRoom(
@@ -65136,7 +65412,7 @@ export interface SpaceRoomListLike {
   /**
    * Return the current list of rooms.
    */
-  rooms(): Array<SpaceRoom>;
+  rooms(asyncOpts_?: { signal: AbortSignal }): Promise<Array<SpaceRoom>>;
   /**
    * Returns the space of the room list if known.
    */
@@ -65150,7 +65426,10 @@ export interface SpaceRoomListLike {
   /**
    * Subscribes to room list updates.
    */
-  subscribeToRoomUpdate(listener: SpaceRoomListEntriesListener): TaskHandleLike;
+  subscribeToRoomUpdate(
+    listener: SpaceRoomListEntriesListener,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<TaskHandleLike>;
   /**
    * Subscribe to space updates.
    */
@@ -65286,18 +65565,36 @@ export class SpaceRoomList
   /**
    * Return the current list of rooms.
    */
-  rooms(): Array<SpaceRoom> {
-    return FfiConverterArrayTypeSpaceRoom.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
+  async rooms(asyncOpts_?: { signal: AbortSignal }): Promise<Array<SpaceRoom>> {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_spaceroomlist_rooms(
-            uniffiTypeSpaceRoomListObjectFactory.clonePointer(this),
-            callStatus
+            uniffiTypeSpaceRoomListObjectFactory.clonePointer(this)
           );
         },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_rust_buffer,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_rust_buffer,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_rust_buffer,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_rust_buffer,
+        /*liftFunc:*/ FfiConverterArrayTypeSpaceRoom.lift.bind(
+          FfiConverterArrayTypeSpaceRoom
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   /**
@@ -65342,21 +65639,40 @@ export class SpaceRoomList
   /**
    * Subscribes to room list updates.
    */
-  subscribeToRoomUpdate(
-    listener: SpaceRoomListEntriesListener
-  ): TaskHandleLike {
-    return FfiConverterTypeTaskHandle.lift(
-      uniffiCaller.rustCall(
-        /*caller:*/ (callStatus) => {
+  async subscribeToRoomUpdate(
+    listener: SpaceRoomListEntriesListener,
+    asyncOpts_?: { signal: AbortSignal }
+  ): Promise<TaskHandleLike> {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+      return await uniffiRustCallAsync(
+        /*rustCaller:*/ uniffiCaller,
+        /*rustFutureFunc:*/ () => {
           return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_spaceroomlist_subscribe_to_room_update(
             uniffiTypeSpaceRoomListObjectFactory.clonePointer(this),
-            FfiConverterTypeSpaceRoomListEntriesListener.lower(listener),
-            callStatus
+            FfiConverterTypeSpaceRoomListEntriesListener.lower(listener)
           );
         },
-        /*liftString:*/ FfiConverterString.lift
-      )
-    );
+        /*pollFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_poll_u64,
+        /*cancelFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_cancel_u64,
+        /*completeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_complete_u64,
+        /*freeFunc:*/ nativeModule()
+          .ubrn_ffi_matrix_sdk_ffi_rust_future_free_u64,
+        /*liftFunc:*/ FfiConverterTypeTaskHandle.lift.bind(
+          FfiConverterTypeTaskHandle
+        ),
+        /*liftString:*/ FfiConverterString.lift,
+        /*asyncOpts:*/ asyncOpts_
+      );
+    } catch (__error: any) {
+      if (uniffiIsDebug && __error instanceof Error) {
+        __error.stack = __stack;
+      }
+      throw __error;
+    }
   }
 
   /**
@@ -66387,7 +66703,13 @@ export interface SqliteStoreBuilderLike {
    */
   journalSizeLimit(limit: /*u32*/ number | undefined): SqliteStoreBuilderLike;
   /**
-   * Set the passphrase for the stores.
+   * Set the raw key for the stores and removes any [`Self::passphrase`]
+   * previously set.
+   */
+  key(key: ArrayBuffer | undefined): SqliteStoreBuilderLike;
+  /**
+   * Set the passphrase for the stores and removes any [`Self::key`]
+   * previously set.
    */
   passphrase(passphrase: string | undefined): SqliteStoreBuilderLike;
   /**
@@ -66503,7 +66825,27 @@ export class SqliteStoreBuilder
   }
 
   /**
-   * Set the passphrase for the stores.
+   * Set the raw key for the stores and removes any [`Self::passphrase`]
+   * previously set.
+   */
+  key(key: ArrayBuffer | undefined): SqliteStoreBuilderLike {
+    return FfiConverterTypeSqliteStoreBuilder.lift(
+      uniffiCaller.rustCall(
+        /*caller:*/ (callStatus) => {
+          return nativeModule().ubrn_uniffi_matrix_sdk_ffi_fn_method_sqlitestorebuilder_key(
+            uniffiTypeSqliteStoreBuilderObjectFactory.clonePointer(this),
+            FfiConverterOptionalArrayBuffer.lower(key),
+            callStatus
+          );
+        },
+        /*liftString:*/ FfiConverterString.lift
+      )
+    );
+  }
+
+  /**
+   * Set the passphrase for the stores and removes any [`Self::key`]
+   * previously set.
    */
   passphrase(passphrase: string | undefined): SqliteStoreBuilderLike {
     return FfiConverterTypeSqliteStoreBuilder.lift(
@@ -70828,6 +71170,11 @@ const FfiConverterTypeWidgetDriverHandle = new FfiConverterObject(
 // FfiConverter for boolean | undefined
 const FfiConverterOptionalBool = new FfiConverterOptional(FfiConverterBool);
 
+// FfiConverter for ArrayBuffer | undefined
+const FfiConverterOptionalArrayBuffer = new FfiConverterOptional(
+  FfiConverterArrayBuffer
+);
+
 // FfiConverter for BackupSteadyStateListener | undefined
 const FfiConverterOptionalTypeBackupSteadyStateListener =
   new FfiConverterOptional(FfiConverterTypeBackupSteadyStateListener);
@@ -70869,6 +71216,11 @@ const FfiConverterOptionalFloat64 = new FfiConverterOptional(
 
 // FfiConverter for /*i32*/number | undefined
 const FfiConverterOptionalInt32 = new FfiConverterOptional(FfiConverterInt32);
+
+// FfiConverter for TileServerInfo | undefined
+const FfiConverterOptionalTypeTileServerInfo = new FfiConverterOptional(
+  FfiConverterTypeTileServerInfo
+);
 
 // FfiConverter for AudioInfo | undefined
 const FfiConverterOptionalTypeAudioInfo = new FfiConverterOptional(
@@ -72211,6 +72563,14 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_mark_all_rooms_as_read() !==
+    23334
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_mark_all_rooms_as_read'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_new_grant_login_with_qr_code_handler() !==
     59558
   ) {
@@ -72256,6 +72616,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_optimize_stores'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_pause() !==
+    1344
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_pause'
     );
   }
   if (
@@ -72320,6 +72688,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_restore_session_with'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_resume() !==
+    51366
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_resume'
     );
   }
   if (
@@ -72436,7 +72812,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_set_pusher() !==
-    51438
+    42931
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_set_pusher'
@@ -72552,6 +72928,14 @@ function uniffiEnsureInitialized() {
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_client_sync_v2'
+    );
+  }
+  if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_client_tile_server() !==
+    43179
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_client_tile_server'
     );
   }
   if (
@@ -74940,7 +75324,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_rooms() !==
-    65022
+    3299
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_rooms'
@@ -74964,7 +75348,7 @@ function uniffiEnsureInitialized() {
   }
   if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_subscribe_to_room_update() !==
-    52629
+    27260
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_subscribe_to_room_update'
@@ -75083,8 +75467,16 @@ function uniffiEnsureInitialized() {
     );
   }
   if (
+    nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_key() !==
+    24015
+  ) {
+    throw new UniffiInternalError.ApiChecksumMismatch(
+      'uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_key'
+    );
+  }
+  if (
     nativeModule().ubrn_uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_passphrase() !==
-    45337
+    33498
   ) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_passphrase'

@@ -1511,6 +1511,48 @@ public object FfiConverterTypeServerVendorInfo: FfiConverterRustBuffer<ServerVen
 
 
 /**
+ * Information about a map tile server advertised by the homeserver through the
+ * `tile_server` field of the matrix client well-known (MSC3488).
+ */
+data class TileServerInfo (
+    /**
+     * The URL of a map tile server's `style.json` file. See the
+     * [Mapbox Style Specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
+     * for more details.
+     */
+    var `mapStyleUrl`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTileServerInfo: FfiConverterRustBuffer<TileServerInfo> {
+    override fun read(buf: ByteBuffer): TileServerInfo {
+        return TileServerInfo(
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TileServerInfo) = (
+            FfiConverterString.allocationSize(value.`mapStyleUrl`)
+    )
+
+    override fun write(value: TileServerInfo, buf: ByteBuffer) {
+            FfiConverterString.write(value.`mapStyleUrl`, buf)
+    }
+}
+
+
+
+/**
  * Configuration parameters, to create a new virtual Element Call widget.
  *
  * If `intent` is provided the appropriate default values for all other

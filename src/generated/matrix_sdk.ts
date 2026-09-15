@@ -275,6 +275,54 @@ const FfiConverterTypeServerVendorInfo = (() => {
 })();
 
 /**
+ * Information about a map tile server advertised by the homeserver through the
+ * `tile_server` field of the matrix client well-known (MSC3488).
+ */
+export type TileServerInfo = {
+  /**
+   * The URL of a map tile server's `style.json` file. See the
+   * [Mapbox Style Specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
+   * for more details.
+   */
+  mapStyleUrl: string;
+};
+
+/**
+ * Generated factory for {@link TileServerInfo} record objects.
+ */
+export const TileServerInfo = (() => {
+  const defaults = () => ({});
+  const create = (() => {
+    return uniffiCreateRecord<TileServerInfo, ReturnType<typeof defaults>>(
+      defaults
+    );
+  })();
+  return Object.freeze({
+    create,
+    new: create,
+    defaults: () => Object.freeze(defaults()) as Partial<TileServerInfo>,
+  });
+})();
+
+const FfiConverterTypeTileServerInfo = (() => {
+  type TypeName = TileServerInfo;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      return {
+        mapStyleUrl: FfiConverterString.read(from),
+      };
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      FfiConverterString.write(value.mapStyleUrl, into);
+    }
+    allocationSize(value: TypeName): number {
+      return FfiConverterString.allocationSize(value.mapStyleUrl);
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
  * Configuration parameters, to create a new virtual Element Call widget.
  *
  * If `intent` is provided the appropriate default values for all other
@@ -1939,6 +1987,7 @@ export default Object.freeze({
     FfiConverterTypeRoomMemberRole,
     FfiConverterTypeRoomPowerLevelChanges,
     FfiConverterTypeServerVendorInfo,
+    FfiConverterTypeTileServerInfo,
     FfiConverterTypeVirtualElementCallWidgetConfig,
     FfiConverterTypeVirtualElementCallWidgetProperties,
   },
