@@ -60,7 +60,7 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli -v android/build example/android/build example/android/app/build example/ios/build lib **/.cxx",
     "prepare": "bob build",
-    "release": "yarn release:prepare && release-it",
+    "release": "yarn release:prepare && node scripts/release.js",
     "release:prepare": "yarn generate:release",
     "postinstall": "patch-package && node scripts/download-binaries.js"
   },
@@ -135,7 +135,7 @@
       "addUntrackedFiles": true
     },
     "npm": {
-      "publish": true
+      "publish": false
     },
     "github": {
       "release": true,
