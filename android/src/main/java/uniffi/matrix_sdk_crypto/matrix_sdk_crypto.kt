@@ -682,7 +682,7 @@ internal object UniffiLib {
     external fun ffi_matrix_sdk_crypto_rust_future_free_u8(`handle`: Long,
     ): Unit
     external fun ffi_matrix_sdk_crypto_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Byte
+    ): Int
     external fun ffi_matrix_sdk_crypto_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
     external fun ffi_matrix_sdk_crypto_rust_future_cancel_i8(`handle`: Long,
@@ -698,7 +698,7 @@ internal object UniffiLib {
     external fun ffi_matrix_sdk_crypto_rust_future_free_u16(`handle`: Long,
     ): Unit
     external fun ffi_matrix_sdk_crypto_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Short
+    ): Int
     external fun ffi_matrix_sdk_crypto_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
     external fun ffi_matrix_sdk_crypto_rust_future_cancel_i16(`handle`: Long,

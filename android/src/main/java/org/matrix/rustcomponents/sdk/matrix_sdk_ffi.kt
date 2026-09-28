@@ -1827,1193 +1827,1193 @@ internal object IntegrityCheckingUniffiLib {
         uniffiCheckContractApiVersion(this)
     }
     external fun uniffi_matrix_sdk_ffi_checksum_func_sdk_git_sha(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_gen_transaction_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_database_contains_secrets_bundle(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_json_string_contains_secrets_bundle(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_init_platform(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_reload_tracing_file_writer(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_log_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_matrix_to_room_alias_permalink(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_is_room_alias_format_valid(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_room_alias_name_from_room_display_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_matrix_to_user_permalink(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_suggested_power_level_for_role(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_suggested_role_for_power_level(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_content_without_relation_from_message(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_html(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_html_as_emote(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_markdown(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_message_event_content_from_markdown_as_emote(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_message_event_content_new(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_parse_matrix_entity_from(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_create_caption_edit(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_generate_webview_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_get_element_call_required_permissions(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_make_widget_driver(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_func_new_virtual_element_call_widget(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roommessageeventcontentwithoutrelation_with_mentions(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_sliding_sync_version(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supported_oauth_prompts(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_oauth_login(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_password_login(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_supports_sso_login(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeserverlogindetails_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_ssohandler_finish(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_ssohandler_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_abort_oauth_auth(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_account_data(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_account_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_available_sliding_sync_versions(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_avatar_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_await_room_remote_echo(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_cached_avatar_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_can_deactivate_account(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_clear_caches(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_create_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_custom_login_with_jwt(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_deactivate_account(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_delete_pusher(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_device_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_display_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_enable_all_send_queues(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_enable_automatic_backpagination(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_enable_send_queue_upload_progress(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_encryption(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_fetch_media_preview_config(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_dm_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_dm_rooms(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_invite_avatars_display_policy(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_max_media_upload_size(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_media_content(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_media_file(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_media_preview_display_policy(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_media_thumbnail(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_notification_settings(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_profile(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_recently_visited_rooms(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_room_preview_from_room_alias(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_room_preview_from_room_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_session_verification_controller(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_store_sizes(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_homeserver(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_homeserver_capabilities(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_homeserver_login_details(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_ignore_user(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_ignored_users(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_is_livekit_rtc_supported(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_is_login_with_qr_code_supported(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_is_report_room_api_supported(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_is_room_alias_available(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_join_room_by_id_or_alias(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_knock(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_login(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_login_with_email(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_login_with_oauth_callback(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_logout(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_mark_all_rooms_as_read(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_new_grant_login_with_qr_code_handler(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_new_login_with_qr_code_handler(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_notification_client(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_observe_account_data_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_observe_room_account_data_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_optimize_stores(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_pause(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_register_notification_handler(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_remove_avatar(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_request_openid_token(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_reset_supported_versions(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_reset_well_known(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_resolve_room_alias(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_restore_session(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_restore_session_with(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_resume(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_room_alias_exists(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_room_directory_search(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_rooms(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_search_users(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_server(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_server_vendor_info(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_session(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_account_data(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_avatar_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_delegate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_display_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_invite_avatars_display_policy(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_media_preview_display_policy(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_media_retention_policy(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_pusher(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_set_utd_delegate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_sliding_sync_version(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_space_service(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_start_sso_login(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_duplicate_key_upload_errors(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_ignored_users(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_media_preview_config(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_own_beacon_info_updates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_room_info(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_send_queue_status(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_subscribe_to_send_queue_updates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_sync_once_v2(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_sync_service(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_sync_v2(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_tile_server(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_track_recently_visited_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_unignore_user(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_upload_avatar(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_upload_media(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_url_for_oauth(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_user_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_user_id_server_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_add_recent_emoji(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_get_recent_emojis(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_client_search_messages(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeservercapabilities_can_change_avatar(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeservercapabilities_can_change_displayname(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeservercapabilities_can_change_password(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeservercapabilities_can_change_thirdparty_ids(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeservercapabilities_can_get_login_token(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeservercapabilities_extended_profile_fields(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeservercapabilities_forgets_room_when_leaving(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_homeservercapabilities_refresh(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_path(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_mediafilehandle_persist(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_add_root_certificates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_auto_enable_backups(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_auto_enable_cross_signing(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_backup_download_strategy(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_build(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_cross_process_lock_config(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_decryption_settings(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_automatic_token_refresh(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_built_in_root_certificates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_disable_ssl_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_dm_room_definition(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_enable_share_history_on_invite(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_homeserver_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_in_memory_store(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_proxy(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_request_config(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_room_key_recipient_strategy(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_server_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_server_name_or_homeserver_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_session_paths(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_set_session_delegate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_sliding_sync_version_builder(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_sqlite_store(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_system_is_memory_constrained(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_threads_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_user_agent(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_username(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientbuilder_with_search_index_store(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_exists_on_server(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_backup_state_listener(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_curve25519_key(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_disable_recovery(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_ed25519_key(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_backups(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_enable_recovery(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_has_devices_to_verify_against(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_import_secrets_bundle(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_is_last_device(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_recover(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_recover_and_fix_backup(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_recover_and_reset(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_recovery_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_recovery_state_listener(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_identity(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_reset_recovery_key(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_user_identity(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_verification_state_listener(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_wait_for_backup_upload_steady_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_encryption_wait_for_e2ee_initialization_tasks(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_auth_type(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_cancel(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_identityresethandle_reset(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_secretsbundlewithuserid_contains_backup_key(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_useridentity_has_verification_violation(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_useridentity_is_verified(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_useridentity_master_key(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_useridentity_pin(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_useridentity_was_previously_verified(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_useridentity_withdraw_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineevent_content(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineevent_event_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineevent_sender_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineevent_thread_root_event_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineevent_timestamp(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_livelocationsobserver_subscribe(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_notifications(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationclient_get_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_can_homeserver_push_encrypted_event_to_device(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_can_push_encrypted_event_to_device(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_contains_keywords_rules(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_default_room_notification_mode(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_raw_push_rules(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_room_notification_settings(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_rooms_with_user_defined_rules(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_get_user_defined_room_notification_mode(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_call_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_invite_for_me_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_room_mention_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_is_user_mention_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_restore_default_room_notification_mode(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_call_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_custom_push_rule(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_default_room_notification_mode(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_delegate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_invite_for_me_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_room_mention_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_room_notification_mode(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_set_user_mention_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettings_unmute_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_span_enter(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_span_exit(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_span_is_none(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_checkcodesender_send(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_grantloginwithqrcodehandler_generate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_grantloginwithqrcodehandler_scan(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_loginwithqrcodehandler_generate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_loginwithqrcodehandler_scan(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_qrcodedata_base_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_qrcodedata_intent(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_qrcodedata_server_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_qrcodedata_to_bytes(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_accept(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_decline(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_decline_and_ban(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_knockrequestactions_mark_as_seen(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_active_members_count(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_active_room_call_participants(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_alternative_aliases(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_apply_power_level_changes(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_avatar_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_ban_user(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_canonical_alias(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_clear_composer_draft(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_clear_event_cache_storage(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_decline_call(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_discard_room_key(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_display_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_edit(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_enable_encryption(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_enable_send_queue(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_encryption_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_fetch_thread_subscription(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_forget(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_get_power_levels(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_get_room_visibility(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_has_active_room_call(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_heroes(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_ignore_device_trust_and_resend(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_ignore_user(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_invite_user_by_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_invited_members_count(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_inviter(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_is_direct(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_is_encrypted(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_is_public(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_is_send_queue_enabled(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_is_space(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_join(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_joined_members_count(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_kick_user(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_latest_encryption_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_latest_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_leave(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_live_locations_observer(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_load_composer_draft(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_load_or_fetch_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_mark_as_fully_read_unchecked(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_mark_as_read(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_matrix_to_event_permalink(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_matrix_to_permalink(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_member(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_member_avatar_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_member_display_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_member_with_sender_info(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_members(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_members_no_sync(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_membership(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_own_user_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_predecessor_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_preview_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_publish_room_alias_in_room_directory(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_raw_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_redact(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_remove_avatar(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_remove_room_alias_from_room_directory(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_report_content(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_report_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_reset_power_levels(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_room_events_debug_string(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_room_info(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_save_composer_draft(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_send_live_location(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_send_raw(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_send_state_event_raw(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_set_is_favourite(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_set_is_low_priority(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_set_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_set_own_member_display_name(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_set_thread_subscription(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_set_topic(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_set_unread_flag(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_start_live_location_share(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_stop_live_location_share(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_call_decline_events(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_identity_status_changes(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_knock_requests(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_room_info_updates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_send_queue_updates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_subscribe_to_typing_notifications(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_successor_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_suggested_role_for_user(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_thread_list_service(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_timeline(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_timeline_with_configuration(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_topic(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_typing_notice(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_unban_user(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_update_canonical_alias(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_update_history_visibility(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_update_join_rules(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_update_power_levels_for_users(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_update_room_visibility(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_upload_avatar(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_withdraw_verification_and_resend(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_room_search_messages(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_len(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roommembersiterator_next_chunk(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_ban(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_invite(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_kick(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_pin_unpin(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_redact_other(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_redact_own(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_send_message(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_send_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_own_user_trigger_room_notification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_ban(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_invite(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_kick(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_pin_unpin(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_redact_other(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_redact_own(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_send_message(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_send_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_can_user_trigger_room_notification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_events(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_user_power_levels(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompowerlevels_values(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_is_at_last_page(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_loaded_pages(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_next_page(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_results(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearch_search(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlist_entries_with_dynamic_adapters(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlist_loading_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlist_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_add_one_page(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_reset_to_one_page(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistdynamicentriescontroller_set_filter(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieswithdynamicadaptersresult_controller(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieswithdynamicadaptersresult_entries_stream(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_all_rooms(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_subscribe_to_rooms(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistservice_sync_indicator(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_has_notifications(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_highlight_count(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_unreadnotificationscount_notification_count(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompreview_forget(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompreview_info(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompreview_inviter(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompreview_leave(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roompreview_own_membership_details(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_mediasource_to_json(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_mediasource_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_globalsearchiterator_next_events(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomsearchiterator_next_events(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_accept_verification_request(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_acknowledge_verification_request(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_approve_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_cancel_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_decline_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_device_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_request_user_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_set_delegate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontroller_start_sas_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationemoji_description(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationemoji_symbol(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_leavespacehandle_leave(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_leavespacehandle_rooms(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_paginate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_pagination_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_reset(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_rooms(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_space(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_subscribe_to_pagination_state_updates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_subscribe_to_room_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlist_subscribe_to_space_updates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_add_child_to_space(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_editable_spaces(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_get_space_room(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_joined_parents_of_child(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_leave_space(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_remove_child_from_space(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_space_filters(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_space_room_list(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_subscribe_to_space_filters(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_subscribe_to_top_level_joined_spaces(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservice_top_level_joined_spaces(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_cache_size(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_journal_size_limit(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_key(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_passphrase(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_pool_max_size(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sqlitestorebuilder_system_is_memory_constrained(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservice_expire_sessions(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservice_room_list_service(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservice_start(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservice_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservice_stop(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_finish(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_offline_mode(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_room_list_connection_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_room_list_timeline_limit(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservicebuilder_with_share_pos(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_taskhandle_cancel(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_taskhandle_is_finished(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_contains_only_emojis(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_debug_info(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_send_handle(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_get_shields(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_lazytimelineitemprovider_latest_json(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_cancel(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendattachmentjoinhandle_join(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendhandle_abort(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendhandle_try_resend(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_add_listener(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_create_message_content(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_create_poll(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_edit(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_end_poll(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_fetch_details_for_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_fetch_members(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_get_event_timeline_item_by_event_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_latest_event_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_load_reply_details(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_mark_as_read(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_backwards(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_paginate_forwards(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_pin_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_redact_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_retry_decryption(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_audio(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_file(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_image(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_location(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_poll_response(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_read_receipt(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_reply(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_video(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_voice_message(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_subscribe_to_back_pagination_status(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_toggle_reaction(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_unpin_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timeline_send_gallery(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineitem_as_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineitem_as_virtual(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineitem_fmt_debug(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelineitem_unique_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendgalleryjoinhandle_cancel(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendgalleryjoinhandle_join(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadsummary_latest_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadsummary_num_replies(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_inreplytodetails_event_id(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadlistservice_items(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadlistservice_paginate(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadlistservice_pagination_state(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadlistservice_reset(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadlistservice_subscribe_to_items_updates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadlistservice_subscribe_to_pagination_state_updates(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_widgetdriver_run(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_widgetdriverhandle_recv(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_widgetdriverhandle_send(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_clientbuilder_new(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_secretsbundlewithuserid_from_database(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_secretsbundlewithuserid_from_str(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_span_current(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_span_new(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_span_new_bridge_span(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_qrcodedata_from_bytes(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_json(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_mediasource_from_url(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_sqlitestorebuilder_new(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_timelineeventfilter_exclude(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_timelineeventfilter_exclude_event_types(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_timelineeventfilter_include(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_constructor_timelineeventfilter_include_event_types(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_accountdatalistener_on_change(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_beaconinfolistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_did_receive_auth_error(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientdelegate_on_background_task_error_report(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientsessiondelegate_retrieve_session_from_keychain(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_clientsessiondelegate_save_session_in_keychain(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_duplicatekeyuploaderrorlistener_on_duplicate_key_upload_error(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_ignoreduserslistener_call(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_mediapreviewconfiglistener_on_change(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_progresswatcher_transmission_progress(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomaccountdatalistener_on_change(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendqueueroomerrorlistener_on_error(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendqueueroomupdatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncnotificationlistener_on_notification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_backupstatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_backupsteadystatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_enablerecoveryprogresslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_recoverystatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_verificationstatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_livelocationslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_notificationsettingsdelegate_settings_did_change(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_generatedqrloginprogresslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_grantgeneratedqrloginprogresslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_grantqrloginprogresslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_qrloginprogresslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_calldeclinelistener_call(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_identitystatuschangelistener_call(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_knockrequestslistener_call(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roominfolistener_call(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sendqueuelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_typingnotificationslistener_call(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomdirectorysearchentrieslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistentrieslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistloadingstatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistservicestatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_roomlistservicesyncindicatorlistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_request(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_accept_verification_request(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_start_sas_verification(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_receive_verification_data(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_fail(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_cancel(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_sessionverificationcontrollerdelegate_did_finish(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlistentrieslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlistpaginationstatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceroomlistspacelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservicejoinedspaceslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_spaceservicespacefilterslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_syncservicestateobserver_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_synclistenerv2_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_paginationstatuslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_timelinelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadlistentrieslistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_threadlistpaginationstatelistener_on_update(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_unabletodecryptdelegate_on_utd(
-): Short
+): Int
 external fun uniffi_matrix_sdk_ffi_checksum_method_widgetcapabilitiesprovider_acquire_capabilities(
-): Short
+): Int
 external fun ffi_matrix_sdk_ffi_uniffi_contract_version(
 ): Int
 
@@ -4504,7 +4504,7 @@ external fun ffi_matrix_sdk_ffi_rust_future_cancel_u8(`handle`: Long,
 external fun ffi_matrix_sdk_ffi_rust_future_free_u8(`handle`: Long,
 ): Unit
 external fun ffi_matrix_sdk_ffi_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-): Byte
+): Int
 external fun ffi_matrix_sdk_ffi_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
 external fun ffi_matrix_sdk_ffi_rust_future_cancel_i8(`handle`: Long,
@@ -4520,7 +4520,7 @@ external fun ffi_matrix_sdk_ffi_rust_future_cancel_u16(`handle`: Long,
 external fun ffi_matrix_sdk_ffi_rust_future_free_u16(`handle`: Long,
 ): Unit
 external fun ffi_matrix_sdk_ffi_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-): Short
+): Int
 external fun ffi_matrix_sdk_ffi_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
 external fun ffi_matrix_sdk_ffi_rust_future_cancel_i16(`handle`: Long,
@@ -4841,6 +4841,10 @@ public object FfiConverterUByte: FfiConverter<UByte, Byte> {
         return value.toUByte()
     }
 
+    fun lift(value: Int): UByte {
+        return value.toUByte()
+    }
+
     override fun read(buf: ByteBuffer): UByte {
         return lift(buf.get())
     }
@@ -4861,6 +4865,10 @@ public object FfiConverterUByte: FfiConverter<UByte, Byte> {
  */
 public object FfiConverterUShort: FfiConverter<UShort, Short> {
     override fun lift(value: Short): UShort {
+        return value.toUShort()
+    }
+
+    fun lift(value: Int): UShort {
         return value.toUShort()
     }
 
