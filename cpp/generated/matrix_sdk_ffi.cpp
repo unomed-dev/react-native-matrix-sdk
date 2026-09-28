@@ -3284,6 +3284,47 @@ template <> struct Bridging<RustBuffer> {
   static RustBuffer fromJs(jsi::Runtime &rt, std::shared_ptr<CallInvoker>,
                            const jsi::Value &value) {
     try {
+      auto obj = value.asObject(rt);
+
+      // Adoption vs copy. Two kinds of view arrive here:
+      //
+      //   * Library-owned views from `rustbuffer_alloc`. Codegen allocates one,
+      //     fills it in place, and ships it as an argument — and never frees a
+      //     lowered argument, while the view's backing `CMutableBuffer` is
+      //     non-owning (its destructor leaves `data` alone). Such a view
+      //     carries a capacity hint (stamped by `rustbuffer_alloc` in the
+      //     wrapper). We *adopt* it: hand the existing allocation to the
+      //     callee, which frees it. Copying instead would orphan the allocation
+      //     and leak one whole payload per call.
+      //   * Ordinary JS-owned arrays, which carry no hint. These are *copied*
+      //     into a fresh library allocation — they are not ours to give away.
+      //
+      // On adoption we reset the hint to 0 so a later `rustbuffer_free(view)`
+      // is a no-op rather than a double free.
+      if (obj.hasProperty(rt, uniffi_jsi::kUbrnRustCapacity)) {
+        auto capacity = static_cast<uint64_t>(
+            obj.getProperty(rt, uniffi_jsi::kUbrnRustCapacity).asNumber());
+        if (capacity == 0) {
+          // Hint present but zeroed: the view was already adopted by a previous
+          // call and its memory has been freed. Reading it would be a
+          // use-after-free, so refuse rather than hand over a dangling pointer.
+          throw jsi::JSError(rt, "RustBuffer argument was already consumed by "
+                                 "a previous FFI call");
+        }
+        auto arrayBuffer =
+            obj.getPropertyAsObject(rt, "buffer").getArrayBuffer(rt);
+        auto byteOffset =
+            static_cast<size_t>(obj.getProperty(rt, "byteOffset").asNumber());
+        auto byteLength =
+            static_cast<size_t>(obj.getProperty(rt, "byteLength").asNumber());
+        obj.setProperty(rt, uniffi_jsi::kUbrnRustCapacity, jsi::Value(0));
+        return RustBuffer{
+            .capacity = capacity,
+            .len = static_cast<uint64_t>(byteLength),
+            .data = arrayBuffer.data(rt) + byteOffset,
+        };
+      }
+
       auto buffer =
           uniffi_jsi::Bridging<jsi::ArrayBuffer>::value_to_arraybuffer(rt,
                                                                        value);
@@ -3292,12 +3333,10 @@ template <> struct Bridging<RustBuffer> {
           .data = buffer.data(rt),
       };
 
-      // This buffer is constructed from foreign bytes. Rust scaffolding copies
-      // the bytes, to make the RustBuffer.
+      // No hint: an ordinary JS-owned array. Rust scaffolding copies the bytes
+      // to make the RustBuffer; the copy is destroyed when the callee
+      // deserializes its arguments.
       auto buf = rustbuffer_from_bytes(bytes);
-      // Once it leaves this function, the buffer is immediately passed back
-      // into Rust, where it's used to deserialize into the Rust versions of the
-      // arguments. At that point, the copy is destroyed.
       return buf;
     } catch (const std::logic_error &e) {
       throw jsi::JSError(rt, e.what());
@@ -3306,26 +3345,31 @@ template <> struct Bridging<RustBuffer> {
 
   static jsi::Value toJs(jsi::Runtime &rt, std::shared_ptr<CallInvoker>,
                          RustBuffer buf) {
-    // We need to make a copy of the bytes from Rust's memory space into
-    // Javascripts memory space. We need to do this because the two languages
-    // manages memory very differently: a garbage collector needs to track all
-    // the memory at runtime, Rust is doing it all closer to compile time.
-    uint8_t *bytes = new uint8_t[buf.len];
-    std::memcpy(bytes, buf.data, buf.len);
-
-    // Construct an ArrayBuffer with copy of the bytes from the RustBuffer.
+    // View-handoff: hand JS a `Uint8Array` view aliasing the Rust-owned bytes
+    // (no boundary copy). The single mandatory copy now happens inside
+    // `converter.lift(view)` (string decode, byte-array `set`, field-by-field
+    // record reads). The codegen-emitted try/finally calls `rustbuffer_free`
+    // on the view after `lift` returns, releasing the Rust allocation.
+    //
+    // Capacity hint: Rust may return a buffer where `capacity > len`. The
+    // view's `byteLength` is `len` (so converters that decode the whole view
+    // see only the message bytes), but `rustbuffer_free` needs `capacity` to
+    // free correctly. We stash `capacity` on the view via a string-keyed
+    // property when it differs from `len`; the JSI `rustbufferFree` host
+    // function reads it back and falls back to `byteLength` for views from
+    // `rustbufferAlloc(n)` where `byteLength == capacity` already.
+    //
+    // CMutableBuffer is non-owning here: its destructor leaves `buf.data`
+    // alone. Only the codegen-emitted `rustbuffer_free` path frees it.
     auto payload = std::make_shared<uniffi_jsi::CMutableBuffer>(
-        uniffi_jsi::CMutableBuffer((uint8_t *)bytes, buf.len));
-    auto arrayBuffer = jsi::ArrayBuffer(rt, payload);
-
-    // Once we have a Javascript version, we no longer need the Rust version, so
-    // we can call into Rust to tell it it's okay to free that memory.
-    rustbuffer_free(buf);
-
-    // Finally, return the ArrayBuffer.
-    return uniffi_jsi::Bridging<jsi::ArrayBuffer>::arraybuffer_to_value(
-        rt, arrayBuffer);
-    ;
+        buf.data, static_cast<size_t>(buf.len));
+    auto view =
+        uniffi_jsi::arraybufferToUint8Array(rt, jsi::ArrayBuffer(rt, payload));
+    if (buf.capacity != static_cast<uint64_t>(buf.len)) {
+      view.setProperty(rt, uniffi_jsi::kUbrnRustCapacity,
+                       jsi::Value(static_cast<double>(buf.capacity)));
+    }
+    return jsi::Value(rt, view);
   }
 };
 
@@ -3350,8 +3394,22 @@ template <> struct Bridging<RustCallStatus> {
                          const jsi::Value &jsStatus) {
     auto statusObject = jsStatus.asObject(rt);
     if (status.error_buf.data != nullptr) {
-      auto rbuf = Bridging<RustBuffer>::toJs(rt, callInvoker, status.error_buf);
-      statusObject.setProperty(rt, "errorBuf", rbuf);
+      // The error path is NOT wrapped in the codegen-emitted try/finally that
+      // covers normal returns: `errorBuf` is read by the runtime's call-status
+      // dispatcher (rust-call.ts) which throws straight to the user without
+      // ever calling `rustbuffer_free`. Switching this site to view-handoff
+      // would leak the Rust allocation, so we keep the copy semantics here:
+      // copy the bytes into a JS-owned ArrayBuffer and free the Rust buffer
+      // immediately. The errorBuf is small (a serialized error variant) and
+      // only allocated on the cold error path, so the boundary copy is cheap.
+      auto len = static_cast<size_t>(status.error_buf.len);
+      uint8_t *bytes = new uint8_t[len];
+      std::memcpy(bytes, status.error_buf.data, len);
+      auto payload = std::make_shared<uniffi_jsi::CMutableBuffer>(bytes, len);
+      auto view = uniffi_jsi::arraybufferToUint8Array(
+          rt, jsi::ArrayBuffer(rt, payload));
+      statusObject.setProperty(rt, "errorBuf", view);
+      Bridging<RustBuffer>::rustbuffer_free(status.error_buf);
     }
     if (status.code != UNIFFI_CALL_STATUS_OK) {
       auto code =
@@ -9142,10 +9200,10 @@ template <> struct Bridging<UniffiForeignFutureResultU8> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<uint8_t>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9208,10 +9266,10 @@ template <> struct Bridging<UniffiForeignFutureResultI8> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<int8_t>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9274,10 +9332,10 @@ template <> struct Bridging<UniffiForeignFutureResultU16> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<uint16_t>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9341,10 +9399,10 @@ template <> struct Bridging<UniffiForeignFutureResultI16> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<int16_t>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9408,10 +9466,10 @@ template <> struct Bridging<UniffiForeignFutureResultU32> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<uint32_t>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9475,10 +9533,10 @@ template <> struct Bridging<UniffiForeignFutureResultI32> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<int32_t>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9542,10 +9600,10 @@ template <> struct Bridging<UniffiForeignFutureResultU64> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<uint64_t>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9609,10 +9667,10 @@ template <> struct Bridging<UniffiForeignFutureResultI64> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<int64_t>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9676,10 +9734,10 @@ template <> struct Bridging<UniffiForeignFutureResultF32> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<float>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9743,10 +9801,10 @@ template <> struct Bridging<UniffiForeignFutureResultF64> {
 
     // Create the vtable from the js callbacks.
     rsObject.return_value = uniffi_jsi::Bridging<double>::fromJs(
-        rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+        rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9811,10 +9869,10 @@ template <> struct Bridging<UniffiForeignFutureResultRustBuffer> {
     // Create the vtable from the js callbacks.
     rsObject.return_value =
         uniffi::matrix_sdk_ffi::Bridging<RustBuffer>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "returnValue"));
+            rt, callInvoker, jsObject.getProperty(rt, "return_value"));
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -9881,7 +9939,7 @@ template <> struct Bridging<UniffiForeignFutureResultVoid> {
     // Create the vtable from the js callbacks.
     rsObject.call_status =
         uniffi::matrix_sdk_ffi::Bridging<RustCallStatus>::fromJs(
-            rt, callInvoker, jsObject.getProperty(rt, "callStatus"));
+            rt, callInvoker, jsObject.getProperty(rt, "call_status"));
 
     return rsObject;
   }
@@ -10207,14 +10265,14 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceAccountDataListener> {
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfaceaccountdatalistener::
             vtablecallbackinterfaceaccountdatalistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceaccountdatalistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_change = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceaccountdatalistenermethod0::
             vtablecallbackinterfaceaccountdatalistener::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "onChange"));
+                rt, callInvoker, jsObject.getProperty(rt, "on_change"));
 
     return rsObject;
   }
@@ -10503,14 +10561,14 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceBeaconInfoListener> {
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfacebeaconinfolistener::
             vtablecallbackinterfacebeaconinfolistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacebeaconinfolistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update =
         uniffi::matrix_sdk_ffi::cb::callbackinterfacebeaconinfolistenermethod0::
             vtablecallbackinterfacebeaconinfolistener::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "onUpdate"));
+                rt, callInvoker, jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -10939,20 +10997,20 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceClientDelegate> {
     rsObject.uniffi_free =
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfaceclientdelegate::
             vtablecallbackinterfaceclientdelegate::free::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "uniffiFree"));
+                rt, callInvoker, jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceclientdelegate::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.did_receive_auth_error =
         uniffi::matrix_sdk_ffi::cb::callbackinterfaceclientdelegatemethod0::
             vtablecallbackinterfaceclientdelegate::makeCallbackFunction(
                 rt, callInvoker,
-                jsObject.getProperty(rt, "didReceiveAuthError"));
+                jsObject.getProperty(rt, "did_receive_auth_error"));
     rsObject.on_background_task_error_report =
         uniffi::matrix_sdk_ffi::cb::callbackinterfaceclientdelegatemethod1::
             vtablecallbackinterfaceclientdelegate::makeCallbackFunction(
                 rt, callInvoker,
-                jsObject.getProperty(rt, "onBackgroundTaskErrorReport"));
+                jsObject.getProperty(rt, "on_background_task_error_report"));
 
     return rsObject;
   }
@@ -11388,20 +11446,20 @@ struct Bridging<UniffiVTableCallbackInterfaceClientSessionDelegate> {
         vtablecallbackinterfaceclientsessiondelegate::
             vtablecallbackinterfaceclientsessiondelegate::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceclientsessiondelegate::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.retrieve_session_from_keychain = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceclientsessiondelegatemethod0::
             vtablecallbackinterfaceclientsessiondelegate::makeCallbackFunction(
                 rt, callInvoker,
-                jsObject.getProperty(rt, "retrieveSessionFromKeychain"));
+                jsObject.getProperty(rt, "retrieve_session_from_keychain"));
     rsObject.save_session_in_keychain = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceclientsessiondelegatemethod1::
             vtablecallbackinterfaceclientsessiondelegate::makeCallbackFunction(
                 rt, callInvoker,
-                jsObject.getProperty(rt, "saveSessionInKeychain"));
+                jsObject.getProperty(rt, "save_session_in_keychain"));
 
     return rsObject;
   }
@@ -11694,17 +11752,17 @@ struct Bridging<UniffiVTableCallbackInterfaceDuplicateKeyUploadErrorListener> {
         vtablecallbackinterfaceduplicatekeyuploaderrorlistener::
             vtablecallbackinterfaceduplicatekeyuploaderrorlistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceduplicatekeyuploaderrorlistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_duplicate_key_upload_error = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceduplicatekeyuploaderrorlistenermethod0::
             vtablecallbackinterfaceduplicatekeyuploaderrorlistener::
                 makeCallbackFunction(
                     rt, callInvoker,
-                    jsObject.getProperty(rt, "onDuplicateKeyUploadError"));
+                    jsObject.getProperty(rt, "on_duplicate_key_upload_error"));
 
     return rsObject;
   }
@@ -11995,10 +12053,10 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceIgnoredUsersListener> {
         vtablecallbackinterfaceignoreduserslistener::
             vtablecallbackinterfaceignoreduserslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceignoreduserslistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.call = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceignoreduserslistenermethod0::
             vtablecallbackinterfaceignoreduserslistener::makeCallbackFunction(
@@ -12295,15 +12353,15 @@ struct Bridging<UniffiVTableCallbackInterfaceMediaPreviewConfigListener> {
         vtablecallbackinterfacemediapreviewconfiglistener::
             vtablecallbackinterfacemediapreviewconfiglistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacemediapreviewconfiglistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_change = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacemediapreviewconfiglistenermethod0::
             vtablecallbackinterfacemediapreviewconfiglistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onChange"));
+                                     jsObject.getProperty(rt, "on_change"));
 
     return rsObject;
   }
@@ -12591,15 +12649,15 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceProgressWatcher> {
     rsObject.uniffi_free =
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfaceprogresswatcher::
             vtablecallbackinterfaceprogresswatcher::free::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "uniffiFree"));
+                rt, callInvoker, jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceprogresswatcher::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.transmission_progress =
         uniffi::matrix_sdk_ffi::cb::callbackinterfaceprogresswatchermethod0::
             vtablecallbackinterfaceprogresswatcher::makeCallbackFunction(
                 rt, callInvoker,
-                jsObject.getProperty(rt, "transmissionProgress"));
+                jsObject.getProperty(rt, "transmission_progress"));
 
     return rsObject;
   }
@@ -12896,15 +12954,15 @@ struct Bridging<UniffiVTableCallbackInterfaceRoomAccountDataListener> {
         vtablecallbackinterfaceroomaccountdatalistener::
             vtablecallbackinterfaceroomaccountdatalistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceroomaccountdatalistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_change = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceroomaccountdatalistenermethod0::
             vtablecallbackinterfaceroomaccountdatalistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onChange"));
+                                     jsObject.getProperty(rt, "on_change"));
 
     return rsObject;
   }
@@ -13201,15 +13259,15 @@ struct Bridging<UniffiVTableCallbackInterfaceSendQueueRoomErrorListener> {
         vtablecallbackinterfacesendqueueroomerrorlistener::
             vtablecallbackinterfacesendqueueroomerrorlistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacesendqueueroomerrorlistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_error = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesendqueueroomerrorlistenermethod0::
             vtablecallbackinterfacesendqueueroomerrorlistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onError"));
+                                     jsObject.getProperty(rt, "on_error"));
 
     return rsObject;
   }
@@ -13507,16 +13565,16 @@ struct Bridging<UniffiVTableCallbackInterfaceSendQueueRoomUpdateListener> {
         vtablecallbackinterfacesendqueueroomupdatelistener::
             vtablecallbackinterfacesendqueueroomupdatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacesendqueueroomupdatelistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesendqueueroomupdatelistenermethod0::
             vtablecallbackinterfacesendqueueroomupdatelistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -13816,16 +13874,16 @@ struct Bridging<UniffiVTableCallbackInterfaceSyncNotificationListener> {
         vtablecallbackinterfacesyncnotificationlistener::
             vtablecallbackinterfacesyncnotificationlistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacesyncnotificationlistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_notification = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesyncnotificationlistenermethod0::
             vtablecallbackinterfacesyncnotificationlistener::
                 makeCallbackFunction(
                     rt, callInvoker,
-                    jsObject.getProperty(rt, "onNotification"));
+                    jsObject.getProperty(rt, "on_notification"));
 
     return rsObject;
   }
@@ -14115,14 +14173,14 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceBackupStateListener> {
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfacebackupstatelistener::
             vtablecallbackinterfacebackupstatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacebackupstatelistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacebackupstatelistenermethod0::
             vtablecallbackinterfacebackupstatelistener::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "onUpdate"));
+                rt, callInvoker, jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -14413,15 +14471,15 @@ struct Bridging<UniffiVTableCallbackInterfaceBackupSteadyStateListener> {
         vtablecallbackinterfacebackupsteadystatelistener::
             vtablecallbackinterfacebackupsteadystatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacebackupsteadystatelistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacebackupsteadystatelistenermethod0::
             vtablecallbackinterfacebackupsteadystatelistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -14714,16 +14772,16 @@ struct Bridging<UniffiVTableCallbackInterfaceEnableRecoveryProgressListener> {
         vtablecallbackinterfaceenablerecoveryprogresslistener::
             vtablecallbackinterfaceenablerecoveryprogresslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceenablerecoveryprogresslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceenablerecoveryprogresslistenermethod0::
             vtablecallbackinterfaceenablerecoveryprogresslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -15014,14 +15072,14 @@ struct Bridging<UniffiVTableCallbackInterfaceRecoveryStateListener> {
         vtablecallbackinterfacerecoverystatelistener::
             vtablecallbackinterfacerecoverystatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacerecoverystatelistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacerecoverystatelistenermethod0::
             vtablecallbackinterfacerecoverystatelistener::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "onUpdate"));
+                rt, callInvoker, jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -15312,15 +15370,15 @@ struct Bridging<UniffiVTableCallbackInterfaceVerificationStateListener> {
         vtablecallbackinterfaceverificationstatelistener::
             vtablecallbackinterfaceverificationstatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceverificationstatelistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceverificationstatelistenermethod0::
             vtablecallbackinterfaceverificationstatelistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -15611,14 +15669,14 @@ struct Bridging<UniffiVTableCallbackInterfaceLiveLocationsListener> {
         vtablecallbackinterfacelivelocationslistener::
             vtablecallbackinterfacelivelocationslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacelivelocationslistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacelivelocationslistenermethod0::
             vtablecallbackinterfacelivelocationslistener::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "onUpdate"));
+                rt, callInvoker, jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -15907,17 +15965,17 @@ struct Bridging<UniffiVTableCallbackInterfaceNotificationSettingsDelegate> {
         vtablecallbackinterfacenotificationsettingsdelegate::
             vtablecallbackinterfacenotificationsettingsdelegate::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacenotificationsettingsdelegate::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.settings_did_change = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacenotificationsettingsdelegatemethod0::
             vtablecallbackinterfacenotificationsettingsdelegate::
                 makeCallbackFunction(
                     rt, callInvoker,
-                    jsObject.getProperty(rt, "settingsDidChange"));
+                    jsObject.getProperty(rt, "settings_did_change"));
 
     return rsObject;
   }
@@ -16210,16 +16268,16 @@ struct Bridging<UniffiVTableCallbackInterfaceGeneratedQrLoginProgressListener> {
         vtablecallbackinterfacegeneratedqrloginprogresslistener::
             vtablecallbackinterfacegeneratedqrloginprogresslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacegeneratedqrloginprogresslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacegeneratedqrloginprogresslistenermethod0::
             vtablecallbackinterfacegeneratedqrloginprogresslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -16515,16 +16573,16 @@ struct Bridging<
         vtablecallbackinterfacegrantgeneratedqrloginprogresslistener::
             vtablecallbackinterfacegrantgeneratedqrloginprogresslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacegrantgeneratedqrloginprogresslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacegrantgeneratedqrloginprogresslistenermethod0::
             vtablecallbackinterfacegrantgeneratedqrloginprogresslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -16816,16 +16874,16 @@ struct Bridging<UniffiVTableCallbackInterfaceGrantQrLoginProgressListener> {
         vtablecallbackinterfacegrantqrloginprogresslistener::
             vtablecallbackinterfacegrantqrloginprogresslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacegrantqrloginprogresslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacegrantqrloginprogresslistenermethod0::
             vtablecallbackinterfacegrantqrloginprogresslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -17116,15 +17174,15 @@ struct Bridging<UniffiVTableCallbackInterfaceQrLoginProgressListener> {
         vtablecallbackinterfaceqrloginprogresslistener::
             vtablecallbackinterfaceqrloginprogresslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceqrloginprogresslistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceqrloginprogresslistenermethod0::
             vtablecallbackinterfaceqrloginprogresslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -17415,10 +17473,10 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceCallDeclineListener> {
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfacecalldeclinelistener::
             vtablecallbackinterfacecalldeclinelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacecalldeclinelistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.call = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacecalldeclinelistenermethod0::
             vtablecallbackinterfacecalldeclinelistener::makeCallbackFunction(
@@ -17716,11 +17774,11 @@ struct Bridging<UniffiVTableCallbackInterfaceIdentityStatusChangeListener> {
         vtablecallbackinterfaceidentitystatuschangelistener::
             vtablecallbackinterfaceidentitystatuschangelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceidentitystatuschangelistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.call = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceidentitystatuschangelistenermethod0::
             vtablecallbackinterfaceidentitystatuschangelistener::
@@ -18017,10 +18075,10 @@ struct Bridging<UniffiVTableCallbackInterfaceKnockRequestsListener> {
         vtablecallbackinterfaceknockrequestslistener::
             vtablecallbackinterfaceknockrequestslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceknockrequestslistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.call = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceknockrequestslistenermethod0::
             vtablecallbackinterfaceknockrequestslistener::makeCallbackFunction(
@@ -18312,10 +18370,10 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceRoomInfoListener> {
     rsObject.uniffi_free =
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfaceroominfolistener::
             vtablecallbackinterfaceroominfolistener::free::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "uniffiFree"));
+                rt, callInvoker, jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceroominfolistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.call =
         uniffi::matrix_sdk_ffi::cb::callbackinterfaceroominfolistenermethod0::
             vtablecallbackinterfaceroominfolistener::makeCallbackFunction(
@@ -18608,14 +18666,14 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceSendQueueListener> {
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfacesendqueuelistener::
             vtablecallbackinterfacesendqueuelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacesendqueuelistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update =
         uniffi::matrix_sdk_ffi::cb::callbackinterfacesendqueuelistenermethod0::
             vtablecallbackinterfacesendqueuelistener::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "onUpdate"));
+                rt, callInvoker, jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -18907,11 +18965,11 @@ struct Bridging<UniffiVTableCallbackInterfaceTypingNotificationsListener> {
         vtablecallbackinterfacetypingnotificationslistener::
             vtablecallbackinterfacetypingnotificationslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacetypingnotificationslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.call = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacetypingnotificationslistenermethod0::
             vtablecallbackinterfacetypingnotificationslistener::
@@ -19213,16 +19271,16 @@ struct Bridging<
         vtablecallbackinterfaceroomdirectorysearchentrieslistener::
             vtablecallbackinterfaceroomdirectorysearchentrieslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceroomdirectorysearchentrieslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceroomdirectorysearchentrieslistenermethod0::
             vtablecallbackinterfaceroomdirectorysearchentrieslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -19515,15 +19573,15 @@ struct Bridging<UniffiVTableCallbackInterfaceRoomListEntriesListener> {
         vtablecallbackinterfaceroomlistentrieslistener::
             vtablecallbackinterfaceroomlistentrieslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceroomlistentrieslistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceroomlistentrieslistenermethod0::
             vtablecallbackinterfaceroomlistentrieslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -19815,16 +19873,16 @@ struct Bridging<UniffiVTableCallbackInterfaceRoomListLoadingStateListener> {
         vtablecallbackinterfaceroomlistloadingstatelistener::
             vtablecallbackinterfaceroomlistloadingstatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceroomlistloadingstatelistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceroomlistloadingstatelistenermethod0::
             vtablecallbackinterfaceroomlistloadingstatelistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -20116,16 +20174,16 @@ struct Bridging<UniffiVTableCallbackInterfaceRoomListServiceStateListener> {
         vtablecallbackinterfaceroomlistservicestatelistener::
             vtablecallbackinterfaceroomlistservicestatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceroomlistservicestatelistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceroomlistservicestatelistenermethod0::
             vtablecallbackinterfaceroomlistservicestatelistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -20422,16 +20480,16 @@ struct Bridging<
         vtablecallbackinterfaceroomlistservicesyncindicatorlistener::
             vtablecallbackinterfaceroomlistservicesyncindicatorlistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceroomlistservicesyncindicatorlistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceroomlistservicesyncindicatorlistenermethod0::
             vtablecallbackinterfaceroomlistservicesyncindicatorlistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -21540,50 +21598,52 @@ struct Bridging<
         vtablecallbackinterfacesessionverificationcontrollerdelegate::
             vtablecallbackinterfacesessionverificationcontrollerdelegate::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacesessionverificationcontrollerdelegate::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.did_receive_verification_request = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesessionverificationcontrollerdelegatemethod0::
             vtablecallbackinterfacesessionverificationcontrollerdelegate::
                 makeCallbackFunction(
                     rt, callInvoker,
-                    jsObject.getProperty(rt, "didReceiveVerificationRequest"));
+                    jsObject.getProperty(rt,
+                                         "did_receive_verification_request"));
     rsObject.did_accept_verification_request = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesessionverificationcontrollerdelegatemethod1::
             vtablecallbackinterfacesessionverificationcontrollerdelegate::
                 makeCallbackFunction(
                     rt, callInvoker,
-                    jsObject.getProperty(rt, "didAcceptVerificationRequest"));
+                    jsObject.getProperty(rt,
+                                         "did_accept_verification_request"));
     rsObject.did_start_sas_verification = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesessionverificationcontrollerdelegatemethod2::
             vtablecallbackinterfacesessionverificationcontrollerdelegate::
                 makeCallbackFunction(
                     rt, callInvoker,
-                    jsObject.getProperty(rt, "didStartSasVerification"));
+                    jsObject.getProperty(rt, "did_start_sas_verification"));
     rsObject.did_receive_verification_data = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesessionverificationcontrollerdelegatemethod3::
             vtablecallbackinterfacesessionverificationcontrollerdelegate::
                 makeCallbackFunction(
                     rt, callInvoker,
-                    jsObject.getProperty(rt, "didReceiveVerificationData"));
+                    jsObject.getProperty(rt, "did_receive_verification_data"));
     rsObject.did_fail = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesessionverificationcontrollerdelegatemethod4::
             vtablecallbackinterfacesessionverificationcontrollerdelegate::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "didFail"));
+                                     jsObject.getProperty(rt, "did_fail"));
     rsObject.did_cancel = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesessionverificationcontrollerdelegatemethod5::
             vtablecallbackinterfacesessionverificationcontrollerdelegate::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "didCancel"));
+                                     jsObject.getProperty(rt, "did_cancel"));
     rsObject.did_finish = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesessionverificationcontrollerdelegatemethod6::
             vtablecallbackinterfacesessionverificationcontrollerdelegate::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "didFinish"));
+                                     jsObject.getProperty(rt, "did_finish"));
 
     return rsObject;
   }
@@ -21875,16 +21935,16 @@ struct Bridging<UniffiVTableCallbackInterfaceSpaceRoomListEntriesListener> {
         vtablecallbackinterfacespaceroomlistentrieslistener::
             vtablecallbackinterfacespaceroomlistentrieslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacespaceroomlistentrieslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacespaceroomlistentrieslistenermethod0::
             vtablecallbackinterfacespaceroomlistentrieslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -22181,16 +22241,16 @@ struct Bridging<
         vtablecallbackinterfacespaceroomlistpaginationstatelistener::
             vtablecallbackinterfacespaceroomlistpaginationstatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacespaceroomlistpaginationstatelistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacespaceroomlistpaginationstatelistenermethod0::
             vtablecallbackinterfacespaceroomlistpaginationstatelistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -22481,15 +22541,15 @@ struct Bridging<UniffiVTableCallbackInterfaceSpaceRoomListSpaceListener> {
         vtablecallbackinterfacespaceroomlistspacelistener::
             vtablecallbackinterfacespaceroomlistspacelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacespaceroomlistspacelistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacespaceroomlistspacelistenermethod0::
             vtablecallbackinterfacespaceroomlistspacelistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -22783,16 +22843,16 @@ struct Bridging<UniffiVTableCallbackInterfaceSpaceServiceJoinedSpacesListener> {
         vtablecallbackinterfacespaceservicejoinedspaceslistener::
             vtablecallbackinterfacespaceservicejoinedspaceslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacespaceservicejoinedspaceslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacespaceservicejoinedspaceslistenermethod0::
             vtablecallbackinterfacespaceservicejoinedspaceslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -23086,16 +23146,16 @@ struct Bridging<UniffiVTableCallbackInterfaceSpaceServiceSpaceFiltersListener> {
         vtablecallbackinterfacespaceservicespacefilterslistener::
             vtablecallbackinterfacespaceservicespacefilterslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacespaceservicespacefilterslistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacespaceservicespacefilterslistenermethod0::
             vtablecallbackinterfacespaceservicespacefilterslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -23386,15 +23446,15 @@ struct Bridging<UniffiVTableCallbackInterfaceSyncServiceStateObserver> {
         vtablecallbackinterfacesyncservicestateobserver::
             vtablecallbackinterfacesyncservicestateobserver::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacesyncservicestateobserver::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacesyncservicestateobservermethod0::
             vtablecallbackinterfacesyncservicestateobserver::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -23683,14 +23743,14 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceSyncListenerV2> {
     rsObject.uniffi_free =
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfacesynclistenerv2::
             vtablecallbackinterfacesynclistenerv2::free::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "uniffiFree"));
+                rt, callInvoker, jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacesynclistenerv2::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update =
         uniffi::matrix_sdk_ffi::cb::callbackinterfacesynclistenerv2method0::
             vtablecallbackinterfacesynclistenerv2::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "onUpdate"));
+                rt, callInvoker, jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -23981,15 +24041,15 @@ struct Bridging<UniffiVTableCallbackInterfacePaginationStatusListener> {
         vtablecallbackinterfacepaginationstatuslistener::
             vtablecallbackinterfacepaginationstatuslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacepaginationstatuslistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacepaginationstatuslistenermethod0::
             vtablecallbackinterfacepaginationstatuslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -24276,14 +24336,14 @@ template <> struct Bridging<UniffiVTableCallbackInterfaceTimelineListener> {
     rsObject.uniffi_free =
         uniffi::matrix_sdk_ffi::st::vtablecallbackinterfacetimelinelistener::
             vtablecallbackinterfacetimelinelistener::free::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "uniffiFree"));
+                rt, callInvoker, jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacetimelinelistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update =
         uniffi::matrix_sdk_ffi::cb::callbackinterfacetimelinelistenermethod0::
             vtablecallbackinterfacetimelinelistener::makeCallbackFunction(
-                rt, callInvoker, jsObject.getProperty(rt, "onUpdate"));
+                rt, callInvoker, jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -24574,15 +24634,15 @@ struct Bridging<UniffiVTableCallbackInterfaceThreadListEntriesListener> {
         vtablecallbackinterfacethreadlistentrieslistener::
             vtablecallbackinterfacethreadlistentrieslistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacethreadlistentrieslistener::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacethreadlistentrieslistenermethod0::
             vtablecallbackinterfacethreadlistentrieslistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -24876,16 +24936,16 @@ struct Bridging<
         vtablecallbackinterfacethreadlistpaginationstatelistener::
             vtablecallbackinterfacethreadlistpaginationstatelistener::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacethreadlistpaginationstatelistener::
             makeCallbackFunction(rt, callInvoker,
-                                 jsObject.getProperty(rt, "uniffiClone"));
+                                 jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_update = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacethreadlistpaginationstatelistenermethod0::
             vtablecallbackinterfacethreadlistpaginationstatelistener::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUpdate"));
+                                     jsObject.getProperty(rt, "on_update"));
 
     return rsObject;
   }
@@ -25176,15 +25236,15 @@ struct Bridging<UniffiVTableCallbackInterfaceUnableToDecryptDelegate> {
         vtablecallbackinterfaceunabletodecryptdelegate::
             vtablecallbackinterfaceunabletodecryptdelegate::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfaceunabletodecryptdelegate::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.on_utd = uniffi::matrix_sdk_ffi::cb::
         callbackinterfaceunabletodecryptdelegatemethod0::
             vtablecallbackinterfaceunabletodecryptdelegate::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "onUtd"));
+                                     jsObject.getProperty(rt, "on_utd"));
 
     return rsObject;
   }
@@ -25485,16 +25545,16 @@ struct Bridging<UniffiVTableCallbackInterfaceWidgetCapabilitiesProvider> {
         vtablecallbackinterfacewidgetcapabilitiesprovider::
             vtablecallbackinterfacewidgetcapabilitiesprovider::free::
                 makeCallbackFunction(rt, callInvoker,
-                                     jsObject.getProperty(rt, "uniffiFree"));
+                                     jsObject.getProperty(rt, "uniffi_free"));
     rsObject.uniffi_clone = uniffi::matrix_sdk_ffi::cb::callbackinterfaceclone::
         vtablecallbackinterfacewidgetcapabilitiesprovider::makeCallbackFunction(
-            rt, callInvoker, jsObject.getProperty(rt, "uniffiClone"));
+            rt, callInvoker, jsObject.getProperty(rt, "uniffi_clone"));
     rsObject.acquire_capabilities = uniffi::matrix_sdk_ffi::cb::
         callbackinterfacewidgetcapabilitiesprovidermethod0::
             vtablecallbackinterfacewidgetcapabilitiesprovider::
                 makeCallbackFunction(
                     rt, callInvoker,
-                    jsObject.getProperty(rt, "acquireCapabilities"));
+                    jsObject.getProperty(rt, "acquire_capabilities"));
 
     return rsObject;
   }
@@ -25537,27 +25597,39 @@ NativeMatrixSdkFfi::NativeMatrixSdkFfi(
             return this->cpp_uniffi_internal_fn_func_ffi__string_to_byte_length(
                 rt, thisVal, args, count);
           });
-  props["ubrn_uniffi_internal_fn_func_ffi__string_to_arraybuffer"] =
+  props["ubrn_uniffi_internal_fn_func_ffi__string_to_buffer"] =
       jsi::Function::createFromHostFunction(
           rt,
           jsi::PropNameID::forAscii(
-              rt, "ubrn_uniffi_internal_fn_func_ffi__string_to_arraybuffer"),
+              rt, "ubrn_uniffi_internal_fn_func_ffi__string_to_buffer"),
           1,
           [this](jsi::Runtime &rt, const jsi::Value &thisVal,
                  const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_internal_fn_func_ffi__string_to_arraybuffer(
+            return this->cpp_uniffi_internal_fn_func_ffi__string_to_buffer(
                 rt, thisVal, args, count);
           });
-  props["ubrn_uniffi_internal_fn_func_ffi__arraybuffer_to_string"] =
+  props["ubrn_uniffi_internal_fn_func_ffi__string_from_buffer"] =
       jsi::Function::createFromHostFunction(
           rt,
           jsi::PropNameID::forAscii(
-              rt, "ubrn_uniffi_internal_fn_func_ffi__arraybuffer_to_string"),
+              rt, "ubrn_uniffi_internal_fn_func_ffi__string_from_buffer"),
           1,
           [this](jsi::Runtime &rt, const jsi::Value &thisVal,
                  const jsi::Value *args, size_t count) -> jsi::Value {
-            return this->cpp_uniffi_internal_fn_func_ffi__arraybuffer_to_string(
+            return this->cpp_uniffi_internal_fn_func_ffi__string_from_buffer(
                 rt, thisVal, args, count);
+          });
+  props["ubrn_uniffi_internal_fn_func_ffi__read_string_from_buffer"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(
+              rt, "ubrn_uniffi_internal_fn_func_ffi__read_string_from_buffer"),
+          3,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this
+                ->cpp_uniffi_internal_fn_func_ffi__read_string_from_buffer(
+                    rt, thisVal, args, count);
           });
   props["ubrn_uniffi_matrix_sdk_ffi_fn_clone_"
         "roommessageeventcontentwithoutrelation"] =
@@ -42687,6 +42759,103 @@ NativeMatrixSdkFfi::NativeMatrixSdkFfi(
             ->cpp_uniffi_internal_fn_method_widgetdriverhandle_ffi__bless_pointer(
                 rt, thisVal, args, count);
       });
+
+  // `rustbuffer_alloc(n)` -> Uint8Array view over Rust-owned memory of capacity
+  // `n`. `rustbuffer_free(view)` -> hands the underlying (ptr, capacity) back
+  // to the crate's `rustbuffer_free`. Together they let JS allocate buffers
+  // that the codegen-emitted lowering path can fill in place and ship to Rust
+  // without copying.
+  props["rustbuffer_alloc"] = jsi::Function::createFromHostFunction(
+      rt, jsi::PropNameID::forAscii(rt, "rustbuffer_alloc"), 1,
+      [](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+         size_t count) -> jsi::Value {
+        if (count < 1 || !args[0].isNumber()) {
+          throw jsi::JSError(rt, "rustbuffer_alloc expected a number argument");
+        }
+        double size = args[0].asNumber();
+        if (size < 0) {
+          throw jsi::JSError(rt, "rustbuffer_alloc: size must be non-negative");
+        }
+        if (size > INT32_MAX) {
+          throw jsi::JSError(rt, "rustbuffer_alloc: size exceeds INT32_MAX");
+        }
+        auto rb =
+            uniffi::matrix_sdk_ffi::Bridging<RustBuffer>::rustbuffer_alloc(
+                static_cast<int32_t>(size));
+        if (rb.data == nullptr) {
+          throw jsi::JSError(rt,
+                             "rustbuffer_alloc failed: alloc returned null");
+        }
+        // Non-owning view over Rust-allocated memory; CMutableBuffer's
+        // destructor is the default and does not free `rb.data`. The allocation
+        // is released either by an explicit `rustbuffer_free(view)` or by being
+        // adopted when the view is lowered as an FFI argument.
+        auto payload = std::make_shared<uniffi_jsi::CMutableBuffer>(
+            rb.data, static_cast<size_t>(rb.capacity));
+        // Wrap as Uint8Array so JS can index/assign bytes directly.
+        auto view = uniffi_jsi::arraybufferToUint8Array(
+            rt, jsi::ArrayBuffer(rt, payload));
+        // Stamp the capacity so the argument-lowering path
+        // (`Bridging<RustBuffer>::fromJs`) recognises this view as
+        // library-owned and adopts the allocation instead of copying it.
+        // Without the stamp, a lowered argument is copied and this
+        // allocation is orphaned — one leaked payload per call.
+        if (rb.capacity > 0) {
+          view.setProperty(rt, uniffi_jsi::kUbrnRustCapacity,
+                           jsi::Value(static_cast<double>(rb.capacity)));
+        }
+        return jsi::Value(rt, view);
+      });
+
+  props["rustbuffer_free"] = jsi::Function::createFromHostFunction(
+      rt, jsi::PropNameID::forAscii(rt, "rustbuffer_free"), 1,
+      [](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+         size_t count) -> jsi::Value {
+        if (count < 1 || !args[0].isObject()) {
+          throw jsi::JSError(rt,
+                             "rustbuffer_free expected a Uint8Array argument");
+        }
+        auto view = args[0].asObject(rt);
+        auto byteLength =
+            static_cast<size_t>(view.getProperty(rt, "byteLength").asNumber());
+        // Empty views were never allocated by `rustbuffer_alloc`; nothing
+        // to free. Bail out before reading buffer/byteOffset/capacity to
+        // skip three JSI property traversals on the empty path.
+        if (byteLength == 0) {
+          return jsi::Value::undefined();
+        }
+        // Capacity resolution:
+        //   * For a view from `rustbuffer_alloc(n)`, `byteLength == n ==
+        //   capacity`,
+        //     and no `__ubrnRustCapacity` hint was set.
+        //   * For a view from a lift-handoff, the codegen-emitted
+        //     `Bridging<RustBuffer>::toJs` set `byteLength = len` and stashed
+        //     the original `capacity` on `__ubrnRustCapacity` whenever
+        //     `capacity != len`.
+        // So: prefer the hint, fall back to byteLength.
+        size_t capacity = byteLength;
+        if (view.hasProperty(rt, uniffi_jsi::kUbrnRustCapacity)) {
+          capacity = static_cast<size_t>(
+              view.getProperty(rt, uniffi_jsi::kUbrnRustCapacity).asNumber());
+        }
+        // A zero capacity marks a view already adopted as an FFI argument
+        // (its hint was reset to 0) and freed by the callee. Freeing again
+        // would be a double free, so this is a no-op.
+        if (capacity == 0) {
+          return jsi::Value::undefined();
+        }
+        auto buffer = view.getPropertyAsObject(rt, "buffer").getArrayBuffer(rt);
+        auto byteOffset =
+            static_cast<size_t>(view.getProperty(rt, "byteOffset").asNumber());
+        // Honour byteOffset for safety (defensive; currently always 0).
+        RustBuffer rb{
+            .capacity = static_cast<uint64_t>(capacity),
+            .len = 0,
+            .data = buffer.data(rt) + byteOffset,
+        };
+        uniffi::matrix_sdk_ffi::Bridging<RustBuffer>::rustbuffer_free(rb);
+        return jsi::Value::undefined();
+      });
 }
 
 void NativeMatrixSdkFfi::registerModule(
@@ -42706,7 +42875,7 @@ jsi::Value NativeMatrixSdkFfi::get(jsi::Runtime &rt,
                                    const jsi::PropNameID &name) {
   try {
     return jsi::Value(rt, props.at(name.utf8(rt)));
-  } catch (std::out_of_range &e) {
+  } catch (std::out_of_range &) {
     return jsi::Value::undefined();
   }
 }
@@ -43122,17 +43291,25 @@ NativeMatrixSdkFfi::cpp_uniffi_internal_fn_func_ffi__string_to_byte_length(
 }
 
 jsi::Value
-NativeMatrixSdkFfi::cpp_uniffi_internal_fn_func_ffi__string_to_arraybuffer(
+NativeMatrixSdkFfi::cpp_uniffi_internal_fn_func_ffi__string_to_buffer(
     jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
     size_t count) {
-  return uniffi_jsi::Bridging<std::string>::string_to_arraybuffer(rt, args[0]);
+  return uniffi_jsi::Bridging<std::string>::string_to_buffer(rt, args[0]);
 }
 
 jsi::Value
-NativeMatrixSdkFfi::cpp_uniffi_internal_fn_func_ffi__arraybuffer_to_string(
+NativeMatrixSdkFfi::cpp_uniffi_internal_fn_func_ffi__string_from_buffer(
     jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
     size_t count) {
-  return uniffi_jsi::Bridging<std::string>::arraybuffer_to_string(rt, args[0]);
+  return uniffi_jsi::Bridging<std::string>::string_from_buffer(rt, args[0]);
+}
+
+jsi::Value
+NativeMatrixSdkFfi::cpp_uniffi_internal_fn_func_ffi__read_string_from_buffer(
+    jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+    size_t count) {
+  return uniffi_jsi::Bridging<std::string>::read_string_from_buffer(
+      rt, args[0], args[1], args[2]);
 }
 jsi::Value NativeMatrixSdkFfi::
     cpp_uniffi_internal_fn_method_roommessageeventcontentwithoutrelation_ffi__bless_pointer(

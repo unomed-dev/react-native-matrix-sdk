@@ -4524,6 +4524,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ubjs/core@npm:0.31.0-6":
+  version: 0.31.0-6
+  resolution: "@ubjs/core@npm:0.31.0-6"
+  checksum: 625d5b67f36e4d5d41254c7e0552fba9954ab29769f147a890333e5f77b5d15605262c7eae13973046100051770c1afea6a8f0b585be8647e086e759b12e5339
+  languageName: node
+  linkType: hard
+
 "@ungap/structured-clone@npm:^1.2.0":
   version: 1.2.0
   resolution: "@ungap/structured-clone@npm:1.2.0"
@@ -4561,6 +4568,7 @@ __metadata:
     "@release-it/conventional-changelog": ^5.0.0
     "@types/jest": ^29.5.5
     "@types/react": ^18.2.44
+    "@ubjs/core": 0.31.0-6
     commitlint: ^17.0.2
     del-cli: ^5.1.0
     eslint: ^8.51.0
@@ -4577,7 +4585,7 @@ __metadata:
     tar: ^7.4.3
     turbo: ^1.10.7
     typescript: ^5.2.2
-    uniffi-bindgen-react-native: 0.31.0-2
+    uniffi-bindgen-react-native: 0.31.0-6
   peerDependencies:
     react: "*"
     react-native: "*"
@@ -14444,13 +14452,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uniffi-bindgen-react-native@npm:0.31.0-2":
-  version: 0.31.0-2
-  resolution: "uniffi-bindgen-react-native@npm:0.31.0-2"
+"uniffi-bindgen-react-native@npm:0.31.0-6":
+  version: 0.31.0-6
+  resolution: "uniffi-bindgen-react-native@npm:0.31.0-6"
   bin:
     ubrn: bin/cli.cjs
     uniffi-bindgen-react-native: bin/cli.cjs
-  checksum: 7cd9a7a2714edc6c2e5416126362c6d9120071b917115667fa0bb5498df3797aa4c11a64480995b6b73f3b979d368420b1d60bf11a43c7a5cc3131c5b722a4ad
+  checksum: 6b791ed221c231264c3065816811e126ea42c51fb40f91c4f1ca9c117c4051db191df10f4e0c26da9869ae7f11881ebcd403faadb78126950051cf0390fe63ae
   languageName: node
   linkType: hard
 
