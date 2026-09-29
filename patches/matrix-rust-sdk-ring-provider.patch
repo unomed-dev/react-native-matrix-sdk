@@ -29,3 +29,19 @@ index fe4e3da..dd66fd3 100644
  rustls-pki-types = "1.14.0"
  rustls-native-certs = "0.8.3"
  webpki-roots = "1.0.6"
+diff --git a/crates/matrix-sdk/src/http_client/native.rs b/crates/matrix-sdk/src/http_client/native.rs
+index a02455f..71d4419 100644
+--- a/crates/matrix-sdk/src/http_client/native.rs
++++ b/crates/matrix-sdk/src/http_client/native.rs
+@@ -185,6 +185,11 @@ impl Default for HttpSettings {
+ impl HttpSettings {
+     /// Build a client with the specified configuration.
+     pub(crate) fn make_client(&self) -> Result<reqwest::Client, HttpError> {
++        // reqwest is built with `rustls-no-provider`, so it panics with "No provider
++        // set" unless a process-wide default exists. Only the Android verifier below
++        // installs one implicitly. This fails harmlessly if one is already installed.
++        let _ = rustls::crypto::ring::default_provider().install_default();
++
+         let user_agent = self.user_agent.clone().unwrap_or_else(|| "matrix-rust-sdk".to_owned());
+         let mut http_client = reqwest::Client::builder()
+             .user_agent(user_agent)
