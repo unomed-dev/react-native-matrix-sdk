@@ -633,7 +633,6 @@ internal object IntegrityCheckingUniffiLib {
     init {
         Native.register(IntegrityCheckingUniffiLib::class.java, findLibraryName(componentName = "matrix_sdk_common"))
         uniffiCheckContractApiVersion(this)
-        uniffiCheckApiChecksums(this)
     }
     external fun ffi_matrix_sdk_common_uniffi_contract_version(
     ): Int
@@ -764,9 +763,6 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
     if (bindings_contract_version != scaffolding_contract_version) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
-}
-@Suppress("UNUSED_PARAMETER")
-private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
 }
 
 /**
@@ -920,6 +916,128 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
 
 
 /**
+ * Reason why a background task failed.
+ */
+sealed class BackgroundTaskFailureReason {
+    
+    /**
+     * The task panicked.
+     */
+    data class Panic(
+        /**
+         * The panic message, if it could be extracted.
+         */
+        val `message`: kotlin.String?, 
+        /**
+         * Backtrace captured after the panic (if available).
+         */
+        val `panicBacktrace`: kotlin.String?) : BackgroundTaskFailureReason()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * The task returned an error.
+     */
+    data class Error(
+        /**
+         * String representation of the error.
+         */
+        val `error`: kotlin.String) : BackgroundTaskFailureReason()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * The task ended unexpectedly (for tasks expected to run forever).
+     */
+    object EarlyTermination : BackgroundTaskFailureReason()
+    
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeBackgroundTaskFailureReason : FfiConverterRustBuffer<BackgroundTaskFailureReason>{
+    override fun read(buf: ByteBuffer): BackgroundTaskFailureReason {
+        return when(buf.getInt()) {
+            1 -> BackgroundTaskFailureReason.Panic(
+                FfiConverterOptionalString.read(buf),
+                FfiConverterOptionalString.read(buf),
+                )
+            2 -> BackgroundTaskFailureReason.Error(
+                FfiConverterString.read(buf),
+                )
+            3 -> BackgroundTaskFailureReason.EarlyTermination
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: BackgroundTaskFailureReason) = when(value) {
+        is BackgroundTaskFailureReason.Panic -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterOptionalString.allocationSize(value.`message`)
+                + FfiConverterOptionalString.allocationSize(value.`panicBacktrace`)
+            )
+        }
+        is BackgroundTaskFailureReason.Error -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`error`)
+            )
+        }
+        is BackgroundTaskFailureReason.EarlyTermination -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: BackgroundTaskFailureReason, buf: ByteBuffer) {
+        when(value) {
+            is BackgroundTaskFailureReason.Panic -> {
+                buf.putInt(1)
+                FfiConverterOptionalString.write(value.`message`, buf)
+                FfiConverterOptionalString.write(value.`panicBacktrace`, buf)
+                Unit
+            }
+            is BackgroundTaskFailureReason.Error -> {
+                buf.putInt(2)
+                FfiConverterString.write(value.`error`, buf)
+                Unit
+            }
+            is BackgroundTaskFailureReason.EarlyTermination -> {
+                buf.putInt(3)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
  * A machine-readable representation of the authenticity for a `ShieldState`.
  */
 
@@ -941,10 +1059,6 @@ enum class ShieldStateCode {
      * The sender hasn't been verified by the Client's user.
      */
     UNVERIFIED_IDENTITY,
-    /**
-     * An unencrypted event in an encrypted room.
-     */
-    SENT_IN_CLEAR,
     /**
      * The sender was previously verified but changed their identity.
      */
@@ -980,4 +1094,36 @@ public object FfiConverterTypeShieldStateCode: FfiConverterRustBuffer<ShieldStat
 }
 
 
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?> {
+    override fun read(buf: ByteBuffer): kotlin.String? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterString.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.String?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterString.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.String?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterString.write(value, buf)
+        }
+    }
+}
 

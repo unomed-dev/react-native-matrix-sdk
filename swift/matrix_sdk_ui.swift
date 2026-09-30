@@ -579,6 +579,80 @@ public func FfiConverterTypeEventItemOrigin_lower(_ value: EventItemOrigin) -> R
 
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum LatestEventValueLocalState: Equatable, Hashable {
+    
+    case isSending
+    case hasBeenSent
+    case cannotBeSent
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LatestEventValueLocalState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLatestEventValueLocalState: FfiConverterRustBuffer {
+    typealias SwiftType = LatestEventValueLocalState
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LatestEventValueLocalState {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .isSending
+        
+        case 2: return .hasBeenSent
+        
+        case 3: return .cannotBeSent
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: LatestEventValueLocalState, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .isSending:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .hasBeenSent:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .cannotBeSent:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLatestEventValueLocalState_lift(_ buf: RustBuffer) throws -> LatestEventValueLocalState {
+    return try FfiConverterTypeLatestEventValueLocalState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLatestEventValueLocalState_lower(_ value: LatestEventValueLocalState) -> RustBuffer {
+    return FfiConverterTypeLatestEventValueLocalState.lower(value)
+}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
  * The type of change between the previous and current pinned events.
  */
@@ -730,6 +804,314 @@ public func FfiConverterTypeSpaceRoomListPaginationState_lift(_ buf: RustBuffer)
 #endif
 public func FfiConverterTypeSpaceRoomListPaginationState_lower(_ value: SpaceRoomListPaginationState) -> RustBuffer {
     return FfiConverterTypeSpaceRoomListPaginationState.lower(value)
+}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * The pagination state of a [`ThreadListService`].
+ */
+
+public enum ThreadListPaginationState: Equatable, Hashable {
+    
+    /**
+     * The list is idle (not currently loading).
+     */
+    case idle(
+        /**
+         * Whether the end of the thread list has been reached (no more pages
+         * to load).
+         */endReached: Bool
+    )
+    /**
+     * The list is currently loading the next page.
+     */
+    case loading
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ThreadListPaginationState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeThreadListPaginationState: FfiConverterRustBuffer {
+    typealias SwiftType = ThreadListPaginationState
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ThreadListPaginationState {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .idle(endReached: try FfiConverterBool.read(from: &buf)
+        )
+        
+        case 2: return .loading
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ThreadListPaginationState, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .idle(endReached):
+            writeInt(&buf, Int32(1))
+            FfiConverterBool.write(endReached, into: &buf)
+            
+        
+        case .loading:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeThreadListPaginationState_lift(_ buf: RustBuffer) throws -> ThreadListPaginationState {
+    return try FfiConverterTypeThreadListPaginationState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeThreadListPaginationState_lower(_ value: ThreadListPaginationState) -> RustBuffer {
+    return FfiConverterTypeThreadListPaginationState.lower(value)
+}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * Options for controlling the behaviour of [`TimelineFocus::Event`]
+ * for threaded events.
+ */
+
+public enum TimelineEventFocusThreadMode: Equatable, Hashable {
+    
+    /**
+     * Force the timeline into threaded mode.
+     *
+     * When the focused event is part of a thread, the timeline will be focused
+     * on that thread's root. Otherwise, the timeline will treat the target
+     * event itself as the thread root. Threaded events will never be
+     * hidden.
+     */
+    case forceThread
+    /**
+     * Automatically determine if the target event is part of a thread or not.
+     *
+     * If the event is part of a thread, the timeline
+     * will be filtered to on-thread events.
+     */
+    case automatic(
+        /**
+         * When the target event is not part of a thread, whether to
+         * hide in-thread replies from the live timeline.
+         *
+         * Has no effect when the target event is part of a thread.
+         *
+         * This should be set to true when the client can create
+         * [`TimelineFocus::Thread`]-focused timelines from the thread roots
+         * themselves and doesn't use the [`Self::ForceThread`] mode.
+         */hideThreadedEvents: Bool
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TimelineEventFocusThreadMode: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTimelineEventFocusThreadMode: FfiConverterRustBuffer {
+    typealias SwiftType = TimelineEventFocusThreadMode
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TimelineEventFocusThreadMode {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .forceThread
+        
+        case 2: return .automatic(hideThreadedEvents: try FfiConverterBool.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TimelineEventFocusThreadMode, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .forceThread:
+            writeInt(&buf, Int32(1))
+        
+        
+        case let .automatic(hideThreadedEvents):
+            writeInt(&buf, Int32(2))
+            FfiConverterBool.write(hideThreadedEvents, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimelineEventFocusThreadMode_lift(_ buf: RustBuffer) throws -> TimelineEventFocusThreadMode {
+    return try FfiConverterTypeTimelineEventFocusThreadMode.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimelineEventFocusThreadMode_lower(_ value: TimelineEventFocusThreadMode) -> RustBuffer {
+    return FfiConverterTypeTimelineEventFocusThreadMode.lower(value)
+}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * Extends [`ShieldStateCode`] to allow for a `SentInClear` code.
+ */
+
+public enum TimelineEventShieldStateCode: Equatable, Hashable {
+    
+    /**
+     * Not enough information available to check the authenticity.
+     */
+    case authenticityNotGuaranteed
+    /**
+     * The sending device isn't yet known by the Client.
+     */
+    case unknownDevice
+    /**
+     * The sending device hasn't been verified by the sender.
+     */
+    case unsignedDevice
+    /**
+     * The sender hasn't been verified by the Client's user.
+     */
+    case unverifiedIdentity
+    /**
+     * The sender was previously verified but changed their identity.
+     */
+    case verificationViolation
+    /**
+     * The `sender` field on the event does not match the owner of the device
+     * that established the Megolm session.
+     */
+    case mismatchedSender
+    /**
+     * An unencrypted event in an encrypted room.
+     */
+    case sentInClear
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TimelineEventShieldStateCode: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTimelineEventShieldStateCode: FfiConverterRustBuffer {
+    typealias SwiftType = TimelineEventShieldStateCode
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TimelineEventShieldStateCode {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .authenticityNotGuaranteed
+        
+        case 2: return .unknownDevice
+        
+        case 3: return .unsignedDevice
+        
+        case 4: return .unverifiedIdentity
+        
+        case 5: return .verificationViolation
+        
+        case 6: return .mismatchedSender
+        
+        case 7: return .sentInClear
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TimelineEventShieldStateCode, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .authenticityNotGuaranteed:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .unknownDevice:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .unsignedDevice:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .unverifiedIdentity:
+            writeInt(&buf, Int32(4))
+        
+        
+        case .verificationViolation:
+            writeInt(&buf, Int32(5))
+        
+        
+        case .mismatchedSender:
+            writeInt(&buf, Int32(6))
+        
+        
+        case .sentInClear:
+            writeInt(&buf, Int32(7))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimelineEventShieldStateCode_lift(_ buf: RustBuffer) throws -> TimelineEventShieldStateCode {
+    return try FfiConverterTypeTimelineEventShieldStateCode.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimelineEventShieldStateCode_lower(_ value: TimelineEventShieldStateCode) -> RustBuffer {
+    return FfiConverterTypeTimelineEventShieldStateCode.lower(value)
 }
 
 

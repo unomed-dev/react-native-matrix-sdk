@@ -197,6 +197,51 @@ const stringConverter = {
 const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
 
 /**
+ * An enum that defines what the [`BaseClient`] should consider a DM room.
+ */
+export enum DmRoomDefinition {
+  /**
+   * Standard Matrix spec definition: a room linked to a user in an
+   * `m.direct` event.
+   */
+  MatrixSpec,
+  /**
+   * A room that is direct, as per the spec but also contains at most 2
+   * active members.
+   */
+  TwoMembers,
+}
+
+const FfiConverterTypeDmRoomDefinition = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = DmRoomDefinition;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return DmRoomDefinition.MatrixSpec;
+        case 2:
+          return DmRoomDefinition.TwoMembers;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case DmRoomDefinition.MatrixSpec:
+          return ordinalConverter.write(1, into);
+        case DmRoomDefinition.TwoMembers:
+          return ordinalConverter.write(2, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
+})();
+
+/**
  * Represents the state of a room encryption.
  */
 export enum EncryptionState {
@@ -283,6 +328,7 @@ function uniffiEnsureInitialized() {
 export default Object.freeze({
   initialize: uniffiEnsureInitialized,
   converters: {
+    FfiConverterTypeDmRoomDefinition,
     FfiConverterTypeEncryptionState,
     FfiConverterTypeMediaRetentionPolicy,
   },

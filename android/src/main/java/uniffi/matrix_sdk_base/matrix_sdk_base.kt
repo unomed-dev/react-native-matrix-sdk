@@ -633,7 +633,6 @@ internal object IntegrityCheckingUniffiLib {
     init {
         Native.register(IntegrityCheckingUniffiLib::class.java, findLibraryName(componentName = "matrix_sdk_base"))
         uniffiCheckContractApiVersion(this)
-        uniffiCheckApiChecksums(this)
     }
     external fun ffi_matrix_sdk_base_uniffi_contract_version(
     ): Int
@@ -764,9 +763,6 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
     if (bindings_contract_version != scaffolding_contract_version) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
-}
-@Suppress("UNUSED_PARAMETER")
-private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
 }
 
 /**
@@ -1085,6 +1081,51 @@ public object FfiConverterTypeMediaRetentionPolicy: FfiConverterRustBuffer<Media
             FfiConverterOptionalDuration.write(value.`cleanupFrequency`, buf)
     }
 }
+
+
+
+/**
+ * An enum that defines what the [`BaseClient`] should consider a DM room.
+ */
+
+enum class DmRoomDefinition {
+    
+    /**
+     * Standard Matrix spec definition: a room linked to a user in an
+     * `m.direct` event.
+     */
+    MATRIX_SPEC,
+    /**
+     * A room that is direct, as per the spec but also contains at most 2
+     * active members.
+     */
+    TWO_MEMBERS;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeDmRoomDefinition: FfiConverterRustBuffer<DmRoomDefinition> {
+    override fun read(buf: ByteBuffer) = try {
+        DmRoomDefinition.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: DmRoomDefinition) = 4UL
+
+    override fun write(value: DmRoomDefinition, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
 
 
 

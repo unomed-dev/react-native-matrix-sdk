@@ -34,13 +34,22 @@ import nativeModule, {
   type UniffiForeignFutureCompleteVoid,
 } from './matrix_sdk_crypto-ffi';
 import {
+  type FfiConverter,
   type UniffiByteArray,
+  type UniffiGcObject,
+  type UniffiHandle,
+  type UniffiObjectFactory,
   AbstractFfiConverterByteArray,
   FfiConverterInt32,
+  FfiConverterObject,
+  FfiConverterUInt64,
   RustBuffer,
+  UniffiAbstractObject,
   UniffiError,
   UniffiInternalError,
   UniffiRustCaller,
+  destructorGuardSymbol,
+  pointerLiteralSymbol,
   uniffiCreateFfiConverterString,
   uniffiCreateRecord,
   uniffiTypeNameSymbol,
@@ -143,6 +152,13 @@ const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
 export enum CollectStrategy {
   /**
    * Share with all (unblacklisted) devices.
+   *
+   * Not recommended, per the guidance of [MSC4153].
+   *
+   * (Used by Element X and Element Web in the legacy, non-"exclude insecure
+   * devices" mode.)
+   *
+   * [MSC4153]: https://github.com/matrix-org/matrix-doc/pull/4153
    */
   AllDevices,
   /**
@@ -160,12 +176,24 @@ export enum CollectStrategy {
    *
    * Once the problematic devices are blacklisted or whitelisted the
    * caller can retry to share a second time.
+   *
+   * Not recommended, per the guidance of [MSC4153].
+   *
+   * [MSC4153]: https://github.com/matrix-org/matrix-doc/pull/4153
    */
   ErrorOnVerifiedUserProblem,
   /**
    * Share based on identity. Only distribute to devices signed by their
    * owner. If a user has no published identity he will not receive
    * any room keys.
+   *
+   * This is the recommended strategy: it is compliant with the guidance of
+   * [MSC4153].
+   *
+   * (Used by Element Web and Element X in the "exclude insecure devices"
+   * mode.)
+   *
+   * [MSC4153]: https://github.com/matrix-org/matrix-doc/pull/4153
    */
   IdentityBasedStrategy,
   /**
@@ -176,6 +204,14 @@ export enum CollectStrategy {
    * - It is signed by its owner identity, and this identity has been
    * trusted via interactive verification.
    * - It is the current own device of the user.
+   *
+   * This strategy is compliant with [MSC4153], but is probably too strict
+   * for normal use.
+   *
+   * (Used by Element Web when "only send messages to verified users" is
+   * enabled.)
+   *
+   * [MSC4153]: https://github.com/matrix-org/matrix-doc/pull/4153
    */
   OnlyTrustedDevices,
 }
@@ -349,8 +385,8 @@ export enum LoginQrCodeDecodeError_Tags {
   NotEnoughData = 'NotEnoughData',
   NotUtf8 = 'NotUtf8',
   UrlParse = 'UrlParse',
-  InvalidMode = 'InvalidMode',
-  InvalidVersion = 'InvalidVersion',
+  InvalidIntent = 'InvalidIntent',
+  InvalidType = 'InvalidType',
   Base64 = 'Base64',
   InvalidPrefix = 'InvalidPrefix',
 }
@@ -434,10 +470,10 @@ export const LoginQrCodeDecodeError = (() => {
     }
   }
   /**
-   * The QR code data contains an invalid mode, we expect the login (0x03)
-   * mode or the reciprocate mode (0x04).
+   * The QR code data contains an invalid intent, we expect the login
+   * intent or the reciprocate intent.
    */
-  class InvalidMode extends UniffiError {
+  class InvalidIntent extends UniffiError {
     /**
      * @private
      * This field is private and should not be used.
@@ -449,20 +485,20 @@ export const LoginQrCodeDecodeError = (() => {
      */
     readonly [variantOrdinalSymbol] = 4;
 
-    readonly tag = LoginQrCodeDecodeError_Tags.InvalidMode;
+    readonly tag = LoginQrCodeDecodeError_Tags.InvalidIntent;
 
     constructor(message: string) {
-      super('LoginQrCodeDecodeError', 'InvalidMode', message);
+      super('LoginQrCodeDecodeError', 'InvalidIntent', message);
     }
 
-    static instanceOf(e: any): e is InvalidMode {
+    static instanceOf(e: any): e is InvalidIntent {
       return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 4;
     }
   }
   /**
-   * The QR code data contains an unsupported version.
+   * The QR code data contains an unsupported type.
    */
-  class InvalidVersion extends UniffiError {
+  class InvalidType extends UniffiError {
     /**
      * @private
      * This field is private and should not be used.
@@ -474,13 +510,13 @@ export const LoginQrCodeDecodeError = (() => {
      */
     readonly [variantOrdinalSymbol] = 5;
 
-    readonly tag = LoginQrCodeDecodeError_Tags.InvalidVersion;
+    readonly tag = LoginQrCodeDecodeError_Tags.InvalidType;
 
     constructor(message: string) {
-      super('LoginQrCodeDecodeError', 'InvalidVersion', message);
+      super('LoginQrCodeDecodeError', 'InvalidType', message);
     }
 
-    static instanceOf(e: any): e is InvalidVersion {
+    static instanceOf(e: any): e is InvalidType {
       return instanceOf(e) && (e as any)[variantOrdinalSymbol] === 5;
     }
   }
@@ -544,8 +580,8 @@ export const LoginQrCodeDecodeError = (() => {
     NotEnoughData,
     NotUtf8,
     UrlParse,
-    InvalidMode,
-    InvalidVersion,
+    InvalidIntent,
+    InvalidType,
     Base64,
     InvalidPrefix,
     instanceOf,
@@ -587,12 +623,12 @@ const FfiConverterTypeLoginQrCodeDecodeError = (() => {
           );
 
         case 4:
-          return new LoginQrCodeDecodeError.InvalidMode(
+          return new LoginQrCodeDecodeError.InvalidIntent(
             FfiConverterString.read(from)
           );
 
         case 5:
-          return new LoginQrCodeDecodeError.InvalidVersion(
+          return new LoginQrCodeDecodeError.InvalidType(
             FfiConverterString.read(from)
           );
 
@@ -620,6 +656,57 @@ const FfiConverterTypeLoginQrCodeDecodeError = (() => {
     }
   }
   return new FfiConverter();
+})();
+
+/**
+ * The intent of the device that generated/displayed the QR code.
+ *
+ * The QR code login mechanism supports both, the new device, as well as the
+ * existing device to display the QR code.
+ *
+ * The different intents have an explicit one-byte identifier which gets added
+ * to the QR code data.
+ */
+export enum QrCodeIntent {
+  /**
+   * Enum variant for the case where the new device is displaying the QR
+   * code.
+   */
+  Login,
+  /**
+   * Enum variant for the case where the existing device is displaying the QR
+   * code.
+   */
+  Reciprocate,
+}
+
+const FfiConverterTypeQrCodeIntent = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = QrCodeIntent;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return QrCodeIntent.Login;
+        case 2:
+          return QrCodeIntent.Reciprocate;
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value) {
+        case QrCodeIntent.Login:
+          return ordinalConverter.write(1, into);
+        case QrCodeIntent.Reciprocate:
+          return ordinalConverter.write(2, into);
+      }
+    }
+    allocationSize(value: TypeName): number {
+      return ordinalConverter.allocationSize(0);
+    }
+  }
+  return new FFIConverter();
 })();
 
 /**
@@ -690,6 +777,10 @@ const FfiConverterTypeSignatureState = (() => {
 export enum TrustRequirement {
   /**
    * Decrypt events from everyone regardless of trust.
+   *
+   * Not recommended, per the guidance of [MSC4153].
+   *
+   * [MSC4153]: https://github.com/matrix-org/matrix-doc/pull/4153
    */
   Untrusted,
   /**
@@ -882,6 +973,350 @@ const FfiConverterTypeUtdCause = (() => {
 })();
 
 /**
+ * Enum for the algorithm-specific secrets for the room key backup.
+ */
+export interface BackupSecretsLike {}
+/**
+ * @deprecated Use `BackupSecretsLike` instead.
+ */
+export type BackupSecretsInterface = BackupSecretsLike;
+
+/**
+ * Enum for the algorithm-specific secrets for the room key backup.
+ */
+export class BackupSecrets
+  extends UniffiAbstractObject
+  implements BackupSecretsLike
+{
+  readonly [uniffiTypeNameSymbol] = 'BackupSecrets';
+  readonly [destructorGuardSymbol]: UniffiGcObject;
+  readonly [pointerLiteralSymbol]: UniffiHandle;
+  // No primary constructor declared for this class.
+  private constructor(pointer: UniffiHandle) {
+    super();
+    this[pointerLiteralSymbol] = pointer;
+    this[destructorGuardSymbol] =
+      uniffiTypeBackupSecretsObjectFactory.bless(pointer);
+  }
+
+  /**
+   * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
+   */
+  uniffiDestroy(): void {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
+      const pointer = uniffiTypeBackupSecretsObjectFactory.pointer(this);
+      uniffiTypeBackupSecretsObjectFactory.freePointer(pointer);
+      uniffiTypeBackupSecretsObjectFactory.unbless(ptr);
+      delete (this as any)[destructorGuardSymbol];
+    }
+  }
+
+  static instanceOf(obj: any): obj is BackupSecrets {
+    return uniffiTypeBackupSecretsObjectFactory.isConcreteType(obj);
+  }
+}
+
+const uniffiTypeBackupSecretsObjectFactory: UniffiObjectFactory<BackupSecretsLike> =
+  (() => {
+    return {
+      create(pointer: UniffiHandle): BackupSecretsLike {
+        const instance = Object.create(BackupSecrets.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'BackupSecrets';
+        return instance;
+      },
+
+      bless(p: UniffiHandle): UniffiGcObject {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_backupsecrets_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      unbless(ptr: UniffiGcObject) {
+        ptr.markDestroyed();
+      },
+
+      pointer(obj: BackupSecretsLike): UniffiHandle {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
+
+      clonePointer(obj: BackupSecretsLike): UniffiHandle {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_crypto_fn_clone_backupsecrets(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      freePointer(pointer: UniffiHandle): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_crypto_fn_free_backupsecrets(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      isConcreteType(obj: any): obj is BackupSecretsLike {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'BackupSecrets'
+        );
+      },
+    };
+  })();
+// FfiConverter for BackupSecretsLike
+const FfiConverterTypeBackupSecrets = new FfiConverterObject(
+  uniffiTypeBackupSecretsObjectFactory
+);
+
+/**
+ * Data for the secrets bundle containing the cross-signing keys.
+ */
+export interface CrossSigningSecretsLike {}
+/**
+ * @deprecated Use `CrossSigningSecretsLike` instead.
+ */
+export type CrossSigningSecretsInterface = CrossSigningSecretsLike;
+
+/**
+ * Data for the secrets bundle containing the cross-signing keys.
+ */
+export class CrossSigningSecrets
+  extends UniffiAbstractObject
+  implements CrossSigningSecretsLike
+{
+  readonly [uniffiTypeNameSymbol] = 'CrossSigningSecrets';
+  readonly [destructorGuardSymbol]: UniffiGcObject;
+  readonly [pointerLiteralSymbol]: UniffiHandle;
+  // No primary constructor declared for this class.
+  private constructor(pointer: UniffiHandle) {
+    super();
+    this[pointerLiteralSymbol] = pointer;
+    this[destructorGuardSymbol] =
+      uniffiTypeCrossSigningSecretsObjectFactory.bless(pointer);
+  }
+
+  /**
+   * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
+   */
+  uniffiDestroy(): void {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
+      const pointer = uniffiTypeCrossSigningSecretsObjectFactory.pointer(this);
+      uniffiTypeCrossSigningSecretsObjectFactory.freePointer(pointer);
+      uniffiTypeCrossSigningSecretsObjectFactory.unbless(ptr);
+      delete (this as any)[destructorGuardSymbol];
+    }
+  }
+
+  static instanceOf(obj: any): obj is CrossSigningSecrets {
+    return uniffiTypeCrossSigningSecretsObjectFactory.isConcreteType(obj);
+  }
+}
+
+const uniffiTypeCrossSigningSecretsObjectFactory: UniffiObjectFactory<CrossSigningSecretsLike> =
+  (() => {
+    return {
+      create(pointer: UniffiHandle): CrossSigningSecretsLike {
+        const instance = Object.create(CrossSigningSecrets.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'CrossSigningSecrets';
+        return instance;
+      },
+
+      bless(p: UniffiHandle): UniffiGcObject {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_crosssigningsecrets_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      unbless(ptr: UniffiGcObject) {
+        ptr.markDestroyed();
+      },
+
+      pointer(obj: CrossSigningSecretsLike): UniffiHandle {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
+
+      clonePointer(obj: CrossSigningSecretsLike): UniffiHandle {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_crypto_fn_clone_crosssigningsecrets(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      freePointer(pointer: UniffiHandle): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      isConcreteType(obj: any): obj is CrossSigningSecretsLike {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'CrossSigningSecrets'
+        );
+      },
+    };
+  })();
+// FfiConverter for CrossSigningSecretsLike
+const FfiConverterTypeCrossSigningSecrets = new FfiConverterObject(
+  uniffiTypeCrossSigningSecretsObjectFactory
+);
+
+/**
+ * Struct containing the bundle of secrets to fully activate a new device for
+ * end-to-end encryption.
+ */
+export interface SecretsBundleLike {}
+/**
+ * @deprecated Use `SecretsBundleLike` instead.
+ */
+export type SecretsBundleInterface = SecretsBundleLike;
+
+/**
+ * Struct containing the bundle of secrets to fully activate a new device for
+ * end-to-end encryption.
+ */
+export class SecretsBundle
+  extends UniffiAbstractObject
+  implements SecretsBundleLike
+{
+  readonly [uniffiTypeNameSymbol] = 'SecretsBundle';
+  readonly [destructorGuardSymbol]: UniffiGcObject;
+  readonly [pointerLiteralSymbol]: UniffiHandle;
+  // No primary constructor declared for this class.
+  private constructor(pointer: UniffiHandle) {
+    super();
+    this[pointerLiteralSymbol] = pointer;
+    this[destructorGuardSymbol] =
+      uniffiTypeSecretsBundleObjectFactory.bless(pointer);
+  }
+
+  /**
+   * {@inheritDoc uniffi-bindgen-react-native#UniffiAbstractObject.uniffiDestroy}
+   */
+  uniffiDestroy(): void {
+    const ptr = (this as any)[destructorGuardSymbol];
+    if (ptr !== undefined) {
+      const pointer = uniffiTypeSecretsBundleObjectFactory.pointer(this);
+      uniffiTypeSecretsBundleObjectFactory.freePointer(pointer);
+      uniffiTypeSecretsBundleObjectFactory.unbless(ptr);
+      delete (this as any)[destructorGuardSymbol];
+    }
+  }
+
+  static instanceOf(obj: any): obj is SecretsBundle {
+    return uniffiTypeSecretsBundleObjectFactory.isConcreteType(obj);
+  }
+}
+
+const uniffiTypeSecretsBundleObjectFactory: UniffiObjectFactory<SecretsBundleLike> =
+  (() => {
+    return {
+      create(pointer: UniffiHandle): SecretsBundleLike {
+        const instance = Object.create(SecretsBundle.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = 'SecretsBundle';
+        return instance;
+      },
+
+      bless(p: UniffiHandle): UniffiGcObject {
+        return uniffiCaller.rustCall(
+          /*caller:*/ (status) =>
+            nativeModule().ubrn_uniffi_internal_fn_method_secretsbundle_ffi__bless_pointer(
+              p,
+              status
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      unbless(ptr: UniffiGcObject) {
+        ptr.markDestroyed();
+      },
+
+      pointer(obj: SecretsBundleLike): UniffiHandle {
+        if ((obj as any)[destructorGuardSymbol] === undefined) {
+          throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj as any)[pointerLiteralSymbol];
+      },
+
+      clonePointer(obj: SecretsBundleLike): UniffiHandle {
+        const pointer = this.pointer(obj);
+        return uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_crypto_fn_clone_secretsbundle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      freePointer(pointer: UniffiHandle): void {
+        uniffiCaller.rustCall(
+          /*caller:*/ (callStatus) =>
+            nativeModule().ubrn_uniffi_matrix_sdk_crypto_fn_free_secretsbundle(
+              pointer,
+              callStatus
+            ),
+          /*liftString:*/ FfiConverterString.lift
+        );
+      },
+
+      isConcreteType(obj: any): obj is SecretsBundleLike {
+        return (
+          obj[destructorGuardSymbol] &&
+          obj[uniffiTypeNameSymbol] === 'SecretsBundle'
+        );
+      },
+    };
+  })();
+// FfiConverter for SecretsBundleLike
+const FfiConverterTypeSecretsBundle = new FfiConverterObject(
+  uniffiTypeSecretsBundleObjectFactory
+);
+
+/**
  * This should be called before anything else.
  *
  * It is likely that this is being done for you by the library's `index.ts`.
@@ -908,11 +1343,15 @@ function uniffiEnsureInitialized() {
 export default Object.freeze({
   initialize: uniffiEnsureInitialized,
   converters: {
+    FfiConverterTypeBackupSecrets,
     FfiConverterTypeCollectStrategy,
+    FfiConverterTypeCrossSigningSecrets,
     FfiConverterTypeDecryptionSettings,
     FfiConverterTypeIdentityState,
     FfiConverterTypeLocalTrust,
     FfiConverterTypeLoginQrCodeDecodeError,
+    FfiConverterTypeQrCodeIntent,
+    FfiConverterTypeSecretsBundle,
     FfiConverterTypeSignatureState,
     FfiConverterTypeTrustRequirement,
     FfiConverterTypeUtdCause,

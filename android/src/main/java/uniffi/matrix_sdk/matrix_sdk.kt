@@ -30,6 +30,8 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import android.os.Build
+import androidx.annotation.RequiresApi
 import java.util.concurrent.atomic.AtomicBoolean
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
@@ -634,7 +636,6 @@ internal object IntegrityCheckingUniffiLib {
     init {
         Native.register(IntegrityCheckingUniffiLib::class.java, findLibraryName(componentName = "matrix_sdk"))
         uniffiCheckContractApiVersion(this)
-        uniffiCheckApiChecksums(this)
     }
     external fun uniffi_matrix_sdk_checksum_method_oauthauthorizationdata_login_url(
     ): Short
@@ -779,12 +780,6 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
 }
-@Suppress("UNUSED_PARAMETER")
-private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if (lib.uniffi_matrix_sdk_checksum_method_oauthauthorizationdata_login_url() != 47865.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-}
 
 /**
  * @suppress
@@ -915,28 +910,28 @@ private class UniffiJnaCleanable(
 // using Android or not.
 // There are further runtime checks to chose the correct implementation
 // of the cleaner.
+
+
 private fun UniffiCleaner.Companion.create(): UniffiCleaner =
-    try {
-        // For safety's sake: if the library hasn't been run in android_cleaner = true
-        // mode, but is being run on Android, then we still need to think about
-        // Android API versions.
-        // So we check if java.lang.ref.Cleaner is there, and use that…
-        java.lang.Class.forName("java.lang.ref.Cleaner")
-        JavaLangRefCleaner()
-    } catch (e: ClassNotFoundException) {
-        // … otherwise, fallback to the JNA cleaner.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        AndroidSystemCleaner()
+    } else {
         UniffiJnaCleaner()
     }
 
-private class JavaLangRefCleaner : UniffiCleaner {
-    val cleaner = java.lang.ref.Cleaner.create()
+// The SystemCleaner, available from API Level 33.
+// Some API Level 33 OSes do not support using it, so we require API Level 34.
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+private class AndroidSystemCleaner : UniffiCleaner {
+    val cleaner = android.system.SystemCleaner.cleaner()
 
     override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
-        JavaLangRefCleanable(cleaner.register(value, cleanUpTask))
+        AndroidSystemCleanable(cleaner.register(value, cleanUpTask))
 }
 
-private class JavaLangRefCleanable(
-    val cleanable: java.lang.ref.Cleaner.Cleanable
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+private class AndroidSystemCleanable(
+    private val cleanable: java.lang.ref.Cleaner.Cleanable,
 ) : UniffiCleaner.Cleanable {
     override fun clean() = cleanable.clean()
 }
@@ -1391,6 +1386,16 @@ data class RoomPowerLevelChanges (
      * The level required to change the space's children.
      */
     var `spaceChild`: kotlin.Long? = null 
+    , 
+    /**
+     * The level required to send a beacon (live location) message event.
+     */
+    var `beacon`: kotlin.Long? = null 
+    , 
+    /**
+     * The level required to send a beacon info state event.
+     */
+    var `beaconInfo`: kotlin.Long? = null 
     
 ){
     
@@ -1418,6 +1423,8 @@ public object FfiConverterTypeRoomPowerLevelChanges: FfiConverterRustBuffer<Room
             FfiConverterOptionalLong.read(buf),
             FfiConverterOptionalLong.read(buf),
             FfiConverterOptionalLong.read(buf),
+            FfiConverterOptionalLong.read(buf),
+            FfiConverterOptionalLong.read(buf),
         )
     }
 
@@ -1432,7 +1439,9 @@ public object FfiConverterTypeRoomPowerLevelChanges: FfiConverterRustBuffer<Room
             FfiConverterOptionalLong.allocationSize(value.`roomName`) +
             FfiConverterOptionalLong.allocationSize(value.`roomAvatar`) +
             FfiConverterOptionalLong.allocationSize(value.`roomTopic`) +
-            FfiConverterOptionalLong.allocationSize(value.`spaceChild`)
+            FfiConverterOptionalLong.allocationSize(value.`spaceChild`) +
+            FfiConverterOptionalLong.allocationSize(value.`beacon`) +
+            FfiConverterOptionalLong.allocationSize(value.`beaconInfo`)
     )
 
     override fun write(value: RoomPowerLevelChanges, buf: ByteBuffer) {
@@ -1447,6 +1456,8 @@ public object FfiConverterTypeRoomPowerLevelChanges: FfiConverterRustBuffer<Room
             FfiConverterOptionalLong.write(value.`roomAvatar`, buf)
             FfiConverterOptionalLong.write(value.`roomTopic`, buf)
             FfiConverterOptionalLong.write(value.`spaceChild`, buf)
+            FfiConverterOptionalLong.write(value.`beacon`, buf)
+            FfiConverterOptionalLong.write(value.`beaconInfo`, buf)
     }
 }
 
@@ -2026,7 +2037,16 @@ enum class Intent {
     /**
      * The user wants to start a call in a "Direct Message" (DM) room.
      */
-    START_CALL_DM;
+    START_CALL_DM,
+    /**
+     * The user wants to start a voice call in a "Direct Message" (DM) room.
+     */
+    START_CALL_DM_VOICE,
+    /**
+     * The user wants to join an existing  voice call that is a "Direct
+     * Message" (DM) room.
+     */
+    JOIN_EXISTING_DM_VOICE;
 
     
 
@@ -2092,6 +2112,92 @@ public object FfiConverterTypeNotificationType: FfiConverterRustBuffer<Notificat
 
     override fun write(value: NotificationType, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * Status for the pagination on a cache.
+ */
+sealed class PaginationStatus {
+    
+    /**
+     * No pagination is happening right now.
+     */
+    data class Idle(
+        /**
+         * Have we hit the start of the timeline, i.e. paginating wouldn't
+         * have any effect?
+         */
+        val `hitTimelineStart`: kotlin.Boolean) : PaginationStatus()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * Pagination is already running in the background.
+     */
+    object Paginating : PaginationStatus()
+    
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePaginationStatus : FfiConverterRustBuffer<PaginationStatus>{
+    override fun read(buf: ByteBuffer): PaginationStatus {
+        return when(buf.getInt()) {
+            1 -> PaginationStatus.Idle(
+                FfiConverterBoolean.read(buf),
+                )
+            2 -> PaginationStatus.Paginating
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: PaginationStatus) = when(value) {
+        is PaginationStatus.Idle -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterBoolean.allocationSize(value.`hitTimelineStart`)
+            )
+        }
+        is PaginationStatus.Paginating -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: PaginationStatus, buf: ByteBuffer) {
+        when(value) {
+            is PaginationStatus.Idle -> {
+                buf.putInt(1)
+                FfiConverterBoolean.write(value.`hitTimelineStart`, buf)
+                Unit
+            }
+            is PaginationStatus.Paginating -> {
+                buf.putInt(2)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
 
@@ -2359,92 +2465,6 @@ public object FfiConverterTypeRoomMemberRole: FfiConverterRustBuffer<RoomMemberR
 
     override fun write(value: RoomMemberRole, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
-    }
-}
-
-
-
-
-
-/**
- * Status for the back-pagination on a room event cache.
- */
-sealed class RoomPaginationStatus {
-    
-    /**
-     * No back-pagination is happening right now.
-     */
-    data class Idle(
-        /**
-         * Have we hit the start of the timeline, i.e. back-paginating wouldn't
-         * have any effect?
-         */
-        val `hitTimelineStart`: kotlin.Boolean) : RoomPaginationStatus()
-        
-    {
-        
-
-        companion object
-    }
-    
-    /**
-     * Back-pagination is already running in the background.
-     */
-    object Paginating : RoomPaginationStatus()
-    
-    
-
-    
-
-    
-    
-
-
-    companion object
-}
-
-/**
- * @suppress
- */
-public object FfiConverterTypeRoomPaginationStatus : FfiConverterRustBuffer<RoomPaginationStatus>{
-    override fun read(buf: ByteBuffer): RoomPaginationStatus {
-        return when(buf.getInt()) {
-            1 -> RoomPaginationStatus.Idle(
-                FfiConverterBoolean.read(buf),
-                )
-            2 -> RoomPaginationStatus.Paginating
-            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
-        }
-    }
-
-    override fun allocationSize(value: RoomPaginationStatus) = when(value) {
-        is RoomPaginationStatus.Idle -> {
-            // Add the size for the Int that specifies the variant plus the size needed for all fields
-            (
-                4UL
-                + FfiConverterBoolean.allocationSize(value.`hitTimelineStart`)
-            )
-        }
-        is RoomPaginationStatus.Paginating -> {
-            // Add the size for the Int that specifies the variant plus the size needed for all fields
-            (
-                4UL
-            )
-        }
-    }
-
-    override fun write(value: RoomPaginationStatus, buf: ByteBuffer) {
-        when(value) {
-            is RoomPaginationStatus.Idle -> {
-                buf.putInt(1)
-                FfiConverterBoolean.write(value.`hitTimelineStart`, buf)
-                Unit
-            }
-            is RoomPaginationStatus.Paginating -> {
-                buf.putInt(2)
-                Unit
-            }
-        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
 

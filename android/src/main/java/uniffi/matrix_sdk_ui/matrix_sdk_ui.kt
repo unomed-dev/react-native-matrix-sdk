@@ -633,7 +633,6 @@ internal object IntegrityCheckingUniffiLib {
     init {
         Native.register(IntegrityCheckingUniffiLib::class.java, findLibraryName(componentName = "matrix_sdk_ui"))
         uniffiCheckContractApiVersion(this)
-        uniffiCheckApiChecksums(this)
     }
     external fun ffi_matrix_sdk_ui_uniffi_contract_version(
     ): Int
@@ -764,9 +763,6 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
     if (bindings_contract_version != scaffolding_contract_version) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
-}
-@Suppress("UNUSED_PARAMETER")
-private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
 }
 
 /**
@@ -993,6 +989,41 @@ public object FfiConverterTypeEventItemOrigin: FfiConverterRustBuffer<EventItemO
 
 
 
+
+enum class LatestEventValueLocalState {
+    
+    IS_SENDING,
+    HAS_BEEN_SENT,
+    CANNOT_BE_SENT;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLatestEventValueLocalState: FfiConverterRustBuffer<LatestEventValueLocalState> {
+    override fun read(buf: ByteBuffer) = try {
+        LatestEventValueLocalState.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: LatestEventValueLocalState) = 4UL
+
+    override fun write(value: LatestEventValueLocalState, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
 /**
  * The type of change between the previous and current pinned events.
  */
@@ -1106,6 +1137,257 @@ public object FfiConverterTypeSpaceRoomListPaginationState : FfiConverterRustBuf
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
+ * The pagination state of a [`ThreadListService`].
+ */
+sealed class ThreadListPaginationState {
+    
+    /**
+     * The list is idle (not currently loading).
+     */
+    data class Idle(
+        /**
+         * Whether the end of the thread list has been reached (no more pages
+         * to load).
+         */
+        val `endReached`: kotlin.Boolean) : ThreadListPaginationState()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * The list is currently loading the next page.
+     */
+    object Loading : ThreadListPaginationState()
+    
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeThreadListPaginationState : FfiConverterRustBuffer<ThreadListPaginationState>{
+    override fun read(buf: ByteBuffer): ThreadListPaginationState {
+        return when(buf.getInt()) {
+            1 -> ThreadListPaginationState.Idle(
+                FfiConverterBoolean.read(buf),
+                )
+            2 -> ThreadListPaginationState.Loading
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: ThreadListPaginationState) = when(value) {
+        is ThreadListPaginationState.Idle -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterBoolean.allocationSize(value.`endReached`)
+            )
+        }
+        is ThreadListPaginationState.Loading -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: ThreadListPaginationState, buf: ByteBuffer) {
+        when(value) {
+            is ThreadListPaginationState.Idle -> {
+                buf.putInt(1)
+                FfiConverterBoolean.write(value.`endReached`, buf)
+                Unit
+            }
+            is ThreadListPaginationState.Loading -> {
+                buf.putInt(2)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
+ * Options for controlling the behaviour of [`TimelineFocus::Event`]
+ * for threaded events.
+ */
+sealed class TimelineEventFocusThreadMode {
+    
+    /**
+     * Force the timeline into threaded mode.
+     *
+     * When the focused event is part of a thread, the timeline will be focused
+     * on that thread's root. Otherwise, the timeline will treat the target
+     * event itself as the thread root. Threaded events will never be
+     * hidden.
+     */
+    object ForceThread : TimelineEventFocusThreadMode()
+    
+    
+    /**
+     * Automatically determine if the target event is part of a thread or not.
+     *
+     * If the event is part of a thread, the timeline
+     * will be filtered to on-thread events.
+     */
+    data class Automatic(
+        /**
+         * When the target event is not part of a thread, whether to
+         * hide in-thread replies from the live timeline.
+         *
+         * Has no effect when the target event is part of a thread.
+         *
+         * This should be set to true when the client can create
+         * [`TimelineFocus::Thread`]-focused timelines from the thread roots
+         * themselves and doesn't use the [`Self::ForceThread`] mode.
+         */
+        val `hideThreadedEvents`: kotlin.Boolean) : TimelineEventFocusThreadMode()
+        
+    {
+        
+
+        companion object
+    }
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTimelineEventFocusThreadMode : FfiConverterRustBuffer<TimelineEventFocusThreadMode>{
+    override fun read(buf: ByteBuffer): TimelineEventFocusThreadMode {
+        return when(buf.getInt()) {
+            1 -> TimelineEventFocusThreadMode.ForceThread
+            2 -> TimelineEventFocusThreadMode.Automatic(
+                FfiConverterBoolean.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: TimelineEventFocusThreadMode) = when(value) {
+        is TimelineEventFocusThreadMode.ForceThread -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is TimelineEventFocusThreadMode.Automatic -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterBoolean.allocationSize(value.`hideThreadedEvents`)
+            )
+        }
+    }
+
+    override fun write(value: TimelineEventFocusThreadMode, buf: ByteBuffer) {
+        when(value) {
+            is TimelineEventFocusThreadMode.ForceThread -> {
+                buf.putInt(1)
+                Unit
+            }
+            is TimelineEventFocusThreadMode.Automatic -> {
+                buf.putInt(2)
+                FfiConverterBoolean.write(value.`hideThreadedEvents`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
+ * Extends [`ShieldStateCode`] to allow for a `SentInClear` code.
+ */
+
+enum class TimelineEventShieldStateCode {
+    
+    /**
+     * Not enough information available to check the authenticity.
+     */
+    AUTHENTICITY_NOT_GUARANTEED,
+    /**
+     * The sending device isn't yet known by the Client.
+     */
+    UNKNOWN_DEVICE,
+    /**
+     * The sending device hasn't been verified by the sender.
+     */
+    UNSIGNED_DEVICE,
+    /**
+     * The sender hasn't been verified by the Client's user.
+     */
+    UNVERIFIED_IDENTITY,
+    /**
+     * The sender was previously verified but changed their identity.
+     */
+    VERIFICATION_VIOLATION,
+    /**
+     * The `sender` field on the event does not match the owner of the device
+     * that established the Megolm session.
+     */
+    MISMATCHED_SENDER,
+    /**
+     * An unencrypted event in an encrypted room.
+     */
+    SENT_IN_CLEAR;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTimelineEventShieldStateCode: FfiConverterRustBuffer<TimelineEventShieldStateCode> {
+    override fun read(buf: ByteBuffer) = try {
+        TimelineEventShieldStateCode.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TimelineEventShieldStateCode) = 4UL
+
+    override fun write(value: TimelineEventShieldStateCode, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
     }
 }
 

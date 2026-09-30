@@ -460,6 +460,108 @@ fileprivate struct FfiConverterString: FfiConverter {
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
+ * Reason why a background task failed.
+ */
+
+public enum BackgroundTaskFailureReason: Equatable, Hashable {
+    
+    /**
+     * The task panicked.
+     */
+    case panic(
+        /**
+         * The panic message, if it could be extracted.
+         */message: String?, 
+        /**
+         * Backtrace captured after the panic (if available).
+         */panicBacktrace: String?
+    )
+    /**
+     * The task returned an error.
+     */
+    case error(
+        /**
+         * String representation of the error.
+         */error: String
+    )
+    /**
+     * The task ended unexpectedly (for tasks expected to run forever).
+     */
+    case earlyTermination
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension BackgroundTaskFailureReason: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeBackgroundTaskFailureReason: FfiConverterRustBuffer {
+    typealias SwiftType = BackgroundTaskFailureReason
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> BackgroundTaskFailureReason {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .panic(message: try FfiConverterOptionString.read(from: &buf), panicBacktrace: try FfiConverterOptionString.read(from: &buf)
+        )
+        
+        case 2: return .error(error: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 3: return .earlyTermination
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: BackgroundTaskFailureReason, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .panic(message,panicBacktrace):
+            writeInt(&buf, Int32(1))
+            FfiConverterOptionString.write(message, into: &buf)
+            FfiConverterOptionString.write(panicBacktrace, into: &buf)
+            
+        
+        case let .error(error):
+            writeInt(&buf, Int32(2))
+            FfiConverterString.write(error, into: &buf)
+            
+        
+        case .earlyTermination:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeBackgroundTaskFailureReason_lift(_ buf: RustBuffer) throws -> BackgroundTaskFailureReason {
+    return try FfiConverterTypeBackgroundTaskFailureReason.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeBackgroundTaskFailureReason_lower(_ value: BackgroundTaskFailureReason) -> RustBuffer {
+    return FfiConverterTypeBackgroundTaskFailureReason.lower(value)
+}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
  * A machine-readable representation of the authenticity for a `ShieldState`.
  */
 
@@ -481,10 +583,6 @@ public enum ShieldStateCode: Equatable, Hashable {
      * The sender hasn't been verified by the Client's user.
      */
     case unverifiedIdentity
-    /**
-     * An unencrypted event in an encrypted room.
-     */
-    case sentInClear
     /**
      * The sender was previously verified but changed their identity.
      */
@@ -523,11 +621,9 @@ public struct FfiConverterTypeShieldStateCode: FfiConverterRustBuffer {
         
         case 4: return .unverifiedIdentity
         
-        case 5: return .sentInClear
+        case 5: return .verificationViolation
         
-        case 6: return .verificationViolation
-        
-        case 7: return .mismatchedSender
+        case 6: return .mismatchedSender
         
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -553,16 +649,12 @@ public struct FfiConverterTypeShieldStateCode: FfiConverterRustBuffer {
             writeInt(&buf, Int32(4))
         
         
-        case .sentInClear:
+        case .verificationViolation:
             writeInt(&buf, Int32(5))
         
         
-        case .verificationViolation:
-            writeInt(&buf, Int32(6))
-        
-        
         case .mismatchedSender:
-            writeInt(&buf, Int32(7))
+            writeInt(&buf, Int32(6))
         
         }
     }
@@ -583,6 +675,30 @@ public func FfiConverterTypeShieldStateCode_lower(_ value: ShieldStateCode) -> R
     return FfiConverterTypeShieldStateCode.lower(value)
 }
 
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
+    typealias SwiftType = String?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterString.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
 
 private enum InitializationResult {
     case ok

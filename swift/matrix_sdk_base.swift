@@ -675,6 +675,84 @@ public func FfiConverterTypeMediaRetentionPolicy_lower(_ value: MediaRetentionPo
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
+ * An enum that defines what the [`BaseClient`] should consider a DM room.
+ */
+
+public enum DmRoomDefinition: Equatable, Hashable {
+    
+    /**
+     * Standard Matrix spec definition: a room linked to a user in an
+     * `m.direct` event.
+     */
+    case matrixSpec
+    /**
+     * A room that is direct, as per the spec but also contains at most 2
+     * active members.
+     */
+    case twoMembers
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension DmRoomDefinition: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeDmRoomDefinition: FfiConverterRustBuffer {
+    typealias SwiftType = DmRoomDefinition
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> DmRoomDefinition {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .matrixSpec
+        
+        case 2: return .twoMembers
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: DmRoomDefinition, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .matrixSpec:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .twoMembers:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDmRoomDefinition_lift(_ buf: RustBuffer) throws -> DmRoomDefinition {
+    return try FfiConverterTypeDmRoomDefinition.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDmRoomDefinition_lower(_ value: DmRoomDefinition) -> RustBuffer {
+    return FfiConverterTypeDmRoomDefinition.lower(value)
+}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
  * Represents the state of a room encryption.
  */
 

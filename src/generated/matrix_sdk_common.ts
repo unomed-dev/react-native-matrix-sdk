@@ -36,11 +36,15 @@ import nativeModule, {
 import {
   type UniffiByteArray,
   AbstractFfiConverterByteArray,
+  FfiConverterBool,
   FfiConverterInt32,
+  FfiConverterOptional,
   RustBuffer,
+  UniffiEnum,
   UniffiInternalError,
   UniffiRustCaller,
   uniffiCreateFfiConverterString,
+  uniffiTypeNameSymbol,
 } from 'uniffi-bindgen-react-native';
 
 // Get converters from the other files, if any.
@@ -79,6 +83,231 @@ const stringConverter = {
 };
 const FfiConverterString = uniffiCreateFfiConverterString(stringConverter);
 
+// Enum: BackgroundTaskFailureReason
+export enum BackgroundTaskFailureReason_Tags {
+  Panic = 'Panic',
+  Error = 'Error',
+  EarlyTermination = 'EarlyTermination',
+}
+/**
+ * Reason why a background task failed.
+ */
+export const BackgroundTaskFailureReason = (() => {
+  type Panic__interface = {
+    tag: BackgroundTaskFailureReason_Tags.Panic;
+    inner: Readonly<{
+      message: string | undefined;
+      panicBacktrace: string | undefined;
+    }>;
+  };
+
+  /**
+   * The task panicked.
+   */
+  class Panic_ extends UniffiEnum implements Panic__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'BackgroundTaskFailureReason';
+    readonly tag = BackgroundTaskFailureReason_Tags.Panic;
+    readonly inner: Readonly<{
+      message: string | undefined;
+      panicBacktrace: string | undefined;
+    }>;
+    constructor(inner: {
+      /**
+       * The panic message, if it could be extracted.
+       */ message: string | undefined;
+      /**
+       * Backtrace captured after the panic (if available).
+       */ panicBacktrace: string | undefined;
+    }) {
+      super('BackgroundTaskFailureReason', 'Panic');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * The panic message, if it could be extracted.
+       */ message: string | undefined;
+      /**
+       * Backtrace captured after the panic (if available).
+       */ panicBacktrace: string | undefined;
+    }): Panic_ {
+      return new Panic_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Panic_ {
+      return obj.tag === BackgroundTaskFailureReason_Tags.Panic;
+    }
+  }
+
+  type Error__interface = {
+    tag: BackgroundTaskFailureReason_Tags.Error;
+    inner: Readonly<{ error: string }>;
+  };
+
+  /**
+   * The task returned an error.
+   */
+  class Error_ extends UniffiEnum implements Error__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'BackgroundTaskFailureReason';
+    readonly tag = BackgroundTaskFailureReason_Tags.Error;
+    readonly inner: Readonly<{ error: string }>;
+    constructor(inner: {
+      /**
+       * String representation of the error.
+       */ error: string;
+    }) {
+      super('BackgroundTaskFailureReason', 'Error');
+      this.inner = Object.freeze(inner);
+    }
+
+    static new(inner: {
+      /**
+       * String representation of the error.
+       */ error: string;
+    }): Error_ {
+      return new Error_(inner);
+    }
+
+    static instanceOf(obj: any): obj is Error_ {
+      return obj.tag === BackgroundTaskFailureReason_Tags.Error;
+    }
+  }
+
+  type EarlyTermination__interface = {
+    tag: BackgroundTaskFailureReason_Tags.EarlyTermination;
+  };
+
+  /**
+   * The task ended unexpectedly (for tasks expected to run forever).
+   */
+  class EarlyTermination_
+    extends UniffiEnum
+    implements EarlyTermination__interface
+  {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'BackgroundTaskFailureReason';
+    readonly tag = BackgroundTaskFailureReason_Tags.EarlyTermination;
+    constructor() {
+      super('BackgroundTaskFailureReason', 'EarlyTermination');
+    }
+
+    static new(): EarlyTermination_ {
+      return new EarlyTermination_();
+    }
+
+    static instanceOf(obj: any): obj is EarlyTermination_ {
+      return obj.tag === BackgroundTaskFailureReason_Tags.EarlyTermination;
+    }
+  }
+
+  function instanceOf(obj: any): obj is BackgroundTaskFailureReason {
+    return obj[uniffiTypeNameSymbol] === 'BackgroundTaskFailureReason';
+  }
+
+  return Object.freeze({
+    instanceOf,
+    Panic: Panic_,
+    Error: Error_,
+    EarlyTermination: EarlyTermination_,
+  });
+})();
+
+/**
+ * Reason why a background task failed.
+ */
+
+export type BackgroundTaskFailureReason = InstanceType<
+  (typeof BackgroundTaskFailureReason)[keyof Omit<
+    typeof BackgroundTaskFailureReason,
+    'instanceOf'
+  >]
+>;
+
+// FfiConverter for enum BackgroundTaskFailureReason
+const FfiConverterTypeBackgroundTaskFailureReason = (() => {
+  const ordinalConverter = FfiConverterInt32;
+  type TypeName = BackgroundTaskFailureReason;
+  class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+    read(from: RustBuffer): TypeName {
+      switch (ordinalConverter.read(from)) {
+        case 1:
+          return new BackgroundTaskFailureReason.Panic({
+            message: FfiConverterOptionalString.read(from),
+            panicBacktrace: FfiConverterOptionalString.read(from),
+          });
+        case 2:
+          return new BackgroundTaskFailureReason.Error({
+            error: FfiConverterString.read(from),
+          });
+        case 3:
+          return new BackgroundTaskFailureReason.EarlyTermination();
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    write(value: TypeName, into: RustBuffer): void {
+      switch (value.tag) {
+        case BackgroundTaskFailureReason_Tags.Panic: {
+          ordinalConverter.write(1, into);
+          const inner = value.inner;
+          FfiConverterOptionalString.write(inner.message, into);
+          FfiConverterOptionalString.write(inner.panicBacktrace, into);
+          return;
+        }
+        case BackgroundTaskFailureReason_Tags.Error: {
+          ordinalConverter.write(2, into);
+          const inner = value.inner;
+          FfiConverterString.write(inner.error, into);
+          return;
+        }
+        case BackgroundTaskFailureReason_Tags.EarlyTermination: {
+          ordinalConverter.write(3, into);
+          return;
+        }
+        default:
+          // Throwing from here means that BackgroundTaskFailureReason_Tags hasn't matched an ordinal.
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+    allocationSize(value: TypeName): number {
+      switch (value.tag) {
+        case BackgroundTaskFailureReason_Tags.Panic: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(1);
+          size += FfiConverterOptionalString.allocationSize(inner.message);
+          size += FfiConverterOptionalString.allocationSize(
+            inner.panicBacktrace
+          );
+          return size;
+        }
+        case BackgroundTaskFailureReason_Tags.Error: {
+          const inner = value.inner;
+          let size = ordinalConverter.allocationSize(2);
+          size += FfiConverterString.allocationSize(inner.error);
+          return size;
+        }
+        case BackgroundTaskFailureReason_Tags.EarlyTermination: {
+          return ordinalConverter.allocationSize(3);
+        }
+        default:
+          throw new UniffiInternalError.UnexpectedEnumCase();
+      }
+    }
+  }
+  return new FFIConverter();
+})();
+
 /**
  * A machine-readable representation of the authenticity for a `ShieldState`.
  */
@@ -99,10 +328,6 @@ export enum ShieldStateCode {
    * The sender hasn't been verified by the Client's user.
    */
   UnverifiedIdentity,
-  /**
-   * An unencrypted event in an encrypted room.
-   */
-  SentInClear,
   /**
    * The sender was previously verified but changed their identity.
    */
@@ -129,10 +354,8 @@ const FfiConverterTypeShieldStateCode = (() => {
         case 4:
           return ShieldStateCode.UnverifiedIdentity;
         case 5:
-          return ShieldStateCode.SentInClear;
-        case 6:
           return ShieldStateCode.VerificationViolation;
-        case 7:
+        case 6:
           return ShieldStateCode.MismatchedSender;
         default:
           throw new UniffiInternalError.UnexpectedEnumCase();
@@ -148,12 +371,10 @@ const FfiConverterTypeShieldStateCode = (() => {
           return ordinalConverter.write(3, into);
         case ShieldStateCode.UnverifiedIdentity:
           return ordinalConverter.write(4, into);
-        case ShieldStateCode.SentInClear:
-          return ordinalConverter.write(5, into);
         case ShieldStateCode.VerificationViolation:
-          return ordinalConverter.write(6, into);
+          return ordinalConverter.write(5, into);
         case ShieldStateCode.MismatchedSender:
-          return ordinalConverter.write(7, into);
+          return ordinalConverter.write(6, into);
       }
     }
     allocationSize(value: TypeName): number {
@@ -162,6 +383,9 @@ const FfiConverterTypeShieldStateCode = (() => {
   }
   return new FFIConverter();
 })();
+
+// FfiConverter for string | undefined
+const FfiConverterOptionalString = new FfiConverterOptional(FfiConverterString);
 
 /**
  * This should be called before anything else.
@@ -190,6 +414,7 @@ function uniffiEnsureInitialized() {
 export default Object.freeze({
   initialize: uniffiEnsureInitialized,
   converters: {
+    FfiConverterTypeBackgroundTaskFailureReason,
     FfiConverterTypeShieldStateCode,
   },
 });

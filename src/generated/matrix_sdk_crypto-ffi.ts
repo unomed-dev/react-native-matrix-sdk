@@ -27,7 +27,43 @@ interface NativeModuleInterface {
     buffer: Uint8Array,
     uniffi_out_err: UniffiRustCallStatus
   ): string;
+  ubrn_uniffi_matrix_sdk_crypto_fn_clone_backupsecrets(
+    handle: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
+  ubrn_uniffi_matrix_sdk_crypto_fn_free_backupsecrets(
+    handle: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): void;
+  ubrn_uniffi_matrix_sdk_crypto_fn_clone_crosssigningsecrets(
+    handle: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
+  ubrn_uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets(
+    handle: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): void;
+  ubrn_uniffi_matrix_sdk_crypto_fn_clone_secretsbundle(
+    handle: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): bigint;
+  ubrn_uniffi_matrix_sdk_crypto_fn_free_secretsbundle(
+    handle: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): void;
   ubrn_ffi_matrix_sdk_crypto_uniffi_contract_version(): number;
+  ubrn_uniffi_internal_fn_method_backupsecrets_ffi__bless_pointer(
+    pointer: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): UniffiGcObject;
+  ubrn_uniffi_internal_fn_method_crosssigningsecrets_ffi__bless_pointer(
+    pointer: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): UniffiGcObject;
+  ubrn_uniffi_internal_fn_method_secretsbundle_ffi__bless_pointer(
+    pointer: bigint,
+    uniffi_out_err: UniffiRustCallStatus
+  ): UniffiGcObject;
 }
 
 // Casting globalThis to any allows us to look for `NativeMatrixSdkCrypto`

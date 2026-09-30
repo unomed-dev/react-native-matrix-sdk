@@ -95,6 +95,18 @@ typedef struct UniffiForeignFutureResultVoid {
 } UniffiForeignFutureResultVoid;
 typedef void (*UniffiForeignFutureCompleteVoid)(
     uint64_t callback_data, UniffiForeignFutureResultVoid result);
+/*handle*/ uint64_t uniffi_matrix_sdk_crypto_fn_clone_backupsecrets(
+    /*handle*/ uint64_t handle, RustCallStatus *uniffi_out_err);
+void uniffi_matrix_sdk_crypto_fn_free_backupsecrets(
+    /*handle*/ uint64_t handle, RustCallStatus *uniffi_out_err);
+/*handle*/ uint64_t uniffi_matrix_sdk_crypto_fn_clone_crosssigningsecrets(
+    /*handle*/ uint64_t handle, RustCallStatus *uniffi_out_err);
+void uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets(
+    /*handle*/ uint64_t handle, RustCallStatus *uniffi_out_err);
+/*handle*/ uint64_t uniffi_matrix_sdk_crypto_fn_clone_secretsbundle(
+    /*handle*/ uint64_t handle, RustCallStatus *uniffi_out_err);
+void uniffi_matrix_sdk_crypto_fn_free_secretsbundle(
+    /*handle*/ uint64_t handle, RustCallStatus *uniffi_out_err);
 RustBuffer
 ffi_matrix_sdk_crypto_rustbuffer_alloc(uint64_t size,
                                        RustCallStatus *uniffi_out_err);
@@ -1546,6 +1558,74 @@ NativeMatrixSdkCrypto::NativeMatrixSdkCrypto(
             return this->cpp_uniffi_internal_fn_func_ffi__arraybuffer_to_string(
                 rt, thisVal, args, count);
           });
+  props["ubrn_uniffi_matrix_sdk_crypto_fn_clone_backupsecrets"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(
+              rt, "ubrn_uniffi_matrix_sdk_crypto_fn_clone_backupsecrets"),
+          1,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_crypto_fn_clone_backupsecrets(
+                rt, thisVal, args, count);
+          });
+  props["ubrn_uniffi_matrix_sdk_crypto_fn_free_backupsecrets"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(
+              rt, "ubrn_uniffi_matrix_sdk_crypto_fn_free_backupsecrets"),
+          1,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_crypto_fn_free_backupsecrets(
+                rt, thisVal, args, count);
+          });
+  props["ubrn_uniffi_matrix_sdk_crypto_fn_clone_crosssigningsecrets"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(
+              rt, "ubrn_uniffi_matrix_sdk_crypto_fn_clone_crosssigningsecrets"),
+          1,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this
+                ->cpp_uniffi_matrix_sdk_crypto_fn_clone_crosssigningsecrets(
+                    rt, thisVal, args, count);
+          });
+  props["ubrn_uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(
+              rt, "ubrn_uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets"),
+          1,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this
+                ->cpp_uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets(
+                    rt, thisVal, args, count);
+          });
+  props["ubrn_uniffi_matrix_sdk_crypto_fn_clone_secretsbundle"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(
+              rt, "ubrn_uniffi_matrix_sdk_crypto_fn_clone_secretsbundle"),
+          1,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_crypto_fn_clone_secretsbundle(
+                rt, thisVal, args, count);
+          });
+  props["ubrn_uniffi_matrix_sdk_crypto_fn_free_secretsbundle"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(
+              rt, "ubrn_uniffi_matrix_sdk_crypto_fn_free_secretsbundle"),
+          1,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_matrix_sdk_crypto_fn_free_secretsbundle(
+                rt, thisVal, args, count);
+          });
   props["ubrn_ffi_matrix_sdk_crypto_uniffi_contract_version"] =
       jsi::Function::createFromHostFunction(
           rt,
@@ -1556,6 +1636,42 @@ NativeMatrixSdkCrypto::NativeMatrixSdkCrypto(
                  const jsi::Value *args, size_t count) -> jsi::Value {
             return this->cpp_ffi_matrix_sdk_crypto_uniffi_contract_version(
                 rt, thisVal, args, count);
+          });
+  props["ubrn_uniffi_internal_fn_method_backupsecrets_ffi__bless_pointer"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(rt, "ubrn_uniffi_internal_fn_method_"
+                                        "backupsecrets_ffi__bless_pointer"),
+          1,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this
+                ->cpp_uniffi_internal_fn_method_backupsecrets_ffi__bless_pointer(
+                    rt, thisVal, args, count);
+          });
+  props["ubrn_uniffi_internal_fn_method_crosssigningsecrets_ffi__bless_"
+        "pointer"] = jsi::Function::createFromHostFunction(
+      rt,
+      jsi::PropNameID::forAscii(rt, "ubrn_uniffi_internal_fn_method_"
+                                    "crosssigningsecrets_ffi__bless_pointer"),
+      1,
+      [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+             const jsi::Value *args, size_t count) -> jsi::Value {
+        return this
+            ->cpp_uniffi_internal_fn_method_crosssigningsecrets_ffi__bless_pointer(
+                rt, thisVal, args, count);
+      });
+  props["ubrn_uniffi_internal_fn_method_secretsbundle_ffi__bless_pointer"] =
+      jsi::Function::createFromHostFunction(
+          rt,
+          jsi::PropNameID::forAscii(rt, "ubrn_uniffi_internal_fn_method_"
+                                        "secretsbundle_ffi__bless_pointer"),
+          1,
+          [this](jsi::Runtime &rt, const jsi::Value &thisVal,
+                 const jsi::Value *args, size_t count) -> jsi::Value {
+            return this
+                ->cpp_uniffi_internal_fn_method_secretsbundle_ffi__bless_pointer(
+                    rt, thisVal, args, count);
           });
 }
 
@@ -1624,8 +1740,146 @@ NativeMatrixSdkCrypto::cpp_uniffi_internal_fn_func_ffi__arraybuffer_to_string(
     size_t count) {
   return uniffi_jsi::Bridging<std::string>::arraybuffer_to_string(rt, args[0]);
 }
+jsi::Value NativeMatrixSdkCrypto::
+    cpp_uniffi_internal_fn_method_backupsecrets_ffi__bless_pointer(
+        jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+        size_t count) {
+  auto pointer =
+      uniffi_jsi::Bridging<uint64_t>::fromJs(rt, callInvoker, args[0]);
+  auto static destructor = [](uint64_t p) {
+    RustCallStatus status = {0};
+    uniffi_matrix_sdk_crypto_fn_free_backupsecrets(p, &status);
+  };
+  auto ptrObj =
+      std::make_shared<uniffi_jsi::DestructibleObject>(pointer, destructor);
+  auto obj = jsi::Object::createFromHostObject(rt, ptrObj);
+  return jsi::Value(rt, obj);
+}
+jsi::Value NativeMatrixSdkCrypto::
+    cpp_uniffi_internal_fn_method_crosssigningsecrets_ffi__bless_pointer(
+        jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+        size_t count) {
+  auto pointer =
+      uniffi_jsi::Bridging<uint64_t>::fromJs(rt, callInvoker, args[0]);
+  auto static destructor = [](uint64_t p) {
+    RustCallStatus status = {0};
+    uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets(p, &status);
+  };
+  auto ptrObj =
+      std::make_shared<uniffi_jsi::DestructibleObject>(pointer, destructor);
+  auto obj = jsi::Object::createFromHostObject(rt, ptrObj);
+  return jsi::Value(rt, obj);
+}
+jsi::Value NativeMatrixSdkCrypto::
+    cpp_uniffi_internal_fn_method_secretsbundle_ffi__bless_pointer(
+        jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+        size_t count) {
+  auto pointer =
+      uniffi_jsi::Bridging<uint64_t>::fromJs(rt, callInvoker, args[0]);
+  auto static destructor = [](uint64_t p) {
+    RustCallStatus status = {0};
+    uniffi_matrix_sdk_crypto_fn_free_secretsbundle(p, &status);
+  };
+  auto ptrObj =
+      std::make_shared<uniffi_jsi::DestructibleObject>(pointer, destructor);
+  auto obj = jsi::Object::createFromHostObject(rt, ptrObj);
+  return jsi::Value(rt, obj);
+}
 
 // Methods calling directly into the uniffi generated C API of the Rust crate.
+jsi::Value
+NativeMatrixSdkCrypto::cpp_uniffi_matrix_sdk_crypto_fn_clone_backupsecrets(
+    jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+    size_t count) {
+  RustCallStatus status =
+      uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::rustSuccess(rt);
+  auto value = uniffi_matrix_sdk_crypto_fn_clone_backupsecrets(
+      uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker,
+                                                        args[0]),
+      &status);
+  uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::copyIntoJs(
+      rt, callInvoker, status, args[count - 1]);
+
+  return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker,
+                                                         value);
+}
+jsi::Value
+NativeMatrixSdkCrypto::cpp_uniffi_matrix_sdk_crypto_fn_free_backupsecrets(
+    jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+    size_t count) {
+  RustCallStatus status =
+      uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::rustSuccess(rt);
+  uniffi_matrix_sdk_crypto_fn_free_backupsecrets(
+      uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker,
+                                                        args[0]),
+      &status);
+  uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::copyIntoJs(
+      rt, callInvoker, status, args[count - 1]);
+
+  return jsi::Value::undefined();
+}
+jsi::Value NativeMatrixSdkCrypto::
+    cpp_uniffi_matrix_sdk_crypto_fn_clone_crosssigningsecrets(
+        jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+        size_t count) {
+  RustCallStatus status =
+      uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::rustSuccess(rt);
+  auto value = uniffi_matrix_sdk_crypto_fn_clone_crosssigningsecrets(
+      uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker,
+                                                        args[0]),
+      &status);
+  uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::copyIntoJs(
+      rt, callInvoker, status, args[count - 1]);
+
+  return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker,
+                                                         value);
+}
+jsi::Value
+NativeMatrixSdkCrypto::cpp_uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets(
+    jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+    size_t count) {
+  RustCallStatus status =
+      uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::rustSuccess(rt);
+  uniffi_matrix_sdk_crypto_fn_free_crosssigningsecrets(
+      uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker,
+                                                        args[0]),
+      &status);
+  uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::copyIntoJs(
+      rt, callInvoker, status, args[count - 1]);
+
+  return jsi::Value::undefined();
+}
+jsi::Value
+NativeMatrixSdkCrypto::cpp_uniffi_matrix_sdk_crypto_fn_clone_secretsbundle(
+    jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+    size_t count) {
+  RustCallStatus status =
+      uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::rustSuccess(rt);
+  auto value = uniffi_matrix_sdk_crypto_fn_clone_secretsbundle(
+      uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker,
+                                                        args[0]),
+      &status);
+  uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::copyIntoJs(
+      rt, callInvoker, status, args[count - 1]);
+
+  return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker,
+                                                         value);
+}
+jsi::Value
+NativeMatrixSdkCrypto::cpp_uniffi_matrix_sdk_crypto_fn_free_secretsbundle(
+    jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
+    size_t count) {
+  RustCallStatus status =
+      uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::rustSuccess(rt);
+  uniffi_matrix_sdk_crypto_fn_free_secretsbundle(
+      uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker,
+                                                        args[0]),
+      &status);
+  uniffi::matrix_sdk_crypto::Bridging<RustCallStatus>::copyIntoJs(
+      rt, callInvoker, status, args[count - 1]);
+
+  return jsi::Value::undefined();
+}
 jsi::Value
 NativeMatrixSdkCrypto::cpp_ffi_matrix_sdk_crypto_uniffi_contract_version(
     jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
