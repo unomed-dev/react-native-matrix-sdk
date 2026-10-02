@@ -6,6 +6,8 @@ This is a new [**React Native**] project, bootstrapped using [`@react-native-com
 > **Note**: Make sure you have completed the [React Native - Environment Setup] instructions up to
 > the "Creating a new application" step, before proceeding.
 
+- install rust e.g. `brew install rust`
+- prepare module via `npm run prepare` or `yarn prepare`
 
 ## Step 1: Start the Metro Server
 
